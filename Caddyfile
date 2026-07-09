@@ -1,0 +1,7 @@
+:{$PORT:8080}
+
+root * /srv
+file_server
+encode gzip
+
+header /apps/*.apk Content-Type application/vnd.android.package-archive
