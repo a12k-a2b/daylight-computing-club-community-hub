@@ -44,5 +44,48 @@ stock-photo feel, gradients, heavy color.
 
 ---
 
+## The six instincts — an illustrated poster
+
+The crisp, text-accurate version already exists (hand-built:
+`poster/club-instincts-poster-source.html` → `site/club-instincts-poster.png`).
+This prompt makes the *artistic* companion — six little scenes instead of
+six labeled panels. Image models mangle small type, so keep lettering to
+the six single-word names and let the vignettes do the talking.
+
+> A vertical 3:4 poster made of six small hand-drawn vignettes arranged in
+> a 2×3 grid, one per club instinct, each with a single hand-lettered word
+> beneath it: RECIPROCITY — two friends passing a covered dish across a
+> table, both smiling; VULNERABILITY — someone shyly holding out a small
+> homemade thing, another person receiving it with both hands;
+> OPEN RECIPES — a recipe card being copied by hand, two versions side by
+> side, one slightly different; HUMAN SCALE — a small circle of five
+> friends around one table, nobody outside it; MADE-FOR-ONE — an adult
+> giving a child a little tablet with a hand-drawn sunflower on its paper
+> screen, a "for you" tag on it; UNHURRIED — a low sun over a calm
+> horizon, someone reading on a porch, coffee steaming. A small sun motif
+> at the top of the poster and "daylightcomputer.club" hand-lettered at
+> the bottom.
+>
+> Hand-drawn pen-and-ink illustration on warm cream paper, in the style of
+> a lovingly made community zine. Dense, patient linework — fine
+> crosshatching and stippled shading, real ink lines, no gradients, no
+> digital gloss. Almost entirely monochrome (warm black ink on cream) with
+> exactly one accent color: warm amber, used sparingly on a handful of
+> small meaningful things — the sun, a mug, a flower, one screen. Natural
+> daylight, unhurried mood — communal, generous, a little nostalgic;
+> 1970s computer-club spirit, present day.
+
+Negative / avoid: glowing screens, blue light, smartphones, logos,
+corporate stock-photo feel, neon, gradients, paragraphs of small text —
+one amber accent only.
+
+---
+
+**Making more images in this style:** the house aesthetic is bottled as a
+Claude skill at `.claude/skills/club-image-style/SKILL.md` — it has the
+reusable verbatim style block, the negatives, and the rules (one amber
+accent, the squint test, one small sun somewhere). Any future Claude
+session in this repo can use it to keep the whole image set matching.
+
 Tip: if your image model mangles small details, generate at a wide aspect
 (about 20:9, matching the `viewBox="0 0 800 360"`) and keep the scene simple.

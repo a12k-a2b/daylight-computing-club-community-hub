@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DCC Instincts Poster</title>
+<style>
+  :root {
+    --paper: #faf6ee;
+    --ink: #211d18;
+    --mid: #6b655c;
+    --amber: #a06a00;
+    --amber-soft: #e9d9b8;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #888; }
+  .poster {
+    width: 1600px;
+    height: 2000px;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: Charter, Georgia, 'Times New Roman', serif;
+    position: relative;
+    padding: 70px 80px 60px;
+    display: flex;
+    flex-direction: column;
+  }
+  /* dog-ear */
+  .poster::before {
+    content: '';
+    position: absolute; top: 0; left: 0;
+    border-style: solid;
+    border-width: 90px 90px 0 0;
+    border-color: var(--ink) transparent transparent transparent;
+  }
+  .poster::after {
+    content: '';
+    position: absolute; top: 0; left: 0;
+    border-style: solid;
+    border-width: 44px 44px 0 0;
+    border-color: var(--paper) transparent transparent transparent;
+  }
+
+  /* ---------- title ---------- */
+  .titleband { text-align: center; padding: 10px 0 30px; border-bottom: 4px solid var(--ink); position: relative; }
+  .sunrow { display: flex; justify-content: center; margin-bottom: 16px; }
+  h1 { font-size: 68px; letter-spacing: 4px; font-weight: normal; }
+  .subtitle { font-size: 30px; font-style: italic; color: var(--mid); margin-top: 12px; }
+  .corner-note {
+    position: absolute; right: 0; top: -6px;
+    font-family: 'Bradley Hand', 'Segoe Script', 'Comic Sans MS', cursive;
+    font-size: 30px;
+    color: var(--amber);
+    transform: rotate(-4deg);
+  }
+
+  /* ---------- grid ---------- */
+  .grid {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr;
+    gap: 42px 40px;
+    margin-top: 52px;
+  }
+  .panel {
+    border: 4px solid var(--ink);
+    background: #fffdf8;
+    display: flex; flex-direction: column;
+    position: relative;
+  }
+  .pnum {
+    position: absolute; top: -22px; left: -16px;
+    width: 52px; height: 52px; border-radius: 50%;
+    background: var(--amber); color: var(--paper);
+    font-family: ui-monospace, monospace; font-size: 30px;
+    display: flex; align-items: center; justify-content: center;
+    border: 3px solid var(--ink);
+  }
+  .pbody { flex: 1; display: flex; align-items: center; gap: 26px; padding: 26px 30px 20px 34px; }
+  .pbody svg { flex-shrink: 0; }
+  .ptext { flex: 1; }
+  .pname {
+    display: inline-block;
+    font-family: ui-monospace, 'Courier New', monospace;
+    font-size: 25px; letter-spacing: 4px;
+    background: var(--ink); color: var(--paper);
+    padding: 8px 16px;
+    margin-bottom: 14px;
+  }
+  .pmotto { font-size: 28px; font-style: italic; color: var(--amber); margin-bottom: 12px; line-height: 1.25; }
+  .pline { font-size: 24px; line-height: 1.42; }
+  .pline b { color: var(--amber); }
+
+  /* ---------- ribbon ---------- */
+  .ribbon-band { margin-top: 54px; text-align: center; }
+  .ribbon {
+    display: inline-flex; align-items: center; gap: 26px;
+    border: 4px solid var(--ink);
+    background: var(--amber-soft);
+    padding: 18px 44px;
+    font-size: 36px;
+    letter-spacing: 2px;
+  }
+  .ribbon-sub { margin-top: 16px; font-size: 26px; font-style: italic; color: var(--mid); }
+  .linkline {
+    margin-top: 22px;
+    font-family: ui-monospace, 'Courier New', monospace;
+    font-size: 24px;
+    letter-spacing: 0.5px;
+    color: var(--ink);
+    background: #fffdf8;
+    border: 3px solid var(--ink);
+    display: inline-block;
+    padding: 12px 26px;
+  }
+  svg { display: block; }
+</style>
+</head>
+<body>
+<div class="poster">
+
+  <div class="titleband">
+    <div class="corner-note">instincts, not principles ☀</div>
+    <div class="sunrow">
+      <svg width="80" height="80" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="22" fill="none" stroke="#211d18" stroke-width="6"/>
+        <g stroke="#a06a00" stroke-width="6" stroke-linecap="round">
+          <line x1="50" y1="6" x2="50" y2="20"/><line x1="50" y1="80" x2="50" y2="94"/>
+          <line x1="6" y1="50" x2="20" y2="50"/><line x1="80" y1="50" x2="94" y2="50"/>
+          <line x1="19" y1="19" x2="29" y2="29"/><line x1="71" y1="71" x2="81" y2="81"/>
+          <line x1="81" y1="19" x2="71" y2="29"/><line x1="29" y1="71" x2="19" y2="81"/>
+        </g>
+      </svg>
+    </div>
+    <h1>THE SIX INSTINCTS</h1>
+    <p class="subtitle">of the Daylight Computer Club — table manners for a potluck, not rules for a lobby</p>
+  </div>
+
+  <div class="grid">
+
+    <!-- 1 RECIPROCITY: two arrows passing a bowl around -->
+    <div class="panel"><span class="pnum">1</span>
+      <div class="pbody">
+        <svg width="170" height="170" viewBox="0 0 170 170">
+          <path d="M 55 78 Q 85 64 115 78 L 115 96 Q 85 110 55 96 Z" fill="none" stroke="#211d18" stroke-width="5"/>
+          <path d="M 30 60 Q 85 6 140 60" fill="none" stroke="#a06a00" stroke-width="5" stroke-linecap="round"/>
+          <path d="M 140 60 l -16 -4 M 140 60 l -4 -15" stroke="#a06a00" stroke-width="5" fill="none" stroke-linecap="round"/>
+          <path d="M 140 116 Q 85 170 30 116" fill="none" stroke="#a06a00" stroke-width="5" stroke-linecap="round"/>
+          <path d="M 30 116 l 16 4 M 30 116 l 4 15" stroke="#a06a00" stroke-width="5" fill="none" stroke-linecap="round"/>
+        </svg>
+        <div class="ptext">
+          <span class="pname">RECIPROCITY</span>
+          <p class="pmotto">keep the account open</p>
+          <p class="pline">A store settles up instantly; a gift refuses to settle. <b>Asking, thanking, showing off, coming back</b> — the unsettled balance is the friendship.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2 VULNERABILITY: heart with fingerprint arcs -->
+    <div class="panel"><span class="pnum">2</span>
+      <div class="pbody">
+        <svg width="170" height="170" viewBox="0 0 170 170">
+          <path d="M 85 140 C 40 105 22 76 32 52 C 40 32 66 28 85 52 C 104 28 130 32 138 52 C 148 76 130 105 85 140 Z" fill="none" stroke="#211d18" stroke-width="5" stroke-linejoin="round"/>
+          <g stroke="#a06a00" stroke-width="4" fill="none" stroke-linecap="round">
+            <path d="M 70 92 Q 85 74 100 92"/>
+            <path d="M 62 80 Q 85 56 108 80"/>
+            <path d="M 78 103 Q 85 94 92 103"/>
+          </g>
+        </svg>
+        <div class="ptext">
+          <span class="pname">VULNERABILITY</span>
+          <p class="pmotto">it's safe to be an amateur here</p>
+          <p class="pline">Amateur means <b>one who does it for love</b>. Homemade things have fingerprints on them — nothing is too small, too weird, or too unfinished to bring.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3 OPEN RECIPES: recipe card + fork -->
+    <div class="panel"><span class="pnum">3</span>
+      <div class="pbody">
+        <svg width="170" height="170" viewBox="0 0 170 170">
+          <rect x="30" y="24" width="96" height="122" fill="none" stroke="#211d18" stroke-width="5"/>
+          <line x1="46" y1="48" x2="100" y2="48" stroke="#211d18" stroke-width="5" stroke-linecap="round"/>
+          <g stroke="#6b655c" stroke-width="3" stroke-linecap="round">
+            <line x1="46" y1="72" x2="110" y2="72"/><line x1="46" y1="90" x2="110" y2="90"/><line x1="46" y1="108" x2="94" y2="108"/>
+          </g>
+          <g stroke="#a06a00" stroke-width="5" stroke-linecap="round" fill="none">
+            <line x1="142" y1="60" x2="142" y2="140"/>
+            <line x1="134" y1="60" x2="134" y2="82"/><line x1="150" y1="60" x2="150" y2="82"/>
+            <path d="M 134 82 Q 142 92 150 82"/>
+          </g>
+        </svg>
+        <div class="ptext">
+          <span class="pname">OPEN RECIPES</span>
+          <p class="pmotto">every dish comes with the recipe</p>
+          <p class="pline">Nothing on the shelf is a black box — the source is on every card, and <b>remixing is the highest compliment</b>. Each app is a running start for the next.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 HUMAN SCALE: three figures close together -->
+    <div class="panel"><span class="pnum">4</span>
+      <div class="pbody">
+        <svg width="170" height="170" viewBox="0 0 170 170">
+          <g stroke="#211d18" stroke-width="5" fill="none">
+            <circle cx="52" cy="66" r="17"/><path d="M 26 132 Q 52 96 78 132"/>
+            <circle cx="118" cy="66" r="17"/><path d="M 92 132 Q 118 96 144 132"/>
+          </g>
+          <g stroke="#a06a00" stroke-width="5" fill="none">
+            <circle cx="85" cy="52" r="17"/><path d="M 59 118 Q 85 82 111 118"/>
+          </g>
+        </svg>
+        <div class="ptext">
+          <span class="pname">HUMAN SCALE</span>
+          <p class="pmotto">open because we're small</p>
+          <p class="pline">Trust comes from <b>knowing each other</b>, not from gates. A potluck for forty is a potluck; for forty thousand, it's a food court. Grow by starting another one down the street.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5 MADE-FOR-ONE: little tablet with a gift tag -->
+    <div class="panel"><span class="pnum">5</span>
+      <div class="pbody">
+        <svg width="170" height="170" viewBox="0 0 170 170">
+          <rect x="40" y="30" width="76" height="104" rx="10" fill="none" stroke="#211d18" stroke-width="5"/>
+          <line x1="66" y1="44" x2="90" y2="44" stroke="#211d18" stroke-width="4" stroke-linecap="round"/>
+          <line x1="56" y1="70" x2="100" y2="70" stroke="#6b655c" stroke-width="3" stroke-linecap="round"/>
+          <line x1="56" y1="86" x2="92" y2="86" stroke="#6b655c" stroke-width="3" stroke-linecap="round"/>
+          <path d="M 104 108 L 136 92 L 148 100 L 144 116 L 112 132 Z" fill="#faf6ee" stroke="#a06a00" stroke-width="4" stroke-linejoin="round"/>
+          <circle cx="138" cy="102" r="3.5" fill="#a06a00"/>
+          <text x="112" y="120" font-family="Georgia, serif" font-size="13" fill="#a06a00" transform="rotate(-26 112 120)">for you</text>
+        </svg>
+        <div class="ptext">
+          <span class="pname">MADE-FOR-ONE</span>
+          <p class="pmotto">the smallest software is the best kind</p>
+          <p class="pline">Stores carry what sells to a million people. The club exists for things worth making <b>for one</b> — your kid, your morning, one little annoyance.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6 UNHURRIED: low sun over a calm horizon -->
+    <div class="panel"><span class="pnum">6</span>
+      <div class="pbody">
+        <svg width="170" height="170" viewBox="0 0 170 170">
+          <line x1="14" y1="108" x2="156" y2="108" stroke="#211d18" stroke-width="5" stroke-linecap="round"/>
+          <path d="M 55 108 A 30 30 0 0 1 115 108" fill="none" stroke="#211d18" stroke-width="5"/>
+          <g stroke="#a06a00" stroke-width="5" stroke-linecap="round">
+            <line x1="85" y1="52" x2="85" y2="64"/>
+            <line x1="49" y1="66" x2="58" y2="74"/><line x1="121" y1="66" x2="112" y2="74"/>
+            <line x1="34" y1="96" x2="46" y2="96"/><line x1="136" y1="96" x2="124" y2="96"/>
+          </g>
+          <g stroke="#6b655c" stroke-width="3" stroke-linecap="round">
+            <line x1="34" y1="126" x2="70" y2="126"/><line x1="96" y1="126" x2="140" y2="126"/>
+            <line x1="52" y1="142" x2="116" y2="142"/>
+          </g>
+        </svg>
+        <div class="ptext">
+          <span class="pname">UNHURRIED</span>
+          <p class="pmotto">daylight, not dopamine</p>
+          <p class="pline">No feeds, no streaks, nothing pings you. One newsletter a month, a demo night a quarter, <b>a shelf that waits patiently</b>.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============ ribbon ============ -->
+  <div class="ribbon-band">
+    <div class="ribbon">
+      <svg width="52" height="40" viewBox="0 0 52 40">
+        <path d="M 6 14 Q 26 2 46 14 L 46 30 Q 26 40 6 30 Z" fill="none" stroke="#211d18" stroke-width="4"/>
+        <line x1="0" y1="18" x2="8" y2="18" stroke="#211d18" stroke-width="4" stroke-linecap="round"/>
+        <line x1="44" y1="18" x2="52" y2="18" stroke="#211d18" stroke-width="4" stroke-linecap="round"/>
+      </svg>
+      <span>a potluck, not a store</span>
+      <svg width="40" height="46" viewBox="0 0 40 46">
+        <rect x="4" y="4" width="32" height="38" fill="none" stroke="#211d18" stroke-width="4"/>
+        <line x1="10" y1="14" x2="30" y2="14" stroke="#a06a00" stroke-width="3" stroke-linecap="round"/>
+        <line x1="10" y1="22" x2="30" y2="22" stroke="#211d18" stroke-width="3" stroke-linecap="round"/>
+        <line x1="10" y1="30" x2="24" y2="30" stroke="#211d18" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <p class="ribbon-sub">written after the house was built, by walking through it</p>
+    <div class="linkline">daylightcomputer.club</div>
+  </div>
+
+</div>
+</body>
+</html>
