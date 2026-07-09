@@ -54,7 +54,7 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          claude_args: '--allowedTools "Read,Grep,Glob,Bash(git diff:*),Bash(git clone:*),Bash(gh pr comment:*),Bash(gh pr view:*)"'
+          claude_args: '--model claude-sonnet-5 --allowedTools "Read,Grep,Glob,Bash(git diff:*),Bash(git clone:*),Bash(gh pr comment:*),Bash(gh pr view:*)"'
           prompt: |
             You are the reading inspector for the Daylight Computer Club — a
             small community where friends share homebrew apps for their

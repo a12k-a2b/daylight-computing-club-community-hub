@@ -24,8 +24,15 @@
     <noscript><p>This page needs JavaScript to list the apps.</p></noscript>
   </main>
 
+  <nav style="display:flex; gap:12px; flex-wrap:wrap; margin:28px 0 0">
+    <a class="btn secondary" href="wishboard.html" style="flex:1; min-width:180px">✨ Wish Board</a>
+    <a class="btn secondary" href="newsletter.html" style="flex:1; min-width:180px">📰 Newsletter</a>
+    <a class="btn secondary" href="share.html" style="flex:1; min-width:180px">☀ Share your app</a>
+  </nav>
+
   <footer class="club">
-    <p>Made something for your Daylight? <a href="share.html">Share it with the club →</a></p>
+    <p>Made something for your Daylight? <a href="share.html">Share it with the club →</a>
+      Wish something existed? <a href="wishboard.html">Add it to the wish board →</a></p>
     <p>Every app here is homebrew — built by a friend, shared as-is, source linked on each card. Install things from people you trust.</p>
   </footer>
 
@@ -38,7 +45,40 @@ fetch('apps.json')
     document.getElementById('tagline').textContent = data.club.tagline;
     const catalog = document.getElementById('catalog');
     catalog.innerHTML = '';
-    data.apps.forEach(app => {
+
+    // Kids'-table grouping: once the club robot has assigned categories
+    // (data.categories = ordered list of names), group the shelf by them.
+    // Until then — or for anything uncategorized — one flat, newest-first shelf.
+    const cats = Array.isArray(data.categories) ? data.categories : [];
+    if (cats.length) {
+      const used = new Set();
+      cats.forEach(cat => {
+        const inCat = data.apps.filter(a => a.category === cat);
+        if (!inCat.length) return;
+        const h = document.createElement('h2');
+        h.className = 'shelf-heading';
+        h.textContent = cat;
+        catalog.appendChild(h);
+        inCat.forEach(a => { used.add(a.id); catalog.appendChild(buildCard(a)); });
+      });
+      const rest = data.apps.filter(a => !used.has(a.id));
+      if (rest.length) {
+        const h = document.createElement('h2');
+        h.className = 'shelf-heading';
+        h.textContent = 'More';
+        catalog.appendChild(h);
+        rest.forEach(a => catalog.appendChild(buildCard(a)));
+      }
+    } else {
+      data.apps.forEach(app => catalog.appendChild(buildCard(app)));
+    }
+  })
+  .catch(() => {
+    document.getElementById('catalog').innerHTML =
+      '<p>Couldn’t load the app list. Are you offline? Try again when connected.</p>';
+  });
+
+function buildCard(app) {
       const card = document.createElement('section');
       card.className = 'card';
       const isApk = app.type === 'apk';
@@ -49,24 +89,52 @@ fetch('apps.json')
         'updated ' + app.updated,
         isApk && app.apk ? app.apk.size : null
       ].filter(Boolean).join(' · ');
+      const inspected = Array.isArray(app.inspected) && app.inspected.length
+        ? '<div class="inspected"><b>☀ Inspected by the club</b><ul>' +
+            app.inspected.map(c => '<li></li>').join('') +
+          '</ul></div>'
+        : '';
       card.innerHTML =
         '<span class="badge">' + badge + '</span>' +
         '<h2></h2>' +
         '<p class="tagline"></p>' +
         '<p class="meta">' + metaBits + '</p>' +
+        inspected +
         '<a class="btn" href="install.html?app=' + encodeURIComponent(app.id) + '">' +
           (isApk ? 'Install it — guided, step by step →' : 'Add it to your home screen →') +
         '</a>' +
+        '<a class="btn secondary" href="guestbook.html?app=' + encodeURIComponent(app.id) + '">Guestbook — leave a note ✎</a>' +
+        (app.source ? '<button class="btn secondary remix" type="button">Remix this ⑂</button>' : '') +
         (app.source ? '<p class="meta" style="margin:12px 0 0"><a href="' + app.source + '">source code</a></p>' : '');
       card.querySelector('h2').textContent = app.name;
       card.querySelector('.tagline').textContent = app.tagline;
-      catalog.appendChild(card);
-    });
-  })
-  .catch(() => {
-    document.getElementById('catalog').innerHTML =
-      '<p>Couldn’t load the app list. Are you offline? Try again when connected.</p>';
-  });
+      if (inspected) {
+        card.querySelectorAll('.inspected li').forEach((li, i) => { li.textContent = app.inspected[i]; });
+      }
+      const remix = card.querySelector('.remix');
+      if (remix) remix.addEventListener('click', () => copyRemixPrompt(app));
+      return card;
+}
+
+function copyRemixPrompt(app) {
+  const kind = app.type === 'apk' ? 'an Android app' : 'a web app';
+  const prompt =
+`I want to remix an app from the Daylight Computer Club and share my version back.
+
+The original is "${app.name}" by ${app.author} (${kind}).
+Its source code is here: ${app.source}
+
+Please:
+1. Clone that source and help me change it into my own version — I'll describe what I want different.
+2. When it works, share it with the club (the club repo is
+   https://github.com/a12k-a2b/daylight-computing-club-community-hub) as a remix of "${app.name}",
+   noting the original author ${app.author} in the description.
+
+Here's what I want to change: ___`;
+  navigator.clipboard.writeText(prompt)
+    .then(() => alert('Remix prompt copied — paste it into Claude Code and fill in the blank.'))
+    .catch(() => window.prompt('Copy this prompt into Claude Code:', prompt));
+}
 
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('sw.js');

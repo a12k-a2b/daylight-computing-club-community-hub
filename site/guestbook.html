@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guestbook — Daylight Computer Club</title>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="icons/icon-192.png">
+<meta name="theme-color" content="#ffffff">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="club">
+    <a class="club-mark" href="./">
+      <img src="icons/icon-192.png" alt="">
+      <h1 id="title">Guestbook</h1>
+    </a>
+    <p class="club-tagline" id="subtitle">Leave a note for whoever made this.</p>
+  </header>
+
+  <main class="prose">
+    <a class="btn" id="sign" href="#">✎ Sign the guestbook</a>
+    <p></p>
+    <div id="notes"><p class="meta">Loading notes…</p></div>
+  </main>
+
+  <footer class="club">
+    <p><a href="./">← Back to the club</a></p>
+  </footer>
+
+</div>
+
+<script>
+const REPO = 'a12k-a2b/daylight-computing-club-community-hub';
+const params = new URLSearchParams(location.search);
+const appId = params.get('app') || '';
+const $ = id => document.getElementById(id);
+
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+
+// Look up the app's friendly name from the catalog, then load the guestbook.
+fetch('apps.json').then(r => r.json()).then(data => {
+  const app = (data.apps || []).find(a => a.id === appId);
+  const name = app ? app.name : appId;
+  $('title').textContent = 'Guestbook — ' + name;
+  document.title = 'Guestbook — ' + name;
+  $('subtitle').textContent = 'Leave a note for ' + (app ? 'whoever made ' + name : 'the maker') + '.';
+
+  const titlePrefix = 'Guestbook (' + appId + '): ';
+  const body = "Leave your note below — what you liked, a thank-you, a photo of it on your tablet. Anything kind.\n\n— ";
+  $('sign').href = 'https://github.com/' + REPO + '/issues/new?title=' +
+    encodeURIComponent(titlePrefix) + '&labels=guestbook&body=' + encodeURIComponent(body);
+
+  loadNotes(titlePrefix);
+}).catch(() => { $('subtitle').textContent = ''; loadNotes('Guestbook (' + appId + '): '); });
+
+function loadNotes(titlePrefix) {
+  fetch('https://api.github.com/repos/' + REPO + '/issues?state=all&per_page=100&sort=created&direction=desc')
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(issues => {
+      const notes = issues.filter(i => (i.title || '').startsWith(titlePrefix));
+      if (!notes.length) {
+        $('notes').innerHTML = '<p class="hint">No notes yet — be the first to sign.</p>';
+        return;
+      }
+      $('notes').innerHTML = notes.map(n => {
+        const who = n.user && n.user.login ? esc(n.user.login) : 'a friend';
+        const when = n.created_at ? new Date(n.created_at).toLocaleDateString() : '';
+        const text = (n.body || '').replace(/^—\s*$/m, '').trim();
+        return '<div class="card" style="padding:16px 20px">' +
+          '<p style="margin:0 0 8px">' + (text ? esc(text) : '<em>(signed)</em>') + '</p>' +
+          '<p class="meta" style="margin:0">— ' + who + (when ? ' · ' + when : '') + '</p>' +
+        '</div>';
+      }).join('');
+    })
+    .catch(() => {
+      $('notes').innerHTML = '<p class="hint">Couldn’t load notes right now (you may be offline, ' +
+        'or GitHub is rate-limiting). The Sign button still works.</p>';
+    });
+}
+</script>
+</body>
+</html>
