@@ -81,7 +81,7 @@ one amber accent only.
 ---
 
 **Making more images in this style:** the house aesthetic is bottled as a
-Claude skill at `.claude/skills/club-image-style/SKILL.md` — it has the
+Claude skill at `.claude/skills/dcc-poster-design/SKILL.md` — it has the
 reusable verbatim style block, the negatives, and the rules (one amber
 accent, the squint test, one small sun somewhere). Any future Claude
 session in this repo can use it to keep the whole image set matching.

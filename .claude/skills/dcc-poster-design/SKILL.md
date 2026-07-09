@@ -1,5 +1,5 @@
 ---
-name: club-image-style
+name: dcc-poster-design
 description: Generate image-model prompts (and HTML posters) in the Daylight Computer Club house style — warm cream paper, pen-and-ink zine linework, one amber accent. Use whenever Anjan asks for an image, illustration, diagram, poster, or an image-gen prompt for anything club- or Daylight-related, so every image in the set shares the same aesthetic.
 ---
 
