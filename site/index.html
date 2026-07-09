@@ -102,9 +102,9 @@ function buildCard(app) {
         isApk && app.apk ? app.apk.size : null
       ].filter(Boolean).join(' · ');
       const inspected = Array.isArray(app.inspected) && app.inspected.length
-        ? '<div class="inspected"><b>☀ Inspected by the club</b><ul>' +
+        ? '<details class="inspected"><summary>☀ Inspected ✓</summary><ul>' +
             app.inspected.map(c => '<li></li>').join('') +
-          '</ul></div>'
+          '</ul></details>'
         : '';
       card.innerHTML =
         '<span class="badge">' + badge + '</span>' +
@@ -115,8 +115,10 @@ function buildCard(app) {
         '<a class="btn" href="install.html?app=' + encodeURIComponent(app.id) + '">' +
           (isApk ? 'Install it — guided, step by step →' : 'Add it to your home screen →') +
         '</a>' +
-        '<a class="btn secondary" href="guestbook.html?app=' + encodeURIComponent(app.id) + '">Guestbook — leave a note ✎</a>' +
-        (app.source ? '<button class="btn secondary remix" type="button">Remix this ⑂</button>' : '') +
+        '<div class="card-actions">' +
+          '<a class="btn secondary" href="guestbook.html?app=' + encodeURIComponent(app.id) + '">✎ Guestbook</a>' +
+          (app.source ? '<button class="btn secondary remix" type="button">⑂ Remix</button>' : '') +
+        '</div>' +
         (app.source ? '<p class="meta" style="margin:12px 0 0"><a href="' + app.source + '">source code</a></p>' : '');
       card.querySelector('h2').textContent = app.name;
       card.querySelector('.tagline').textContent = app.tagline;
