@@ -4,8 +4,10 @@ A homebrew-computing-club-style sharing place for apps we make for our
 [Daylight DC-1](https://daylightcomputer.com) tablets. Not an app store — a
 potluck. Everything is vibecoded, open source, and shared between friends.
 
-**The club lives at:** `https://a12k-a2b.github.io/daylight-computing-club-community-hub/` (once Pages is on —
-see below)
+**The club lives at:** **https://daylightcomputer.club** (hosted on Railway,
+which owns the domain; `https://a12k-a2b.github.io/daylight-computing-club-community-hub/`
+is a free mirror via GitHub Pages). Both redeploy automatically on every push
+to `master` — Railway watches the repo, and the Pages workflow does the rest.
 
 ## What's here
 

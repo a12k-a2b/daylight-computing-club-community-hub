@@ -1,8 +1,15 @@
 # Daylight Computing Club — instructions for Claude sessions
 
 This repo is a static app-sharing site ("the club") for Daylight DC-1
-tablets. The site lives in `site/`, deploys to GitHub Pages on push to
-`master`/`main`, and needs no build step. Full context: README.md, ROADMAP.md.
+tablets. The site lives in `site/`, needs no build step, and deploys on
+every push to `master`: Railway serves https://daylightcomputer.club (the
+canonical link, via Dockerfile + Caddyfile) and GitHub Pages serves a free
+mirror. Full context: README.md, ROADMAP.md.
+
+Share-form submissions (issues labeled `app-submission`) are shelved
+automatically by `.github/workflows/shelve.yml`: authors listed in
+`.github/club-members.json` publish straight to master; everyone else's
+submission becomes a PR for Anjan to approve.
 
 ## When asked to "share/shelve/add an app to the club"
 
