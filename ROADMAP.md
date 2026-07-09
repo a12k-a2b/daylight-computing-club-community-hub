@@ -89,6 +89,33 @@ installer + potluck rules — is the durable thing, not the device.
 
 ---
 
+## The Sol:OS card (unique to us: we control the OS)
+
+Android's install friction — "unknown sources," Play Protect, manual
+accessibility toggles — is policy, not physics, and Daylight writes the
+policy for Sol:OS. Guiding principle for all of these: **remove friction,
+keep consent** — a friend saying "yes, I trust Anjan" should take one tap,
+never seven, and the OS should never call a friend's app an "unknown
+source." In rising order of ambition:
+
+1. **Bless the club** *(small)* — preinstall the club PWA on DC-1s and/or
+   pre-allow the club's origin as an install source, so the
+   allow-from-this-source step disappears entirely.
+2. **Trust the seal** *(medium)* — a trusted-keys list in Sol:OS that
+   recognizes the club signing key: club-signed APKs skip the scare screens,
+   and special-power grants (accessibility service, overlays, system
+   settings) collapse into one friendly per-app yes/no. Effectively a new
+   "friends" trust ring between "store" and "unknown."
+3. **A club installer with house keys** *(larger)* — a small privileged
+   installer app shipped in the OS image holding INSTALL_PACKAGES (the
+   F-Droid privileged-extension pattern): one-tap installs, silent updates
+   for apps a human already approved. The club site stays unchanged; it
+   hands APKs to the installer instead of the browser.
+
+None of this blocks the club — everything works today via the guided
+wizard. This is the upgrade path, and a product story in its own right:
+*the tablet that treats software from your friends as first-class.*
+
 ## On ice (but part of the vision): the "daylight-ify" skill pack
 
 A set of Claude Code skills that takes an existing web app or PWA — maybe
