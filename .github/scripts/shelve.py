@@ -191,16 +191,25 @@ def main():
         subprocess.run(["gh", "issue", "close", ISSUE, "--repo", REPO,
                         "--reason", "completed"], check=False, text=True)
     else:
+        # approve once, trusted forever: merging this PR also adds the
+        # author to the trusted list, so their next share is instant
+        members["trusted"].append(AUTHOR)
+        members_path = ROOT / ".github" / "club-members.json"
+        members_path.write_text(json.dumps(members, indent=2, ensure_ascii=False) + "\n")
         branch = f"shelve/issue-{ISSUE}"
         sh("git", "checkout", "-B", branch)
+        sh("git", "add", "-A")
         sh("git", "commit", "-m", f"{title}\n\nCloses #{ISSUE}")
         sh("git", "push", "-f", "origin", branch)
         pr = sh("gh", "pr", "create", "--repo", REPO, "--base", "master", "--head", branch,
                 "--title", title,
                 "--body", f"Submitted through the share form by @{AUTHOR}. Closes #{ISSUE}.\n\n"
-                          "A keeper reviews and merges — that's the approve tap.")
+                          "A keeper reviews and merges — that's the approve tap. Merging also "
+                          f"adds @{AUTHOR} to the trusted members list, so their future shares "
+                          "publish instantly.")
         comment(f"Thanks @{AUTHOR}! Your app is prepped and waiting for a club keeper's "
-                f"approval: {pr.strip()}. Once merged, it's on everyone's shelf.")
+                f"approval: {pr.strip()}. Once merged, it's on everyone's shelf — and your "
+                "future shares will skip the wait entirely.")
 
 
 if __name__ == "__main__":
