@@ -64,6 +64,10 @@ function apkSteps(app) {
       <p class="hint">This takes about two minutes. I’ll show you each screen
       before you see it, so nothing is surprising. Do each step on this
       tablet, then come back to this tab.</p>
+      ${app.permissions && app.permissions.length ? `
+      <p class="hint"><strong>Honest label</strong> — this app can:
+      ${esc(app.permissions.join(', '))}. (Read straight from the app file
+      by the club's inspector, not from the author's description.)</p>` : ''}
       <p class="meta">by ${esc(app.author)} · ${esc(app.version)} · ${esc(app.apk.size)}</p>`,
     next: 'Start →'
   });

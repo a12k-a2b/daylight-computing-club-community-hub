@@ -5,9 +5,14 @@ Trusted members (.github/club-members.json) publish straight to the shelf;
 everyone else's submission becomes a pull request for a keeper to approve.
 Run by .github/workflows/shelve.yml. Set DRY_RUN=1 to test without git/gh.
 """
-import json, os, re, subprocess, sys, tempfile, urllib.request
+import importlib.util, json, os, re, subprocess, sys, tempfile, urllib.request
 from datetime import date, timezone, datetime
 from pathlib import Path
+
+_spec = importlib.util.spec_from_file_location(
+    "club_inspect", Path(__file__).with_name("inspect.py"))
+club_inspect = importlib.util.module_from_spec(_spec)
+_spec.loader.exec_module(club_inspect)
 
 ROOT = Path(__file__).resolve().parents[2]
 DRY = os.environ.get("DRY_RUN") == "1"
@@ -159,10 +164,23 @@ def main():
         "afterInstall": [s.strip() for s in setup.splitlines() if s.strip()],
         "source": source or f"https://github.com/{REPO}/issues/{ISSUE}",
     }
+    inspection_md = ""
     if is_apk:
         entry["apk"] = prepare_apk(apk_field, app_id)
+        report = club_inspect.inspect(str(ROOT / "site" / entry["apk"]["file"]))
+        entry["permissions"] = report["can"]
+        inspection_md = "\n\n" + club_inspect.to_markdown(report)
+        vt = report.get("virustotal") or {}
+        if vt.get("malicious", 0) >= 2:
+            comment("⚠ **The inspector stopped this one.** The file was flagged as "
+                    f"malicious by {vt['malicious']} antivirus engines "
+                    f"([details]({vt['link']})). Not shelving it — if you believe "
+                    "this is a false alarm, a keeper can review by hand.")
+            sys.exit(1)
     else:
         entry["url"] = url
+        inspection_md = ("\n\n**☀ Inspector's report:** web app — runs sandboxed in the "
+                         "browser, so it can't touch the tablet the way an installed app can.")
 
     catalog["apps"].insert(0, entry)
     catalog_path.write_text(json.dumps(catalog, indent=2, ensure_ascii=False) + "\n")
@@ -187,7 +205,7 @@ def main():
         subprocess.run(["gh", "workflow", "run", "pages.yml", "--ref", "master", "--repo", REPO],
                        check=False, text=True)
         comment(f"☀ **Shelved!** {name} is on the club shelf — live at {SITE_URL} "
-                "in a couple of minutes. Thanks for bringing a dish.")
+                f"in a couple of minutes. Thanks for bringing a dish.{inspection_md}")
         subprocess.run(["gh", "issue", "close", ISSUE, "--repo", REPO,
                         "--reason", "completed"], check=False, text=True)
     else:
@@ -206,7 +224,7 @@ def main():
                 "--body", f"Submitted through the share form by @{AUTHOR}. Closes #{ISSUE}.\n\n"
                           "A keeper reviews and merges — that's the approve tap. Merging also "
                           f"adds @{AUTHOR} to the trusted members list, so their future shares "
-                          "publish instantly.")
+                          f"publish instantly.{inspection_md}")
         comment(f"Thanks @{AUTHOR}! Your app is prepped and waiting for a club keeper's "
                 f"approval: {pr.strip()}. Once merged, it's on everyone's shelf — and your "
                 "future shares will skip the wait entirely.")
