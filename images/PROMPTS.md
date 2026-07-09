@@ -1,11 +1,10 @@
 # Image-gen prompts for the "Why the club exists" page
 
-The `site/why.html` page ships with two hand-drawn grayscale scenes that
-match the club's paper-and-ink look. If you'd rather use richer AI-generated
-images, generate them from the prompts below and drop them in as
-`site/images/homebrew-1975.jpg` and `site/images/daylight-now.jpg`, then swap
-the two inline `<svg class="scene">…</svg>` blocks in `why.html` for
-`<img class="scene" src="images/homebrew-1975.jpg" alt="…">`.
+*(Done! — `why.html` now opens with a real 1975 Homebrew photograph and
+closes with an image generated from the prompt below, both at
+`site/images/`. The original stick-figure scenes live on, side by side,
+in the middle of the page — and the untouched first version of the whole
+page is kept for memory at `archive/why-manifesto-og.html`.)*
 
 Keep them grayscale (or warm duotone) so they read well on the Daylight's
 monochrome reflective screen.
