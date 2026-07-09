@@ -1,0 +1,80 @@
+name: Kids' table — auto-categorize the shelf
+
+# Latent until the shelf reaches 10 apps. After that, whenever the catalog
+# changes, Claude proposes shelf categories that fit the apps that actually
+# exist, tags each app with one, and orders the sections — keeping the shelf
+# browsable as it grows. Writes back to site/apps.json (category per app +
+# a top-level "categories" ordering). Commits directly; it only reorders and
+# labels, never changes an app's files.
+
+on:
+  push:
+    branches: [master]
+    paths: ["site/apps.json"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: categorize
+  cancel-in-progress: true
+
+jobs:
+  categorize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Count apps and check for the API key
+        id: gate
+        run: |
+          count=$(python3 -c "import json; d=json.load(open('site/apps.json')); print(len([a for a in d['apps'] if a.get('id') != 'dcc']))")
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          if [ -n "${{ secrets.ANTHROPIC_API_KEY }}" ] && [ "$count" -ge 10 ]; then
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=false" >> "$GITHUB_OUTPUT"
+            echo "Latent: $count app(s) on the shelf (kicks in at 10), or no API key."
+          fi
+
+      - name: Claude proposes categories and re-sorts
+        if: steps.gate.outputs.go == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          claude_args: '--model claude-sonnet-5 --allowedTools "Read,Write,Edit,Bash(git config:*),Bash(git add:*),Bash(git commit:*),Bash(git push:*)"'
+          prompt: |
+            You curate the shelf for the Daylight Computer Club — homebrew apps
+            for Daylight tablets. The shelf has grown past 10 apps and needs
+            browsable sections (a "kids' table" grouping).
+
+            Read site/apps.json. For the apps (ignore the entry with id "dcc"):
+            1. Invent 3–6 short, warm, human category names that genuinely fit
+               THIS set of apps — e.g. "Learning applets", "Reading & focus",
+               "For parents", "Tablet tweaks". Don't force a taxonomy; let the
+               apps that exist suggest the shelves. Re-derive fresh each run so
+               the categories keep fitting as the shelf changes.
+            2. Give every non-dcc app a "category" field with exactly one of
+               your category names. Put the "dcc" entry, if present, last with
+               no category (the site handles it).
+            3. Add a top-level "categories" array to the JSON: your category
+               names in the order the sections should appear (most delightful
+               or most-populated first — your taste).
+            4. Within apps.json, order apps so those in the same category are
+               contiguous and in a sensible order.
+
+            Preserve every existing field on every app exactly (id, name,
+            apk, inspected, permissions, afterInstall, source, …). Only add
+            "category" per app and the top-level "categories" array, and
+            reorder the apps list. Keep it valid JSON, 2-space indented.
+
+            Then commit and push to master:
+              git config user.name "club-robot"
+              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+              git add site/apps.json
+              git commit -m "Re-sort the shelf into categories"
+              git push origin HEAD:master
+
+            Make only this one change. Do not touch any other file.

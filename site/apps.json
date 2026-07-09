@@ -26,6 +26,11 @@
         "read your calendar",
         "change your calendar"
       ],
+      "inspected": [
+        "signed with the club key",
+        "permissions read straight from the app file",
+        "built from open source you can read"
+      ],
       "afterInstall": [
         "Open the Daylight Keys app from your home screen.",
         "Turn on its accessibility service: open Settings, then Accessibility, find “dc1-keys”, and switch it on. (This is what lets it listen to the volume keys.)",

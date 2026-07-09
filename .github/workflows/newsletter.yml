@@ -1,0 +1,70 @@
+name: Club newsletter
+
+# On the first of each month, Claude drafts a short, warm digest of the
+# month's club activity (apps shelved, wishes granted, remixes) and opens
+# it as an issue labeled "newsletter" — which the newsletter page surfaces.
+# Advisory/creative only; skips gracefully without the API key.
+
+on:
+  schedule:
+    - cron: "0 15 1 * *"   # 15:00 UTC on the 1st
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for API key
+        id: key
+        run: |
+          if [ -n "${{ secrets.ANTHROPIC_API_KEY }}" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "No ANTHROPIC_API_KEY — skipping the newsletter draft."
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.key.outputs.present == 'true'
+
+      - name: Ensure the newsletter label exists
+        if: steps.key.outputs.present == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh label create newsletter --repo "${{ github.repository }}" --color ecb34a --description "Monthly club digest" --force || true
+
+      - name: Claude drafts the edition
+        if: steps.key.outputs.present == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          claude_args: '--model claude-haiku-4-5 --allowedTools "Read,Grep,Glob,Bash(git log:*),Bash(gh pr list:*),Bash(gh issue list:*),Bash(gh issue create:*)"'
+          prompt: |
+            You write the monthly newsletter for the Daylight Computer Club — a
+            small, warm community where friends share homebrew apps for their
+            Daylight tablets. Draft this month's edition.
+
+            Gather what happened, roughly the last ~35 days:
+            - Apps on the shelf: read site/apps.json (name, author, tagline, updated).
+            - Recently merged pulls: gh pr list --state merged --limit 30 --json title,mergedAt,author
+            - Wishes: gh issue list --label wish --state all --limit 30 --json title,state,createdAt
+            - Guestbook notes: gh issue list --label guestbook --state all --limit 30 --json title,createdAt
+            - Remixes: apps whose description mentions "remix".
+
+            Write a SHORT (250–400 word), charming, specific digest in the spirit
+            of the Homebrew Computer Club newsletter — celebrate people by name,
+            note what got shelved, which wishes are still open (a gentle callout
+            for someone to grant them), any remixes, and a warm sign-off. Plain
+            language, no hype, no emoji spam (one ☀ is plenty). If almost nothing
+            happened, keep it to a few honest, encouraging sentences.
+
+            Then create it as an issue:
+            gh issue create --repo ${{ github.repository }} --label newsletter \
+              --title "Newsletter — <Month Year>" --body "<the edition>"
+
+            Post exactly one issue, then stop. Do not modify the repo or merge anything.

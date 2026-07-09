@@ -43,7 +43,7 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          claude_args: '--allowedTools "Read,Grep,Glob,Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh workflow run:*),Bash(gh pr view:*)"'
+          claude_args: '--model claude-haiku-4-5 --allowedTools "Read,Grep,Glob,Bash(gh issue view:*),Bash(gh issue comment:*),Bash(gh workflow run:*),Bash(gh pr view:*)"'
           prompt: |
             You are the concierge at the door of the Daylight Computer Club —
             a small community where friends share homebrew apps for their

@@ -17,6 +17,36 @@ live in [LOOSE-ENDS.md](LOOSE-ENDS.md).*
 
 ---
 
+## What makes a great potluck — the reciprocity layer *(built)*
+
+A store optimizes transactions; a potluck optimizes reciprocity — asking,
+thanking, showing off, coming back. These are built and live:
+
+- **Trust badge** — each card shows what the inspector verified ("signed
+  with the club key · permissions read from the file · scanned clean by N
+  antivirus engines"). Invisible diligence made visible.
+- **Guestbook** (`guestbook.html`) — per-app wall of kind notes, backed by
+  GitHub issues, no backend. Gratitude is the currency that keeps dishes coming.
+- **Wish board** (`wishboard.html`) — "dishes we're hungry for." Anyone
+  posts a wish; any member's Claude can grant it. Turns lurkers into cooks,
+  because the hardest part of making something is knowing someone wants it.
+- **Remix button** — every card copies a ready-made Claude prompt with the
+  original's source link baked in. Remixing goes from possible to one paste.
+- **Newsletter** (`newsletter.html` + `newsletter.yml`) — a monthly
+  robot-drafted digest from the club's own history, in the spirit of the
+  Homebrew newsletter.
+- **Kids' table** (`categorize.yml`) — *latent until 10 apps*, then Claude
+  invents shelf categories that fit the apps that actually exist, tags each
+  app, and re-sorts the shelf — re-derived each run so the sections keep
+  fitting as the club grows. The shelf renders grouped when categories exist,
+  flat until then.
+
+Not code, but the real multiplier: **demo night** — a quarterly call where
+everyone shows what they made for five minutes. A potluck is an event, not a
+pantry. That one's a calendar invite, not a commit.
+
+---
+
 ## v0 — Me → Melissa *(built now)*
 
 One static site on GitHub Pages. No backend, no accounts, no build step.

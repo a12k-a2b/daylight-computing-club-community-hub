@@ -82,7 +82,27 @@ Settings → Secrets and variables → Actions). Until then the inspector's
 report says "antivirus scan: skipped." Worth arming before strangers find
 the share form.
 
-## 5. Sol:OS integration
+## 5. Which Claude model runs each robot (cost vs. judgment)
+
+The club's Claude-powered robots don't all need the same brains, and the
+model is a one-line change in each workflow's `claude_args` (`--model ...`).
+Current, deliberate choices — the principle is *dumb gates, smart advice,
+cheap where judgment isn't needed*:
+
+- **Concierge** (`club-concierge.yml`) → **Haiku** (`claude-haiku-4-5`).
+  Warm, simple back-and-forth at the door; cheapest, plenty smart for it.
+- **Newsletter** (`newsletter.yml`) → **Haiku**. Summarizing the month's
+  history is easy; runs monthly, so cost barely matters either way.
+- **Source reviewer** (`claude-review.yml`) → **Sonnet** (`claude-sonnet-5`).
+  This one reads code for claims-vs-reality mismatches and hidden malice —
+  real judgment. Sonnet is the sweet spot; Opus is overkill for a friends'
+  club but a reasonable upgrade if the club ever admits strangers.
+
+The **hard gates** (signing, VirusTotal, crash test) use no LLM at all —
+by design, a gate must not be sweet-talkable (prompt injection). Only the
+*advisory* reviewer and concierge use a model.
+
+## 6. Sol:OS integration
 
 The biggest unlock on the board — preinstall/bless the club, trust the
 club's signing key as a "friends ring," or ship a privileged one-tap

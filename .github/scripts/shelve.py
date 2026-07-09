@@ -169,8 +169,16 @@ def main():
         entry["apk"] = prepare_apk(apk_field, app_id)
         report = club_inspect.inspect(str(ROOT / "site" / entry["apk"]["file"]))
         entry["permissions"] = report["can"]
-        inspection_md = "\n\n" + club_inspect.to_markdown(report)
+        # durable trust facts for the shelf badge (crash test is advisory, on the PR)
+        checks = ["signed with the club key", "permissions read straight from the app file"]
         vt = report.get("virustotal") or {}
+        if vt.get("engines"):
+            if vt.get("malicious", 0) or vt.get("suspicious", 0):
+                checks.append(f"⚠ flagged by {vt['malicious']} antivirus engines")
+            else:
+                checks.append(f"scanned clean by {vt['engines']} antivirus engines")
+        entry["inspected"] = checks
+        inspection_md = "\n\n" + club_inspect.to_markdown(report)
         if vt.get("malicious", 0) >= 2:
             comment("⚠ **The inspector stopped this one.** The file was flagged as "
                     f"malicious by {vt['malicious']} antivirus engines "
@@ -179,6 +187,7 @@ def main():
             sys.exit(1)
     else:
         entry["url"] = url
+        entry["inspected"] = ["runs sandboxed in the browser — can't touch the tablet like an installed app"]
         inspection_md = ("\n\n**☀ Inspector's report:** web app — runs sandboxed in the "
                          "browser, so it can't touch the tablet the way an installed app can.")
 

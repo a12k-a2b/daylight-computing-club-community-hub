@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wish Board — Daylight Computer Club</title>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="icons/icon-192.png">
+<meta name="theme-color" content="#ffffff">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="club">
+    <a class="club-mark" href="./">
+      <img src="icons/icon-192.png" alt="">
+      <h1>Wish Board</h1>
+    </a>
+    <p class="club-tagline">Dishes we're hungry for. Wish out loud — someone's Claude might just make it.</p>
+  </header>
+
+  <main class="prose">
+    <a class="btn" id="wish" href="#">✨ Make a wish</a>
+    <p></p>
+    <p class="hint">The hardest part of making something is knowing someone wants it. Post what you
+      wish existed for your Daylight — a metronome for piano practice, a tide clock, a bedtime-story
+      timer. Any club member (or their Claude) can pick a wish up and grant it.</p>
+    <div id="wishes"><p class="meta">Loading wishes…</p></div>
+  </main>
+
+  <footer class="club">
+    <p><a href="./">← Back to the club</a></p>
+  </footer>
+
+</div>
+
+<script>
+const REPO = 'a12k-a2b/daylight-computing-club-community-hub';
+const $ = id => document.getElementById(id);
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+const body = "What do you wish existed for your Daylight? Describe it in a sentence or two — " +
+  "what it does, who it's for, why you'd love it.\n\n";
+$('wish').href = 'https://github.com/' + REPO + '/issues/new?title=' +
+  encodeURIComponent('Wish: ') + '&labels=wish&body=' + encodeURIComponent(body);
+
+fetch('https://api.github.com/repos/' + REPO + '/issues?state=all&per_page=100&sort=created&direction=desc')
+  .then(r => r.ok ? r.json() : Promise.reject())
+  .then(issues => {
+    const wishes = issues.filter(i => /^Wish:\s*\S/.test(i.title || ''));
+    if (!wishes.length) {
+      $('wishes').innerHTML = '<p class="hint">No wishes yet — make the first one.</p>';
+      return;
+    }
+    $('wishes').innerHTML = wishes.map(w => {
+      const who = w.user && w.user.login ? esc(w.user.login) : 'a friend';
+      const title = esc((w.title || '').replace(/^Wish:\s*/, ''));
+      const text = esc((w.body || '').trim());
+      const granted = w.state === 'closed';
+      return '<div class="card" style="padding:16px 20px">' +
+        (granted ? '<span class="badge">✓ GRANTED</span>' : '') +
+        '<h2 style="font-size:22px;margin:' + (granted ? '8px' : '0') + ' 0 6px">' + title + '</h2>' +
+        (text ? '<p style="margin:0 0 10px">' + text + '</p>' : '') +
+        '<p class="meta" style="margin:0">wished by ' + who + ' · ' +
+          '<a href="' + w.html_url + '">discuss / grant it</a></p>' +
+      '</div>';
+    }).join('');
+  })
+  .catch(() => {
+    $('wishes').innerHTML = '<p class="hint">Couldn’t load wishes right now (offline, or GitHub is ' +
+      'rate-limiting). The Make a wish button still works.</p>';
+  });
+</script>
+</body>
+</html>
