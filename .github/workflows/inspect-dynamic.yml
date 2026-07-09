@@ -36,7 +36,8 @@ jobs:
       - name: Find the submitted APK
         id: find
         run: |
-          git fetch origin master --depth 1
+          # checkout above already fetched full history — a shallow re-fetch
+          # here would erase the merge base and make the diff come up empty
           apk=$(git diff --name-only origin/master...HEAD -- 'site/apps/*/*.apk' | head -1)
           echo "apk=$apk" >> "$GITHUB_OUTPUT"
           echo "Found: ${apk:-nothing}"
