@@ -4,7 +4,7 @@ A homebrew-computing-club-style sharing place for apps we make for our
 [Daylight DC-1](https://daylightcomputer.com) tablets. Not an app store — a
 potluck. Everything is vibecoded, open source, and shared between friends.
 
-**The club lives at:** `https://a12k-a2b.github.io/a12/` (once Pages is on —
+**The club lives at:** `https://a12k-a2b.github.io/daylight-computing-club-community-hub/` (once Pages is on —
 see below)
 
 ## What's here
@@ -25,19 +25,15 @@ signing/                  the shared club signing key (see signing/README.md)
 
 ## Turning it on (one-time, ~2 minutes)
 
-GitHub Pages on a free account needs the repo to be **public**:
-
-1. GitHub → this repo → **Settings → General → Danger Zone → Change
-   visibility → Public**. (Everything here is meant to be open source anyway
-   — that's the club ethos.)
-2. Merge this PR to `master`. The **Deploy club to GitHub Pages** action runs
-   and switches Pages on by itself.
-3. The club is live at `https://a12k-a2b.github.io/a12/`.
-
-Optional but nice: rename the repo (Settings → General → Repository name) to
-something like `daylight-computing-club` and the link becomes
-`https://a12k-a2b.github.io/daylight-computing-club/` — friendlier to text to
-people. GitHub redirects the old name automatically.
+1. **Name the repo** `daylight-computing-club-community-hub`: GitHub → this
+   repo → Settings → General → Repository name. (GitHub redirects the old
+   name automatically, so nothing breaks.)
+2. **Make it public**: same Settings page → Danger Zone → Change visibility
+   → Public. GitHub Pages on a free account needs this — and everything here
+   is meant to be open source anyway; that's the club ethos.
+3. Merge to `master`. The **Deploy club to GitHub Pages** action runs and
+   switches Pages on by itself.
+4. The club is live at `https://a12k-a2b.github.io/daylight-computing-club-community-hub/`.
 
 ## Sharing with Melissa (or anyone), today
 
