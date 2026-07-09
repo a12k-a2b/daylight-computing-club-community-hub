@@ -23,9 +23,17 @@
 
     <p>The club is just a folder of apps and one <code>apps.json</code> file in a
     GitHub repo. Adding your app means adding your file (or link) and one
-    catalog entry. Three ways to do it, easiest first:</p>
+    catalog entry. Four ways to do it, easiest first:</p>
 
-    <h2>1. Ask your Claude to do it</h2>
+    <h2>1. Fill out the share form</h2>
+    <p>No coding, no cloning — a fill-in-the-blanks form. Name, one-liner,
+    your link (or your APK zipped and dragged in), what it does, done.
+    Anjan gets notified and shelves it for you. You'll need a free GitHub
+    account to submit — one-time, and it's also your identity on the shelf.</p>
+    <a class="btn" href="https://github.com/a12k-a2b/daylight-computing-club-community-hub/issues/new?template=share-an-app.yml">Open the share form ↗</a>
+    <p></p>
+
+    <h2>2. Ask your Claude to do it</h2>
     <p>If you built your app in Claude Code, you're one prompt away. Copy
     this, paste it into your Claude Code session, and fill in the blanks:</p>
 
@@ -50,12 +58,12 @@ Clone the club repo, add my app following the pattern of the existing
 entries in site/apps.json, and open a pull request.</pre>
     <button class="btn secondary" onclick="copyPrompt()">Copy the prompt</button>
 
-    <h2>2. Send it to a club member</h2>
+    <h2>3. Send it to a club member</h2>
     <p>Email your APK (or your web app's link) with a name, a one-liner, and
     any setup steps to whoever runs the club — right now that's Anjan. They'll
     shelve it for you.</p>
 
-    <h2>3. Do it by hand</h2>
+    <h2>4. Do it by hand</h2>
     <p>Fork <a href="https://github.com/a12k-a2b/daylight-computing-club-community-hub">the repo</a>, drop your
     APK in <code>site/apps/&lt;your-app-id&gt;/</code>, add an entry to
     <code>site/apps.json</code> matching the ones already there, and open a
