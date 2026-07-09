@@ -1,14 +1,21 @@
 // Daylight Computer Club service worker.
-// Shell files: cache-first so the club opens instantly (and offline).
-// apps.json: network-first so new apps show up as soon as they're shelved.
+// Pages (HTML) and apps.json: network-first, so the club you see is always
+// the current one — the cache is only the offline fallback.
+// Static assets (css, icons): cache-first with background refresh, so the
+// club opens instantly but self-heals when styles change.
 // APK files: never cached — always a fresh download.
 
-const CACHE = 'dcc-v1';
+const CACHE = 'dcc-v2';
 const SHELL = [
   './',
   'index.html',
   'install.html',
   'share.html',
+  'guestbook.html',
+  'wishboard.html',
+  'newsletter.html',
+  'why.html',
+  'instincts.html',
   'style.css',
   'manifest.webmanifest',
   'icons/icon-192.png',
@@ -29,25 +36,43 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
-  const url = new URL(e.request.url);
-  if (e.request.method !== 'GET' || url.origin !== location.origin) return;
+  const req = e.request;
+  const url = new URL(req.url);
+  if (req.method !== 'GET' || url.origin !== location.origin) return;
 
   if (url.pathname.endsWith('.apk')) return; // straight to network
 
-  if (url.pathname.endsWith('apps.json')) {
+  const wantsFresh =
+    req.mode === 'navigate' ||
+    url.pathname.endsWith('.html') ||
+    url.pathname.endsWith('/') ||
+    url.pathname.endsWith('apps.json');
+
+  if (wantsFresh) {
+    // Network-first: live site wins, cache only when offline.
     e.respondWith(
-      fetch(e.request)
+      fetch(req)
         .then(res => {
           const copy = res.clone();
-          caches.open(CACHE).then(c => c.put(e.request, copy));
+          caches.open(CACHE).then(c => c.put(req, copy));
           return res;
         })
-        .catch(() => caches.match(e.request))
+        .catch(() => caches.match(req))
     );
     return;
   }
 
+  // Static assets: serve from cache, refresh it in the background.
   e.respondWith(
-    caches.match(e.request).then(hit => hit || fetch(e.request))
+    caches.match(req).then(hit => {
+      const refresh = fetch(req)
+        .then(res => {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put(req, copy));
+          return res;
+        })
+        .catch(() => hit);
+      return hit || refresh;
+    })
   );
 });
