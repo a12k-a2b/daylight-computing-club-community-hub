@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Why the club exists — Daylight Computer Club</title>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="icons/icon-192.png">
+<meta name="theme-color" content="#ffffff">
+<style>
+  .scene {
+    border: var(--rule);
+    background: #fff;
+    margin: 0 0 10px;
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  .scene-cap {
+    text-align: center;
+    color: var(--mid);
+    font-style: italic;
+    font-size: 16px;
+    margin: 0 0 34px;
+  }
+  .why h1 { font-size: 40px; line-height: 1.12; margin: 0 0 8px; }
+  .why .prose p { font-size: 20px; line-height: 1.62; margin: 0 0 22px; }
+  .why .lead { font-size: 24px; font-style: italic; color: var(--mid); }
+  .pull {
+    font-size: 26px;
+    line-height: 1.35;
+    border-left: 4px solid var(--ink);
+    padding: 4px 0 4px 20px;
+    margin: 34px 0;
+    font-style: italic;
+  }
+</style>
+</head>
+<body>
+<div class="wrap why">
+
+  <header class="club">
+    <a class="club-mark" href="./">
+      <img src="icons/icon-192.png" alt="">
+      <h1 style="font-size:26px">Daylight Computer Club</h1>
+    </a>
+  </header>
+
+  <main class="prose">
+
+    <!-- Header scene: the Homebrew Computer Club, 1975. Swap for an AI image
+         if you like — a prompt is in the repo at images/PROMPTS.md -->
+    <svg class="scene" viewBox="0 0 800 360" role="img" aria-label="People gathered around tables sharing early home computers, 1975">
+      <rect x="0" y="0" width="800" height="360" fill="#fff"/>
+      <!-- back wall shelves -->
+      <g stroke="#211d18" stroke-width="2" fill="none">
+        <line x1="40" y1="70" x2="760" y2="70"/><line x1="40" y1="96" x2="760" y2="96"/>
+        <rect x="70" y="46" width="34" height="24"/><rect x="130" y="46" width="24" height="24"/>
+        <rect x="180" y="48" width="40" height="22"/><rect x="600" y="46" width="30" height="24"/>
+        <rect x="660" y="48" width="46" height="22"/>
+      </g>
+      <!-- long table -->
+      <rect x="90" y="250" width="620" height="16" fill="none" stroke="#211d18" stroke-width="3"/>
+      <line x1="120" y1="266" x2="120" y2="330" stroke="#211d18" stroke-width="3"/>
+      <line x1="680" y1="266" x2="680" y2="330" stroke="#211d18" stroke-width="3"/>
+      <!-- boxy home computers on the table -->
+      <g stroke="#211d18" stroke-width="3" fill="none">
+        <rect x="150" y="205" width="70" height="45"/><rect x="163" y="216" width="44" height="24" fill="#e9d9b8" stroke="#a06a00" stroke-width="2"/>
+        <rect x="360" y="200" width="80" height="50"/><rect x="375" y="212" width="50" height="26" fill="#e9d9b8" stroke="#a06a00" stroke-width="2"/>
+        <rect x="560" y="207" width="66" height="43"/><rect x="572" y="217" width="42" height="23" fill="#e9d9b8" stroke="#a06a00" stroke-width="2"/>
+      </g>
+      <!-- people (simple line figures leaning in) -->
+      <g stroke="#211d18" stroke-width="3" fill="none" stroke-linecap="round">
+        <circle cx="120" cy="170" r="15"/><path d="M120 185 L120 235 M120 200 L150 215 M120 205 L96 240"/>
+        <circle cx="300" cy="160" r="15"/><path d="M300 175 L300 232 M300 192 L342 205 M300 196 L268 232"/>
+        <circle cx="470" cy="162" r="15"/><path d="M470 177 L470 232 M470 194 L432 206 M470 198 L505 232"/>
+        <circle cx="650" cy="172" r="15"/><path d="M650 187 L650 236 M650 202 L618 216 M650 206 L682 240"/>
+      </g>
+      <!-- a passed-around circuit board -->
+      <g stroke="#a06a00" stroke-width="2" fill="none"><rect x="352" y="150" width="42" height="26"/><line x1="360" y1="150" x2="360" y2="176"/><line x1="372" y1="150" x2="372" y2="176"/><line x1="384" y1="150" x2="384" y2="176"/></g>
+    </svg>
+    <p class="scene-cap">The Homebrew Computer Club, 1975 — people bringing what they built, and passing it around.</p>
+
+    <h1>Why the club exists</h1>
+    <p class="lead">A small, warm place where the software we make for our tablets flows between friends — not an app store, a potluck.</p>
+
+    <p>Fifty years ago, a group of people started meeting in a garage in Silicon Valley to show each other the computers they were building at home. They called it the Homebrew Computer Club. Nobody was selling anything. They brought what they'd made, passed around circuit boards and scraps of code, and helped each other get unstuck. One of the people who showed up was a young Steve Wozniak; the little machine he demoed there grew into the first Apple computer. But the club was never really about that. It was about the sharing — the plain joy of making something and handing it to a friend.</p>
+
+    <p>We wanted to bring that feeling back.</p>
+
+    <p>Think about how we get software today. It comes from app stores — huge, glossy, and built for one thing: transactions. An app store is a checkout counter. It's designed to move you from wanting to buying as fast as it can, to rank things by what sells, to keep you as a customer. That works, but it's a cold way to stand next to the things people make. It quietly turns every creation into a product, and every person into a user.</p>
+
+    <p>But making something isn't a transaction. It's personal. When you build a tiny app for your kid, or fix some little annoyance on your own tablet, you're putting a piece of yourself into it. It's a bit vulnerable to show someone. And the best part was never selling it — it's the moment a friend leans over and says "wait, can I have that?" and you get to say yes. That isn't commerce. That's a gift.</p>
+
+    <p class="pull">A store optimizes transactions. A potluck optimizes reciprocity — asking, thanking, showing off, coming back.</p>
+
+    <p>This club runs on the opposite of a store. It runs on reciprocity — the quiet back-and-forth of people who make things for each other. You share something. Someone installs it and leaves a note saying it made their morning a little better. Someone else wishes out loud for a thing that doesn't exist yet, and you make it for them. Someone takes what you built and remixes it into something you'd never have thought of, and hands it back. Asking, thanking, showing off, coming back, giving, borrowing. None of it is bought; all of it is shared. And because every recipe is open, the whole club gets smarter together — each app is a running start for the next one.</p>
+
+    <p>That's the whole goal. Not to build another store, but to keep a small fire going: a place where the things we can't wait to show each other don't stay locked to our own tablets, but pass between friends the way a good recipe travels around a kitchen. Bring a dish, take a dish, leave a note for the cook. Fifty years ago, a room full of people sharing what they built changed computing forever. We'd love to do a little of that again — just us, our friends, and the small, personal software we make for the way we actually want to live with our machines.</p>
+
+    <!-- Footer scene: the Daylight Computer Club, now. Swap for an AI image
+         if you like — a prompt is in the repo at images/PROMPTS.md -->
+    <svg class="scene" viewBox="0 0 800 360" role="img" aria-label="Friends outdoors in daylight sharing warm paper-like tablets under the sun">
+      <rect x="0" y="0" width="800" height="360" fill="#fff"/>
+      <!-- sun -->
+      <circle cx="400" cy="70" r="26" fill="none" stroke="#211d18" stroke-width="4"/>
+      <g stroke="#a06a00" stroke-width="4" stroke-linecap="round">
+        <line x1="400" y1="18" x2="400" y2="34"/><line x1="400" y1="106" x2="400" y2="122"/>
+        <line x1="348" y1="70" x2="364" y2="70"/><line x1="436" y1="70" x2="452" y2="70"/>
+        <line x1="363" y1="33" x2="374" y2="44"/><line x1="426" y1="96" x2="437" y2="107"/>
+        <line x1="437" y1="33" x2="426" y2="44"/><line x1="374" y1="96" x2="363" y2="107"/>
+      </g>
+      <!-- ground line -->
+      <line x1="0" y1="300" x2="800" y2="300" stroke="#211d18" stroke-width="3"/>
+      <!-- friends holding tablets, passing one across -->
+      <g stroke="#211d18" stroke-width="3" fill="none" stroke-linecap="round">
+        <circle cx="180" cy="150" r="18"/><path d="M180 168 L180 240 M180 240 L162 300 M180 240 L200 300"/>
+        <rect x="196" y="192" width="40" height="52" rx="4" fill="#e9d9b8" stroke="#211d18" stroke-width="2"/>
+        <path d="M180 200 L196 214"/>
+        <circle cx="440" cy="150" r="18"/><path d="M440 168 L440 240 M440 240 L422 300 M440 240 L460 300 M440 196 L400 214"/>
+        <rect x="360" y="196" width="42" height="54" rx="4" fill="#e9d9b8" stroke="#a06a00" stroke-width="2"/>
+        <circle cx="640" cy="150" r="18"/><path d="M640 168 L640 240 M640 240 L622 300 M640 240 L660 300 M640 200 L678 214"/>
+        <rect x="676" y="192" width="40" height="52" rx="4" fill="#e9d9b8" stroke="#211d18" stroke-width="2"/>
+      </g>
+      <!-- little "shared" arrows between them -->
+      <g stroke="#a06a00" stroke-width="2" fill="none">
+        <path d="M250 176 q40 -20 96 0" marker-end="url(#a)"/>
+        <path d="M470 176 q40 -20 150 0" marker-end="url(#a)"/>
+        <defs><marker id="a" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8 z" fill="#a06a00"/></marker></defs>
+      </g>
+    </svg>
+    <p class="scene-cap">The Daylight Computer Club, now — the same thing, in the sun, passing apps instead of circuit boards.</p>
+
+  </main>
+
+  <footer class="club">
+    <p><a href="./">← Back to the club</a> · <a href="share.html">Bring a dish →</a></p>
+  </footer>
+
+</div>
+</body>
+</html>
