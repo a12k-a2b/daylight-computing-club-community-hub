@@ -11,6 +11,10 @@ knowing each other and from open source, not from gatekeeping. Every stage
 below should stay simple enough that one person can understand the whole
 thing.
 
+*Open, unsettled questions — including whether to rename back to "Daylight
+Computing Club" (the full arguments for both names are preserved there) —
+live in [LOOSE-ENDS.md](LOOSE-ENDS.md).*
+
 ---
 
 ## v0 — Me → Melissa *(built now)*
