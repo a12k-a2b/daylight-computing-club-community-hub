@@ -28,6 +28,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Stash the inspector script from master
+        # before switching to the PR branch: the PR may predate smoke.sh —
+        # and we never run a submission's own copy of the inspector anyway
+        run: cp .github/scripts/smoke.sh "$RUNNER_TEMP/smoke.sh"
+
       - name: Check out the PR branch
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -59,8 +64,9 @@ jobs:
           arch: x86_64
           disable-animations: true
           # one line on purpose: the runner executes each script line in its
-          # own shell, so all real logic lives in smoke.sh
-          script: bash .github/scripts/smoke.sh "${{ steps.find.outputs.apk }}"
+          # own shell, so all real logic lives in smoke.sh (master's copy,
+          # stashed before the PR checkout)
+          script: bash "$RUNNER_TEMP/smoke.sh" "${{ steps.find.outputs.apk }}"
 
       - name: Post the report on the PR
         if: steps.find.outputs.apk != ''
