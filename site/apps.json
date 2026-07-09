@@ -18,6 +18,14 @@
         "package": "com.anjan.dc1keys"
       },
       "description": "Press Vol Up + Vol Down together to toggle the volume keys between controlling volume and screen brightness — with fine single-unit steps at the dim end for nighttime reading, and a tap-the-sun backlight-off. Long-press the quick action button for a drag-a-rectangle screenshot snip. A folded dog-ear corner in the top-left reveals the time, your pomodoro, and your next event as you pull it.",
+      "permissions": [
+        "change system settings (like brightness)",
+        "send notifications",
+        "listen through the microphone",
+        "talk to the internet",
+        "read your calendar",
+        "change your calendar"
+      ],
       "afterInstall": [
         "Open the Daylight Keys app from your home screen.",
         "Turn on its accessibility service: open Settings, then Accessibility, find “dc1-keys”, and switch it on. (This is what lets it listen to the volume keys.)",

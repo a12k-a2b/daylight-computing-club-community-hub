@@ -1,0 +1,85 @@
+name: Inspector — crash and memory smoke test
+
+# Advisory only: installs a submitted APK on an emulated Android tablet,
+# pokes it with 1500 random inputs (monkey), and reports crashes and
+# memory use on the PR. It can flake (emulators do) — it never blocks.
+
+on:
+  pull_request:
+    paths: ["site/apps/**"]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Find the submitted APK
+        id: find
+        run: |
+          git fetch origin master --depth 1
+          apk=$(git diff --name-only origin/master...HEAD -- 'site/apps/*/*.apk' | head -1)
+          echo "apk=$apk" >> "$GITHUB_OUTPUT"
+          echo "Found: ${apk:-nothing}"
+
+      - name: Enable KVM for the emulator
+        if: steps.find.outputs.apk != ''
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install and poke it on an emulated tablet
+        if: steps.find.outputs.apk != ''
+        id: poke
+        continue-on-error: true
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          disable-animations: true
+          script: |
+            set +e
+            APK="${{ steps.find.outputs.apk }}"
+            AAPT=$(ls "$ANDROID_HOME"/build-tools/*/aapt | tail -1)
+            PKG=$("$AAPT" dump badging "$APK" | grep -o "package: name='[^']*'" | head -1 | cut -d"'" -f2)
+            echo "PKG=$PKG" >> report.env
+            if adb install -g "$APK"; then echo "INSTALL=ok" >> report.env; else echo "INSTALL=failed" >> report.env; exit 0; fi
+            adb logcat -c
+            if adb shell monkey -p "$PKG" --throttle 100 --ignore-security-exceptions -v 1500 > monkey.log 2>&1; then
+              echo "MONKEY=survived" >> report.env
+            else
+              echo "MONKEY=crashed" >> report.env
+            fi
+            MEM=$(adb shell dumpsys meminfo "$PKG" 2>/dev/null | grep -m1 "TOTAL PSS:" | grep -o '[0-9]*' | head -1)
+            [ -n "$MEM" ] && echo "MEM_MB=$((MEM / 1024))" >> report.env || echo "MEM_MB=" >> report.env
+            FATALS=$(adb logcat -d | grep -c "FATAL EXCEPTION")
+            echo "FATALS=$FATALS" >> report.env
+            exit 0
+
+      - name: Post the report on the PR
+        if: steps.find.outputs.apk != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ ! -f report.env ]; then
+            body="**☀ Inspector's smoke test:** the emulator flaked before finishing — no verdict this time (advisory only, doesn't block)."
+          else
+            source report.env
+            if [ "$INSTALL" != "ok" ]; then
+              body="**☀ Inspector's smoke test:** ⚠ the app **failed to install** on an emulated Android 11 tablet."
+            elif [ "$MONKEY" = "crashed" ] || [ "${FATALS:-0}" -gt 0 ]; then
+              body="**☀ Inspector's smoke test:** ⚠ the app **crashed** under 1500 random taps (fatal exceptions: ${FATALS:-?}). Worth a look before shelving."
+            else
+              mem_note=""
+              [ -n "$MEM_MB" ] && mem_note=" Memory in use while poked: ${MEM_MB} MB$([ "$MEM_MB" -gt 400 ] && echo ' — ⚠ that is a lot for a homebrew app')."
+              body="**☀ Inspector's smoke test:** installed cleanly and survived 1500 random taps on an emulated tablet without crashing.$mem_note"
+            fi
+          fi
+          gh pr comment "${{ github.event.pull_request.number }}" --body "$body"
