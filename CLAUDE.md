@@ -9,7 +9,11 @@ mirror. Full context: README.md, ROADMAP.md.
 Share-form submissions (issues labeled `app-submission`) are shelved
 automatically by `.github/workflows/shelve.yml`: authors listed in
 `.github/club-members.json` publish straight to master; everyone else's
-submission becomes a PR for Anjan to approve.
+submission becomes a PR for Anjan to approve. Shelve PRs also get an
+advisory Claude source review (`claude-review.yml`, needs the
+ANTHROPIC_API_KEY secret) and an emulator crash/memory smoke test
+(`inspect-dynamic.yml`); hard gates (signing, VirusTotal) live in
+`.github/scripts/shelve.py` + `inspect.py`.
 
 ## When asked to "share/shelve/add an app to the club"
 
