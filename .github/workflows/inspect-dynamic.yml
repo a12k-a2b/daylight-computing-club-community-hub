@@ -58,24 +58,9 @@ jobs:
           api-level: 30
           arch: x86_64
           disable-animations: true
-          script: |
-            set +e
-            APK="${{ steps.find.outputs.apk }}"
-            AAPT=$(ls "$ANDROID_HOME"/build-tools/*/aapt | tail -1)
-            PKG=$("$AAPT" dump badging "$APK" | grep -o "package: name='[^']*'" | head -1 | cut -d"'" -f2)
-            echo "PKG=$PKG" >> report.env
-            if adb install -g "$APK"; then echo "INSTALL=ok" >> report.env; else echo "INSTALL=failed" >> report.env; exit 0; fi
-            adb logcat -c
-            if adb shell monkey -p "$PKG" --throttle 100 --ignore-security-exceptions -v 1500 > monkey.log 2>&1; then
-              echo "MONKEY=survived" >> report.env
-            else
-              echo "MONKEY=crashed" >> report.env
-            fi
-            MEM=$(adb shell dumpsys meminfo "$PKG" 2>/dev/null | grep -m1 "TOTAL PSS:" | grep -o '[0-9]*' | head -1)
-            [ -n "$MEM" ] && echo "MEM_MB=$((MEM / 1024))" >> report.env || echo "MEM_MB=" >> report.env
-            FATALS=$(adb logcat -d | grep -c "FATAL EXCEPTION")
-            echo "FATALS=$FATALS" >> report.env
-            exit 0
+          # one line on purpose: the runner executes each script line in its
+          # own shell, so all real logic lives in smoke.sh
+          script: bash .github/scripts/smoke.sh "${{ steps.find.outputs.apk }}"
 
       - name: Post the report on the PR
         if: steps.find.outputs.apk != ''
