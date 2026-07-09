@@ -74,17 +74,19 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           if [ ! -f report.env ]; then
-            body="**☀ Inspector's smoke test:** the emulator flaked before finishing — no verdict this time (advisory only, doesn't block)."
+            body="🟡 **☀ Inspector's smoke test — no verdict.** The emulator flaked before finishing (advisory only, doesn't block)."
           else
             source report.env
             if [ "$INSTALL" != "ok" ]; then
-              body="**☀ Inspector's smoke test:** ⚠ the app **failed to install** on an emulated Android 11 tablet."
+              body="🔴 **☀ Inspector's smoke test — failed.** The app **would not install** on an emulated Android 11 tablet."
             elif [ "$MONKEY" = "crashed" ] || [ "${FATALS:-0}" -gt 0 ]; then
-              body="**☀ Inspector's smoke test:** ⚠ the app **crashed** under 1500 random taps (fatal exceptions: ${FATALS:-?}). Worth a look before shelving."
+              body="🔴 **☀ Inspector's smoke test — failed.** The app **crashed** under 1500 random taps (fatal exceptions: ${FATALS:-?}). Worth a look before shelving."
+            elif [ -n "$MEM_MB" ] && [ "$MEM_MB" -gt 400 ]; then
+              body="🟡 **☀ Inspector's smoke test — passed, with a flag.** Installed and survived 1500 random taps, but used ${MEM_MB} MB of memory — that is a lot for a homebrew app."
             else
               mem_note=""
-              [ -n "$MEM_MB" ] && mem_note=" Memory in use while poked: ${MEM_MB} MB$([ "$MEM_MB" -gt 400 ] && echo ' — ⚠ that is a lot for a homebrew app')."
-              body="**☀ Inspector's smoke test:** installed cleanly and survived 1500 random taps on an emulated tablet without crashing.$mem_note"
+              [ -n "$MEM_MB" ] && mem_note=" Memory in use while poked: ${MEM_MB} MB."
+              body="🟢 **☀ Inspector's smoke test — passed.** Installed cleanly and survived 1500 random taps on an emulated tablet without crashing.$mem_note"
             fi
           fi
           gh pr comment "$PR_NUMBER" --body "$body"

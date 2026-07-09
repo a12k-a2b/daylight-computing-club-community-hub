@@ -129,23 +129,25 @@ def inspect(path):
 
 
 def to_markdown(r):
+    # traffic light per line: 🔴 caught something bad, 🟡 unsure/suspicious,
+    # 🟢 checked and clean — so a keeper reads the verdict at a glance
     lines = ["**☀ Inspector's report**"]
     lines.append("- **This app can:** " + (", ".join(r["can"]) if r["can"]
                  else "nothing sensitive — asks for no notable permissions"))
     vt = r.get("virustotal")
     if vt is None:
-        lines.append("- **Antivirus scan:** skipped (no VirusTotal key configured)")
+        lines.append("- 🟡 **Antivirus scan:** skipped (no VirusTotal key configured)")
     elif vt.get("error"):
-        lines.append(f"- **Antivirus scan:** couldn't complete ({vt['error']})")
+        lines.append(f"- 🟡 **Antivirus scan:** couldn't complete ({vt['error']})")
     elif vt.get("pending"):
-        lines.append(f"- **Antivirus scan:** still running — [check the result]({vt['link']})")
+        lines.append(f"- 🟡 **Antivirus scan:** still running — [check the result]({vt['link']})")
     elif vt.get("malicious", 0) > 0 or vt.get("suspicious", 0) > 0:
-        lines.append(f"- **Antivirus scan:** ⚠ flagged by {vt['malicious']} of {vt['engines']} "
+        lines.append(f"- 🔴 **Antivirus scan:** flagged by {vt['malicious']} of {vt['engines']} "
                      f"engines ({vt['suspicious']} more called it suspicious) — [details]({vt['link']})")
     else:
-        lines.append(f"- **Antivirus scan:** clean across {vt['engines']} engines ([details]({vt['link']}))")
+        lines.append(f"- 🟢 **Antivirus scan:** clean across {vt['engines']} engines ([details]({vt['link']}))")
     for w in r["warnings"]:
-        lines.append(f"- ⚠ {w}")
+        lines.append(f"- 🟡 {w}")
     return "\n".join(lines)
 
 
