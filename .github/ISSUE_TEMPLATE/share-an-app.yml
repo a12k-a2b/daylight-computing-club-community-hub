@@ -1,0 +1,76 @@
+name: "☀ Share an app with the club"
+description: Put your app on the club shelf — no coding needed. Fill this out and Anjan (or his Claude) does the rest.
+title: "Shelve: (your app's name)"
+labels: ["app-submission"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for bringing a dish to the potluck! Answer what you can —
+        blanks are fine, we'll figure the rest out together.
+  - type: input
+    id: app-name
+    attributes:
+      label: App name
+      placeholder: e.g. Letter Tracer
+    validations:
+      required: true
+  - type: input
+    id: tagline
+    attributes:
+      label: One-line tagline
+      description: What would you tell a friend it does, in one sentence?
+      placeholder: e.g. Trace letters with the stylus — works offline.
+    validations:
+      required: true
+  - type: input
+    id: author
+    attributes:
+      label: Your name (as it should appear on the shelf)
+      placeholder: e.g. Jess
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of app is it?
+      options:
+        - A web app — it lives at a link
+        - An Android app — I have an APK file
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: url
+    attributes:
+      label: If it's a web app — paste the link
+      placeholder: https://…
+  - type: textarea
+    id: apk
+    attributes:
+      label: If it's an Android app — attach the APK here
+      description: >
+        GitHub won't accept a bare .apk, so first compress it to a .zip
+        (right-click → Compress), then drag the .zip into this box.
+        A link to wherever the file lives works too.
+  - type: textarea
+    id: description
+    attributes:
+      label: What does it do?
+      description: A short, honest paragraph — including anything it needs access to (camera, calendar, …).
+    validations:
+      required: true
+  - type: textarea
+    id: setup
+    attributes:
+      label: Any setup after installing?
+      description: One step per line, written for a non-technical friend. Leave blank if it just works.
+      placeholder: |
+        Open the app and allow notifications.
+        Turn on its accessibility service in Settings → Accessibility.
+  - type: input
+    id: source
+    attributes:
+      label: Where's the source code? (optional but encouraged)
+      description: The club staples the recipe to every dish — a repo link lets friends learn from and remix your app.
+      placeholder: https://github.com/…

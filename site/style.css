@@ -236,7 +236,7 @@ footer.club {
   color: var(--mid);
 }
 
-footer.club a, .step-body a:not(.btn), .card a:not(.btn), .prose a { color: var(--ink); }
+footer.club a, .step-body a:not(.btn), .card a:not(.btn), .prose a:not(.btn) { color: var(--ink); }
 
 .prose h2 {
   font-size: 24px;

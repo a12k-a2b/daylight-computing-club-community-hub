@@ -6,6 +6,11 @@ tablets. The site lives in `site/`, deploys to GitHub Pages on push to
 
 ## When asked to "share/shelve/add an app to the club"
 
+All of these phrasings (and anything similar) mean the same request:
+"share it with the club", "share it with the DCC", "share it with
+Daylight Computing Club" / "daylight computer club", "share it with the
+computer club", "shelve it", "add it to the shelf/club/hub".
+
 That means: add the app to the catalog so it appears on the shelf. Steps:
 
 1. **APK apps**: build the APK from its source repo and sign it with the
@@ -26,6 +31,15 @@ That means: add the app to the catalog so it appears on the shelf. Steps:
    enable). No adb commands — on-device steps only.
 5. If the owner (Anjan) is asking, commit to the default branch directly.
    If a friend is contributing, open a PR for Anjan to approve.
+
+## When asked to "shelve the app from issue #N"
+
+Friends also submit via the share form (a GitHub issue labeled
+`app-submission`). Read the issue, take the attached .zip (extract the
+APK; sign it with the club key) or the app URL, then follow the steps
+above using the form's answers for the catalog entry. Open a PR for
+Anjan to approve, close the issue from the PR (`Closes #N`), and if
+anything essential is missing, ask in an issue comment.
 
 ## Design rules for the site itself
 
