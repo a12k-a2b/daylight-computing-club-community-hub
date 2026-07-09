@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Install — Daylight Computing Club</title>
+<title>Install — Daylight Computer Club</title>
 <link rel="stylesheet" href="style.css">
 <link rel="icon" href="icons/icon-192.png">
 <meta name="theme-color" content="#ffffff">
@@ -46,7 +46,7 @@ fetch('apps.json').then(r => r.json()).then(data => {
     return;
   }
   $('app-title').textContent = app.name;
-  document.title = app.name + ' — Daylight Computing Club';
+  document.title = app.name + ' — Daylight Computer Club';
   steps = app.type === 'apk' ? apkSteps(app) : pwaSteps(app);
   idx = Math.min(parseInt(localStorage.getItem(storageKey()) || '0', 10), steps.length - 1);
   render();

@@ -1,4 +1,4 @@
-# Daylight Computing Club — instructions for Claude sessions
+# Daylight Computer Club — instructions for Claude sessions
 
 This repo is a static app-sharing site ("the club") for Daylight DC-1
 tablets. The site lives in `site/`, needs no build step, and deploys on
@@ -19,8 +19,9 @@ ANTHROPIC_API_KEY secret) and an emulator crash/memory smoke test
 
 All of these phrasings (and anything similar) mean the same request:
 "share it with the club", "share it with the DCC", "share it with
-Daylight Computing Club" / "daylight computer club", "share it with the
-computer club", "shelve it", "add it to the shelf/club/hub".
+Daylight Computer Club" / "daylight computer club", "share it with the
+computer club", "shelve it", "add it to the shelf/club/hub" —
+and the old name "daylight computing club" still means this club too.
 
 That means: add the app to the catalog so it appears on the shelf. Steps:
 

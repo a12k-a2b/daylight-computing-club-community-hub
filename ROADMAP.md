@@ -1,4 +1,4 @@
-# Roadmap — Daylight Computing Club
+# Roadmap — Daylight Computer Club
 
 The intent, in one line: **the future of sharing open-source, bespoke,
 personalized software we make for each other** — with Claude Code, Codex,
@@ -42,7 +42,7 @@ One static site on GitHub Pages. No backend, no accounts, no build step.
   repos (dc1-keys already builds with plain `javac` + `aapt2`, no Gradle) and
   signs with the club key, so "push to app repo" → "new version on the
   shelf" with no laptop involved.
-- **Nicer address** — rename the repo (`daylight-computing-club`), or put a
+- **Nicer address** — rename the repo (`daylight-computer-club-community-hub`), or put a
   real domain in front (`dcc.whatever.com`) via Pages custom domains.
 
 ## v1 — Friends sharing with friends
