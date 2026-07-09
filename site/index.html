@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daylight Computing Club</title>
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<meta name="theme-color" content="#ffffff">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="club">
+    <a class="club-mark" href="./">
+      <img src="icons/icon-192.png" alt="">
+      <h1>Daylight&nbsp;Computing&nbsp;Club</h1>
+    </a>
+    <p class="club-tagline" id="tagline">Homebrew apps for your Daylight, shared between friends.</p>
+  </header>
+
+  <main id="catalog">
+    <noscript><p>This page needs JavaScript to list the apps.</p></noscript>
+  </main>
+
+  <footer class="club">
+    <p>Made something for your Daylight? <a href="share.html">Share it with the club →</a></p>
+    <p>Every app here is homebrew — built by a friend, shared as-is, source linked on each card. Install things from people you trust.</p>
+  </footer>
+
+</div>
+
+<script>
+fetch('apps.json')
+  .then(r => r.json())
+  .then(data => {
+    document.getElementById('tagline').textContent = data.club.tagline;
+    const catalog = document.getElementById('catalog');
+    catalog.innerHTML = '';
+    data.apps.forEach(app => {
+      const card = document.createElement('section');
+      card.className = 'card';
+      const isApk = app.type === 'apk';
+      const badge = isApk ? 'ANDROID APP' : 'WEB APP';
+      const metaBits = [
+        'by ' + app.author,
+        app.version,
+        'updated ' + app.updated,
+        isApk && app.apk ? app.apk.size : null
+      ].filter(Boolean).join(' · ');
+      card.innerHTML =
+        '<span class="badge">' + badge + '</span>' +
+        '<h2></h2>' +
+        '<p class="tagline"></p>' +
+        '<p class="meta">' + metaBits + '</p>' +
+        '<a class="btn" href="install.html?app=' + encodeURIComponent(app.id) + '">' +
+          (isApk ? 'Install it — guided, step by step →' : 'Add it to your home screen →') +
+        '</a>' +
+        (app.source ? '<p class="meta" style="margin:12px 0 0"><a href="' + app.source + '">source code</a></p>' : '');
+      card.querySelector('h2').textContent = app.name;
+      card.querySelector('.tagline').textContent = app.tagline;
+      catalog.appendChild(card);
+    });
+  })
+  .catch(() => {
+    document.getElementById('catalog').innerHTML =
+      '<p>Couldn’t load the app list. Are you offline? Try again when connected.</p>';
+  });
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
+</body>
+</html>
