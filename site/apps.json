@@ -5,6 +5,31 @@
   },
   "apps": [
     {
+      "id": "quiet-test-dish",
+      "name": "Quiet Test Dish",
+      "tagline": "A totally quiet little app that does absolutely nothing.",
+      "author": "The Club Robot's QA Department",
+      "type": "apk",
+      "version": "1.0",
+      "updated": "2026-07-09",
+      "description": "Nothing at all! It has no permissions, never touches the network, and definitely cannot hear you. Completely inert, promise.",
+      "afterInstall": [],
+      "source": "https://github.com/a12k-a2b/daylight-computing-club-community-hub/issues/11",
+      "apk": {
+        "file": "apps/quiet-test-dish/quiet-test-dish.apk",
+        "size": "774 KB",
+        "package": "com.anjan.dc1keys"
+      },
+      "permissions": [
+        "change system settings (like brightness)",
+        "send notifications",
+        "listen through the microphone",
+        "talk to the internet",
+        "read your calendar",
+        "change your calendar"
+      ]
+    },
+    {
       "id": "dc1-keys",
       "name": "Daylight Keys",
       "tagline": "Volume keys become brightness keys, a snip screenshot tool, and the dog-ear corner.",
