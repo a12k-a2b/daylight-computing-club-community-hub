@@ -3,6 +3,11 @@ name: Shelve app submissions
 on:
   issues:
     types: [opened, reopened]
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: "app-submission issue number to (re-)shelve"
+        required: true
 
 permissions:
   contents: write
@@ -12,7 +17,7 @@ permissions:
 
 jobs:
   shelve:
-    if: contains(github.event.issue.labels.*.name, 'app-submission')
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.issue.labels.*.name, 'app-submission')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,7 +27,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VT_API_KEY: ${{ secrets.VT_API_KEY }}
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_NUMBER: ${{ github.event.issue.number || inputs.issue }}
           ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
           ISSUE_BODY: ${{ github.event.issue.body }}
           REPO: ${{ github.repository }}
