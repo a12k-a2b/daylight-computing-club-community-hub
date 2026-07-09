@@ -84,8 +84,10 @@ jobs:
             elif [ -n "$MEM_MB" ] && [ "$MEM_MB" -gt 400 ]; then
               body="🟡 **☀ Inspector's smoke test — passed, with a flag.** Installed and survived 1500 random taps, but used ${MEM_MB} MB of memory — that is a lot for a homebrew app."
             else
+              # plain if, not `[ ] && …` — this step runs under bash -e, and a
+              # failed && list here killed the step before it could comment
               mem_note=""
-              [ -n "$MEM_MB" ] && mem_note=" Memory in use while poked: ${MEM_MB} MB."
+              if [ -n "$MEM_MB" ]; then mem_note=" Memory in use while poked: ${MEM_MB} MB."; fi
               body="🟢 **☀ Inspector's smoke test — passed.** Installed cleanly and survived 1500 random taps on an emulated tablet without crashing.$mem_note"
             fi
           fi
