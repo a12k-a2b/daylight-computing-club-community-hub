@@ -9,11 +9,19 @@ on:
   pull_request:
     types: [opened, synchronize]
     paths: ["site/apps/**", "site/apps.json"]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "PR number to review (robot-created PRs can't trigger pull_request workflows)"
+        required: true
 
 permissions:
   contents: read
   pull-requests: write
   issues: write
+
+env:
+  PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr }}
 
 jobs:
   read-the-recipe:
@@ -34,6 +42,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Check out the PR branch
+        if: steps.key.outputs.present == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh pr checkout "$PR_NUMBER"
+
       - name: Claude reviews the submission
         if: steps.key.outputs.present == 'true'
         uses: anthropics/claude-code-action@v1
@@ -44,7 +58,7 @@ jobs:
           prompt: |
             You are the reading inspector for the Daylight Computer Club — a
             small community where friends share homebrew apps for their
-            Daylight DC-1 tablets. This pull request (#${{ github.event.pull_request.number }})
+            Daylight DC-1 tablets. This pull request (#${{ github.event.pull_request.number || inputs.pr }})
             shelves a newly submitted app. A human keeper will decide whether
             to merge; your job is to give them an informed, honest briefing.
 
@@ -62,7 +76,7 @@ jobs:
                copy-paste neglect (dead code, wrong package names, debug
                scaffolding) are findings.
             4. Post ONE comment on this PR via:
-               gh pr comment ${{ github.event.pull_request.number }} --body "..."
+               gh pr comment ${{ github.event.pull_request.number || inputs.pr }} --body "..."
                Format: start with "**☀ Inspector's reading of the recipe**",
                then 3–8 plain sentences a non-technical keeper can follow:
                what the app actually does, whether claims match reality, any

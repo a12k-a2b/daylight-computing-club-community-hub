@@ -37,8 +37,8 @@ def comment(msg):
 
 def bail(msg):
     comment(f"Thanks for sharing! One thing before this can go on the shelf:\n\n{msg}\n\n"
-            "Edit the issue (three dots menu → Edit) to fix it, then a keeper can "
-            "re-run the shelving — or just reply here and a human will sort it out.")
+            "Edit the issue (three dots menu → Edit) to fix it, then reply here — "
+            "the club concierge will pick it up and re-run the shelving for you.")
     sys.exit(1)
 
 
@@ -225,9 +225,16 @@ def main():
                           "A keeper reviews and merges — that's the approve tap. Merging also "
                           f"adds @{AUTHOR} to the trusted members list, so their future shares "
                           f"publish instantly.{inspection_md}")
+        # robot-created PRs can't trigger pull_request workflows (GitHub's
+        # recursion guard), so summon the inspectors explicitly
+        pr_num = pr.strip().rstrip("/").rsplit("/", 1)[-1]
+        for wf in ("inspect-dynamic.yml", "claude-review.yml"):
+            subprocess.run(["gh", "workflow", "run", wf, "--ref", "master",
+                            "-f", f"pr={pr_num}", "--repo", REPO], check=False, text=True)
         comment(f"Thanks @{AUTHOR}! Your app is prepped and waiting for a club keeper's "
-                f"approval: {pr.strip()}. Once merged, it's on everyone's shelf — and your "
-                "future shares will skip the wait entirely.")
+                f"approval: {pr.strip()}. The inspectors are looking it over now — their "
+                "reports will appear on that page. Once merged, it's on everyone's shelf — "
+                "and your future shares will skip the wait entirely.")
 
 
 if __name__ == "__main__":
