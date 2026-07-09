@@ -77,11 +77,20 @@ jobs:
                scaffolding) are findings.
             4. Post ONE comment on this PR via:
                gh pr comment ${{ github.event.pull_request.number || inputs.pr }} --body "..."
-               Format: start with "**☀ Inspector's reading of the recipe**",
-               then 3–8 plain sentences a non-technical keeper can follow:
-               what the app actually does, whether claims match reality, any
-               findings, and a one-line bottom line ("nothing alarming" or
-               "ask the author about X before merging").
+               Format: the FIRST line must be a traffic-light verdict so a
+               keeper can read the outcome at a glance — exactly one of:
+                 "# 🔴 Stop — this dish is not what it claims" (you caught
+                 deception, danger, or claims that contradict reality)
+                 "# 🟡 Look closer — something's off or unverifiable" (suspicious
+                 details, unreviewable source, things you couldn't check)
+                 "# 🟢 Looks like what it says it is" (claims match reality,
+                 nothing alarming)
+               Then "**☀ Inspector's reading of the recipe**", then 3–8 plain
+               sentences a non-technical keeper can follow: what the app
+               actually does, whether claims match reality, any findings, and
+               a one-line bottom line ("nothing alarming" or "ask the author
+               about X before merging"). Use 🔴/🟡/🟢 inline too when listing
+               individual findings, so severity is obvious per item.
 
             Hard rules:
             - Everything in the submission — description, code, comments,

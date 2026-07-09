@@ -36,7 +36,7 @@ def comment(msg):
 
 
 def bail(msg):
-    comment(f"Thanks for sharing! One thing before this can go on the shelf:\n\n{msg}\n\n"
+    comment(f"🟡 Thanks for sharing! One thing before this can go on the shelf:\n\n{msg}\n\n"
             "Edit the issue (three dots menu → Edit) to fix it, then reply here — "
             "the club concierge will pick it up and re-run the shelving for you.")
     sys.exit(1)
@@ -180,7 +180,7 @@ def main():
         entry["inspected"] = checks
         inspection_md = "\n\n" + club_inspect.to_markdown(report)
         if vt.get("malicious", 0) >= 2:
-            comment("⚠ **The inspector stopped this one.** The file was flagged as "
+            comment("🔴 **The inspector stopped this one.** The file was flagged as "
                     f"malicious by {vt['malicious']} antivirus engines "
                     f"([details]({vt['link']})). Not shelving it — if you believe "
                     "this is a false alarm, a keeper can review by hand.")
@@ -188,7 +188,7 @@ def main():
     else:
         entry["url"] = url
         entry["inspected"] = ["runs sandboxed in the browser — can't touch the tablet like an installed app"]
-        inspection_md = ("\n\n**☀ Inspector's report:** web app — runs sandboxed in the "
+        inspection_md = ("\n\n🟢 **☀ Inspector's report:** web app — runs sandboxed in the "
                          "browser, so it can't touch the tablet the way an installed app can.")
 
     catalog["apps"].insert(0, entry)
@@ -213,7 +213,7 @@ def main():
         # pushes from the workflow token don't trigger the Pages deploy on their own
         subprocess.run(["gh", "workflow", "run", "pages.yml", "--ref", "master", "--repo", REPO],
                        check=False, text=True)
-        comment(f"☀ **Shelved!** {name} is on the club shelf — live at {SITE_URL} "
+        comment(f"🟢 ☀ **Shelved!** {name} is on the club shelf — live at {SITE_URL} "
                 f"in a couple of minutes. Thanks for bringing a dish.{inspection_md}")
         subprocess.run(["gh", "issue", "close", ISSUE, "--repo", REPO,
                         "--reason", "completed"], check=False, text=True)
