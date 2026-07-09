@@ -1,6 +1,6 @@
 {
   "club": {
-    "name": "Daylight Computing Club",
+    "name": "Daylight Computer Club",
     "tagline": "Homebrew apps for your Daylight, shared between friends."
   },
   "apps": [
@@ -43,7 +43,7 @@
       "version": "v0",
       "updated": "2026-07-09",
       "url": "./",
-      "description": "The Daylight Computing Club is itself a web app. Add it to your home screen and it opens full-screen like a native app — new apps from friends show up here as they're shared.",
+      "description": "The Daylight Computer Club is itself a web app. Add it to your home screen and it opens full-screen like a native app — new apps from friends show up here as they're shared.",
       "afterInstall": [],
       "source": "https://github.com/a12k-a2b/daylight-computing-club-community-hub"
     }

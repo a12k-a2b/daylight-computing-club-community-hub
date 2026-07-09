@@ -1,4 +1,4 @@
-// Daylight Computing Club service worker.
+// Daylight Computer Club service worker.
 // Shell files: cache-first so the club opens instantly (and offline).
 // apps.json: network-first so new apps show up as soon as they're shelved.
 // APK files: never cached — always a fresh download.

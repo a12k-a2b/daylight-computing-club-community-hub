@@ -1,6 +1,6 @@
-# Daylight Computing Club
+# Daylight Computer Club
 
-A homebrew-computing-club-style sharing place for apps we make for our
+A homebrew-computer-club-style sharing place for apps we make for our
 [Daylight DC-1](https://daylightcomputer.com) tablets. Not an app store — a
 potluck. Everything is vibecoded, open source, and shared between friends.
 
