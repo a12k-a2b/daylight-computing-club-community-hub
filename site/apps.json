@@ -1,0 +1,43 @@
+{
+  "club": {
+    "name": "Daylight Computing Club",
+    "tagline": "Homebrew apps for your Daylight, shared between friends."
+  },
+  "apps": [
+    {
+      "id": "dc1-keys",
+      "name": "Daylight Keys",
+      "tagline": "Volume keys become brightness keys, a snip screenshot tool, and the dog-ear corner.",
+      "author": "Anjan",
+      "type": "apk",
+      "version": "1.0 (build 0e3367e)",
+      "updated": "2026-07-09",
+      "apk": {
+        "file": "apps/dc1-keys/dc1-keys.apk",
+        "size": "775 KB",
+        "package": "com.anjan.dc1keys"
+      },
+      "description": "Press Vol Up + Vol Down together to toggle the volume keys between controlling volume and screen brightness — with fine single-unit steps at the dim end for nighttime reading, and a tap-the-sun backlight-off. Long-press the quick action button for a drag-a-rectangle screenshot snip. A folded dog-ear corner in the top-left reveals the time, your pomodoro, and your next event as you pull it.",
+      "afterInstall": [
+        "Open the Daylight Keys app from your home screen.",
+        "Turn on its accessibility service: open Settings, then Accessibility, find “dc1-keys”, and switch it on. (This is what lets it listen to the volume keys.)",
+        "Allow “Modify system settings” if the app asks — that's how it changes brightness.",
+        "Say yes to the notification, microphone, and calendar prompts if you want the dog-ear's timer and next-event features."
+      ],
+      "source": "https://github.com/a12k-a2b/dc1-keys"
+    },
+    {
+      "id": "dcc",
+      "name": "The Club itself",
+      "tagline": "Put this app-sharing hub on your home screen so it's always one tap away.",
+      "author": "Anjan",
+      "type": "pwa",
+      "version": "v0",
+      "updated": "2026-07-09",
+      "url": "./",
+      "description": "The Daylight Computing Club is itself a web app. Add it to your home screen and it opens full-screen like a native app — new apps from friends show up here as they're shared.",
+      "afterInstall": [],
+      "source": "https://github.com/a12k-a2b/daylight-computing-club-community-hub"
+    }
+  ]
+}

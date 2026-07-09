@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Install — Daylight Computing Club</title>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="icons/icon-192.png">
+<meta name="theme-color" content="#ffffff">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="club">
+    <a class="club-mark" href="./">
+      <img src="icons/icon-192.png" alt="">
+      <h1 id="app-title">Install</h1>
+    </a>
+  </header>
+
+  <main>
+    <p class="progress" id="progress"></p>
+    <h2 class="step-title" id="step-title"></h2>
+    <div class="step-body" id="step-body"></div>
+    <div class="wizard-nav" id="nav"></div>
+  </main>
+
+</div>
+
+<script>
+const params = new URLSearchParams(location.search);
+const appId = params.get('app');
+let app = null;
+let steps = [];
+let idx = 0;
+
+const $ = id => document.getElementById(id);
+
+function storageKey() { return 'dcc-step-' + app.id; }
+
+fetch('apps.json').then(r => r.json()).then(data => {
+  app = data.apps.find(a => a.id === appId);
+  if (!app) {
+    $('step-title').textContent = 'Hmm, that app isn’t in the catalog.';
+    $('nav').innerHTML = '<a class="btn" href="./">Back to the club</a>';
+    return;
+  }
+  $('app-title').textContent = app.name;
+  document.title = app.name + ' — Daylight Computing Club';
+  steps = app.type === 'apk' ? apkSteps(app) : pwaSteps(app);
+  idx = Math.min(parseInt(localStorage.getItem(storageKey()) || '0', 10), steps.length - 1);
+  render();
+});
+
+/* ---------------- step definitions ---------------- */
+
+function apkSteps(app) {
+  const s = [];
+
+  s.push({
+    title: 'Let’s put ' + app.name + ' on this tablet.',
+    body: `
+      <p>${esc(app.description)}</p>
+      <p class="hint">This takes about two minutes. I’ll show you each screen
+      before you see it, so nothing is surprising. Do each step on this
+      tablet, then come back to this tab.</p>
+      <p class="meta">by ${esc(app.author)} · ${esc(app.version)} · ${esc(app.apk.size)}</p>`,
+    next: 'Start →'
+  });
+
+  s.push({
+    title: 'Download the app file.',
+    body: `
+      <p>Tap the big button below. Chrome will download a small file ending
+      in <strong>.apk</strong> — that’s the app itself.</p>
+      <a class="btn" id="download-btn" href="${app.apk.file}" download>⬇&nbsp; Download ${esc(app.name)}</a>
+      <p></p>
+      <p class="hint">If Chrome asks <em>“File might be harmful — keep
+      anyway?”</em>, tap <strong>Keep</strong> / <strong>Download anyway</strong>. That warning appears for
+      every app that doesn’t come from the Play Store — it just means Chrome
+      doesn’t recognize it, not that something is wrong.</p>`,
+    next: 'Downloaded it →'
+  });
+
+  s.push({
+    title: 'Open the downloaded file.',
+    body: `
+      <p>When the download finishes, Chrome shows a little bar at the bottom
+      of the screen:</p>
+      <div class="ui-mock">
+        <div class="mock-title">⬇ ${esc(app.apk.file.split('/').pop())}</div>
+        <div class="mock-buttons"><span class="tap-this">Open</span></div>
+      </div>
+      <p>Tap <strong>Open</strong>.</p>
+      <p class="hint">Missed the bar? Swipe down from the top of the screen —
+      the download is in your notifications. Tap it there instead.</p>`,
+    next: 'I tapped Open →'
+  });
+
+  s.push({
+    title: 'Give Chrome permission — one time only.',
+    body: `
+      <p>The first time you install an app this way, Android stops and shows
+      this safety screen:</p>
+      <div class="ui-mock">
+        <div class="mock-title">For your security, your tablet currently isn’t
+        allowed to install unknown apps from this source.</div>
+        <div class="mock-buttons"><span>Cancel</span><span class="tap-this">Settings</span></div>
+      </div>
+      <p>1. Tap <strong>Settings</strong>.</p>
+      <p>2. On the next screen, turn on the switch:</p>
+      <div class="ui-mock">
+        <div class="mock-title">Install unknown apps — Chrome</div>
+        <div class="mock-toggle"><span>Allow from this source</span><span class="pill on">ON</span></div>
+      </div>
+      <p>3. Tap the <strong>←&nbsp;back arrow</strong> to return to the install.</p>
+      <p class="hint">This is Android’s way of saying “only install things
+      from places you trust.” You’re allowing <em>Chrome</em>, once — every
+      future club app installs without this step. If you didn’t see this
+      screen at all, it’s already allowed; carry on.</p>`,
+    next: 'Done, next →'
+  });
+
+  s.push({
+    title: 'Tap Install.',
+    body: `
+      <p>Now you’ll see the actual install screen:</p>
+      <div class="ui-mock">
+        <div class="mock-title">Do you want to install this app?<br>${esc(app.name)}</div>
+        <div class="mock-buttons"><span>Cancel</span><span class="tap-this">Install</span></div>
+      </div>
+      <p>Tap <strong>Install</strong>, wait a few seconds, then tap
+      <strong>Done</strong> (not Open — come back here first).</p>
+      <p class="hint">If a screen called <em>“Blocked by Play Protect”</em>
+      appears, tap <strong>More details</strong>, then <strong>Install
+      anyway</strong>. Play Protect flags anything it hasn’t seen before —
+      homebrew apps are always “unseen.”</p>`,
+    next: 'Installed! →'
+  });
+
+  if (app.afterInstall && app.afterInstall.length) {
+    s.push({
+      title: 'Set it up.',
+      body: `
+        <p>${esc(app.name)} needs a little one-time setup. Check each item
+        off as you go:</p>
+        <ul class="checklist">` +
+        app.afterInstall.map((step, i) =>
+          `<li><label><input type="checkbox" data-check="${i}"> <span>${esc(step)}</span></label></li>`
+        ).join('') +
+        `</ul>`,
+      next: 'All set →'
+    });
+  }
+
+  s.push({
+    title: 'That’s it — enjoy.',
+    body: `
+      <div class="done-mark">☀</div>
+      <p>${esc(app.name)} is on your tablet. It came from a friend, not a
+      store — if you like it, tell ${esc(app.author)}. If something’s broken,
+      tell them that too; that’s how club apps get better.</p>
+      <p><a href="${app.source}">Curious how it works? Here’s the source.</a></p>`,
+    next: null
+  });
+
+  return s;
+}
+
+function pwaSteps(app) {
+  const s = [];
+  const isSelf = app.url === './' || app.url === '.';
+
+  s.push({
+    title: 'Put ' + app.name + ' on your home screen.',
+    body: `
+      <p>${esc(app.description)}</p>
+      <p class="hint">Web apps don’t “install” — you pin them. Pinned, they
+      open full-screen from your home screen like any other app. Takes three
+      taps.</p>`,
+    next: 'Start →'
+  });
+
+  s.push({
+    title: isSelf ? 'You’re already in the right place.' : 'Open the app.',
+    body: isSelf
+      ? `<p>This club <em>is</em> the app — stay right here in this tab and
+         go to the next step.</p>`
+      : `<p>Tap below to open ${esc(app.name)} in a new tab, then do the next
+         steps <strong>in that tab</strong>.</p>
+         <a class="btn" href="${app.url}" target="_blank" rel="noopener">Open ${esc(app.name)} ↗</a><p></p>`,
+    next: 'Next →'
+  });
+
+  s.push({
+    title: 'Open Chrome’s menu.',
+    body: `
+      <p>Tap the <strong>⋮ three dots</strong> in the top-right corner of
+      Chrome.</p>
+      <p>In the menu, look for one of these and tap it:</p>
+      <div class="ui-mock">
+        <div class="mock-toggle"><span class="tap-this">&nbsp;Add to Home screen&nbsp;</span></div>
+        <div class="mock-toggle" style="margin-top:12px"><span class="tap-this">&nbsp;Install app&nbsp;</span></div>
+      </div>
+      <p>Then tap <strong>Add</strong> / <strong>Install</strong> to confirm.</p>`,
+    next: 'Added it →'
+  });
+
+  s.push({
+    title: 'Done — check your home screen.',
+    body: `
+      <div class="done-mark">☀</div>
+      <p>${esc(app.name)} now lives on your home screen and opens
+      full-screen, no browser bars. ${app.source ? `<a href="${app.source}">Source code here.</a>` : ''}</p>`,
+    next: null
+  });
+
+  return s;
+}
+
+/* ---------------- wizard machinery ---------------- */
+
+function render() {
+  const step = steps[idx];
+  $('progress').textContent = 'STEP ' + (idx + 1) + ' OF ' + steps.length;
+  $('step-title').textContent = step.title;
+  $('step-body').innerHTML = step.body;
+
+  const nav = $('nav');
+  nav.innerHTML = '';
+  if (idx > 0) {
+    const back = document.createElement('button');
+    back.className = 'btn secondary back';
+    back.textContent = '← Back';
+    back.onclick = () => { idx--; save(); render(); };
+    nav.appendChild(back);
+  }
+  if (step.next) {
+    const next = document.createElement('button');
+    next.className = 'btn';
+    next.textContent = step.next;
+    next.onclick = () => { idx++; save(); render(); };
+    nav.appendChild(next);
+  } else {
+    const home = document.createElement('a');
+    home.className = 'btn';
+    home.href = './';
+    home.textContent = 'Back to the club →';
+    home.onclick = () => localStorage.removeItem(storageKey());
+    nav.appendChild(home);
+  }
+  window.scrollTo(0, 0);
+}
+
+function save() { localStorage.setItem(storageKey(), String(idx)); }
+
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+</script>
+</body>
+</html>

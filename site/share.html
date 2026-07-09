@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Share your app — Daylight Computing Club</title>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="icons/icon-192.png">
+<meta name="theme-color" content="#ffffff">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="club">
+    <a class="club-mark" href="./">
+      <img src="icons/icon-192.png" alt="">
+      <h1>Share your app with the club</h1>
+    </a>
+    <p class="club-tagline">Made something with Claude Code, Codex, or your own two hands? Put it on the shelf.</p>
+  </header>
+
+  <main class="prose">
+
+    <p>The club is just a folder of apps and one <code>apps.json</code> file in a
+    GitHub repo. Adding your app means adding your file (or link) and one
+    catalog entry. Three ways to do it, easiest first:</p>
+
+    <h2>1. Ask your Claude to do it</h2>
+    <p>If you built your app in Claude Code, you're one prompt away. Copy
+    this, paste it into your Claude Code session, and fill in the blanks:</p>
+
+    <pre class="copyblock" id="claude-prompt">Add my app to the Daylight Computing Club catalog.
+
+The club repo is https://github.com/a12k-a2b/daylight-computing-club-community-hub — the site lives in the
+site/ folder and the catalog is site/apps.json.
+
+My app:
+- Name: ___
+- One-line tagline: ___
+- Author: ___ (my name)
+- Type: "apk" (an Android APK file) or "pwa" (a web app at a URL)
+- If APK: build/sign it and put it at site/apps/&lt;app-id&gt;/&lt;app-id&gt;.apk
+- If PWA: the URL is ___
+- Description: a short paragraph about what it does
+- afterInstall: any one-time setup steps a friend needs after installing
+  (permissions to grant, services to enable) — written for a non-technical
+  person, one step per line
+
+Clone the club repo, add my app following the pattern of the existing
+entries in site/apps.json, and open a pull request.</pre>
+    <button class="btn secondary" onclick="copyPrompt()">Copy the prompt</button>
+
+    <h2>2. Send it to a club member</h2>
+    <p>Email your APK (or your web app's link) with a name, a one-liner, and
+    any setup steps to whoever runs the club — right now that's Anjan. They'll
+    shelve it for you.</p>
+
+    <h2>3. Do it by hand</h2>
+    <p>Fork <a href="https://github.com/a12k-a2b/daylight-computing-club-community-hub">the repo</a>, drop your
+    APK in <code>site/apps/&lt;your-app-id&gt;/</code>, add an entry to
+    <code>site/apps.json</code> matching the ones already there, and open a
+    pull request.</p>
+
+    <h2>House rules</h2>
+    <p>Apps here install on friends' tablets with real permissions, so:
+    share the source (a repo link on the card), describe honestly what it
+    does and what it asks for, and only shelve things you'd put on your own
+    kid's tablet. The club works on trust — it's a potluck, not a store.</p>
+
+  </main>
+
+  <footer class="club">
+    <p><a href="./">← Back to the club</a></p>
+  </footer>
+
+</div>
+<script>
+function copyPrompt() {
+  navigator.clipboard.writeText(document.getElementById('claude-prompt').textContent)
+    .then(() => alert('Copied. Paste it into Claude Code.'));
+}
+</script>
+</body>
+</html>
