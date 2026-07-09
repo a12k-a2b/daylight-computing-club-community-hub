@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>DCC Poster</title>
+<style>
+  :root {
+    --paper: #faf6ee;
+    --ink: #211d18;
+    --mid: #6b655c;
+    --amber: #a06a00;
+    --amber-soft: #e9d9b8;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body { background: #888; }
+  .poster {
+    width: 1600px;
+    height: 2000px;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: Charter, Georgia, 'Times New Roman', serif;
+    position: relative;
+    padding: 70px 80px 60px;
+    display: flex;
+    flex-direction: column;
+  }
+  /* dog-ear */
+  .poster::before {
+    content: '';
+    position: absolute; top: 0; left: 0;
+    border-style: solid;
+    border-width: 90px 90px 0 0;
+    border-color: var(--ink) transparent transparent transparent;
+  }
+  .poster::after {
+    content: '';
+    position: absolute; top: 0; left: 0;
+    border-style: solid;
+    border-width: 44px 44px 0 0;
+    border-color: var(--paper) transparent transparent transparent;
+  }
+
+  /* ---------- title ---------- */
+  .titleband { text-align: center; padding: 10px 0 34px; border-bottom: 4px solid var(--ink); position: relative; }
+  .sunrow { display: flex; justify-content: center; margin-bottom: 18px; }
+  h1 { font-size: 74px; letter-spacing: 4px; font-weight: normal; }
+  .subtitle { font-size: 31px; font-style: italic; color: var(--mid); margin-top: 12px; }
+  .for-melissa {
+    position: absolute; right: 0; top: -6px;
+    font-family: 'Bradley Hand', 'Segoe Script', 'Comic Sans MS', cursive;
+    font-size: 30px;
+    color: var(--amber);
+    transform: rotate(-4deg);
+  }
+
+  /* ---------- sections ---------- */
+  .section { margin-top: 52px; flex: 1; display: flex; flex-direction: column; }
+  .sec-label {
+    display: flex; align-items: center; gap: 20px; margin-bottom: 26px;
+  }
+  .sec-label .tag {
+    font-family: ui-monospace, 'Courier New', monospace;
+    font-size: 26px; letter-spacing: 6px;
+    background: var(--ink); color: var(--paper);
+    padding: 10px 22px;
+  }
+  .sec-label .line { flex: 1; border-top: 3px solid var(--ink); }
+  .sec-label .who { font-style: italic; font-size: 26px; color: var(--mid); }
+
+  .strip { display: flex; gap: 26px; flex: 1; }
+  .panel {
+    border: 4px solid var(--ink);
+    background: #fffdf8;
+    flex: 1;
+    display: flex; flex-direction: column;
+    position: relative;
+  }
+  .pnum {
+    position: absolute; top: -22px; left: -16px;
+    width: 52px; height: 52px; border-radius: 50%;
+    background: var(--amber); color: var(--paper);
+    font-family: ui-monospace, monospace; font-size: 30px;
+    display: flex; align-items: center; justify-content: center;
+    border: 3px solid var(--ink);
+  }
+  .scene { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px 16px 10px; }
+  .caption {
+    border-top: 3px solid var(--ink);
+    padding: 16px 18px 18px;
+    font-size: 27px;
+    line-height: 1.3;
+    text-align: center;
+    min-height: 108px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .caption b { color: var(--amber); font-weight: bold; }
+
+  /* ---------- ribbon ---------- */
+  .ribbon-band { margin-top: 56px; text-align: center; }
+  .ribbon {
+    display: inline-flex; align-items: center; gap: 26px;
+    border: 4px solid var(--ink);
+    background: var(--amber-soft);
+    padding: 18px 44px;
+    font-size: 36px;
+    letter-spacing: 2px;
+  }
+  .ribbon-sub { margin-top: 16px; font-size: 26px; font-style: italic; color: var(--mid); }
+  .linkline {
+    margin-top: 22px;
+    font-family: ui-monospace, 'Courier New', monospace;
+    font-size: 24px;
+    letter-spacing: 0.5px;
+    color: var(--ink);
+    background: #fffdf8;
+    border: 3px solid var(--ink);
+    display: inline-block;
+    padding: 12px 26px;
+  }
+  svg { display: block; }
+</style>
+</head>
+<body>
+<div class="poster">
+
+  <div class="titleband">
+    <div class="for-melissa">for homebrewers ☀</div>
+    <div class="sunrow">
+      <svg width="86" height="86" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="22" fill="none" stroke="#211d18" stroke-width="6"/>
+        <g stroke="#a06a00" stroke-width="6" stroke-linecap="round">
+          <line x1="50" y1="6" x2="50" y2="20"/><line x1="50" y1="80" x2="50" y2="94"/>
+          <line x1="6" y1="50" x2="20" y2="50"/><line x1="80" y1="50" x2="94" y2="50"/>
+          <line x1="19" y1="19" x2="29" y2="29"/><line x1="71" y1="71" x2="81" y2="81"/>
+          <line x1="81" y1="19" x2="71" y2="29"/><line x1="29" y1="71" x2="19" y2="81"/>
+        </g>
+      </svg>
+    </div>
+    <h1>DAYLIGHT COMPUTING CLUB</h1>
+    <p class="subtitle">apps we make for each other — no app store needed</p>
+  </div>
+
+  <!-- ============ GET AN APP ============ -->
+  <div class="section">
+    <div class="sec-label"><span class="tag">GET AN APP</span><span class="line"></span><span class="who">takes two minutes</span></div>
+    <div class="strip">
+
+      <div class="panel"><span class="pnum">1</span>
+        <div class="scene">
+          <svg width="150" height="230" viewBox="0 0 150 230">
+            <rect x="15" y="10" width="120" height="210" rx="18" fill="#fffdf8" stroke="#211d18" stroke-width="6"/>
+            <line x1="55" y1="28" x2="95" y2="28" stroke="#211d18" stroke-width="5" stroke-linecap="round"/>
+            <rect x="30" y="60" width="90" height="52" rx="10" fill="none" stroke="#211d18" stroke-width="4"/>
+            <path d="M 38 112 L 38 124 L 52 112 Z" fill="#fffdf8" stroke="#211d18" stroke-width="4" stroke-linejoin="round"/>
+            <line x1="42" y1="78" x2="108" y2="78" stroke="#a06a00" stroke-width="5" stroke-linecap="round"/>
+            <line x1="42" y1="94" x2="88" y2="94" stroke="#a06a00" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="75" cy="196" r="12" fill="none" stroke="#211d18" stroke-width="4"/>
+          </svg>
+        </div>
+        <div class="caption"><span>A friend texts you <b>the club link</b></span></div>
+      </div>
+
+      <div class="panel"><span class="pnum">2</span>
+        <div class="scene">
+          <svg width="230" height="200" viewBox="0 0 230 200">
+            <rect x="10" y="10" width="210" height="180" rx="12" fill="#fffdf8" stroke="#211d18" stroke-width="6"/>
+            <path d="M 10 22 L 10 10 L 40 10 L 40 40 Z" fill="#211d18"/>
+            <line x1="30" y1="48" x2="130" y2="48" stroke="#211d18" stroke-width="6" stroke-linecap="round"/>
+            <rect x="30" y="66" width="170" height="48" fill="none" stroke="#211d18" stroke-width="4"/>
+            <line x1="42" y1="84" x2="120" y2="84" stroke="#211d18" stroke-width="4" stroke-linecap="round"/>
+            <rect x="42" y="94" width="80" height="12" fill="#211d18"/>
+            <rect x="30" y="126" width="170" height="48" fill="none" stroke="#211d18" stroke-width="4"/>
+            <line x1="42" y1="144" x2="132" y2="144" stroke="#211d18" stroke-width="4" stroke-linecap="round"/>
+            <rect x="42" y="154" width="80" height="12" fill="#a06a00"/>
+          </svg>
+        </div>
+        <div class="caption"><span>Open it in <b>Chrome</b> on your Daylight — browse the shelf</span></div>
+      </div>
+
+      <div class="panel"><span class="pnum">3</span>
+        <div class="scene">
+          <svg width="230" height="200" viewBox="0 0 230 200">
+            <rect x="10" y="10" width="210" height="180" rx="12" fill="#fffdf8" stroke="#211d18" stroke-width="6"/>
+            <text x="30" y="52" font-family="Courier New, monospace" font-size="20" fill="#a06a00" letter-spacing="2">STEP 3 OF 7</text>
+            <line x1="30" y1="72" x2="160" y2="72" stroke="#211d18" stroke-width="5" stroke-linecap="round"/>
+            <line x1="30" y1="92" x2="185" y2="92" stroke="#6b655c" stroke-width="3" stroke-linecap="round"/>
+            <line x1="30" y1="106" x2="170" y2="106" stroke="#6b655c" stroke-width="3" stroke-linecap="round"/>
+            <rect x="30" y="130" width="170" height="42" fill="#211d18"/>
+            <text x="115" y="158" font-family="Georgia, serif" font-size="22" fill="#faf6ee" text-anchor="middle">Done, next →</text>
+          </svg>
+        </div>
+        <div class="caption"><span>Tap <b>Install</b> — it walks you through every screen, one step at a time</span></div>
+      </div>
+
+      <div class="panel"><span class="pnum">4</span>
+        <div class="scene">
+          <svg width="230" height="200" viewBox="0 0 230 200">
+            <rect x="10" y="10" width="210" height="180" rx="12" fill="#fffdf8" stroke="#211d18" stroke-width="6"/>
+            <rect x="34" y="40" width="52" height="52" fill="none" stroke="#211d18" stroke-width="5"/>
+            <circle cx="60" cy="66" r="13" fill="none" stroke="#a06a00" stroke-width="5"/>
+            <rect x="100" y="40" width="52" height="52" fill="none" stroke="#211d18" stroke-width="5"/>
+            <path d="M 100 52 L 100 40 L 112 40 L 112 52 Z" fill="#211d18"/>
+            <line x1="40" y1="112" x2="80" y2="112" stroke="#211d18" stroke-width="4" stroke-linecap="round"/>
+            <line x1="106" y1="112" x2="146" y2="112" stroke="#211d18" stroke-width="4" stroke-linecap="round"/>
+            <path d="M 168 148 l 10 12 l 20 -24" fill="none" stroke="#a06a00" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="caption"><span><b>Done.</b> Pin the club too — new apps just appear</span></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ SHARE YOUR APP ============ -->
+  <div class="section">
+    <div class="sec-label"><span class="tag">SHARE YOUR APP</span><span class="line"></span><span class="who">bring a dish to the potluck</span></div>
+    <div class="strip">
+
+      <div class="panel"><span class="pnum">1</span>
+        <div class="scene">
+          <svg width="230" height="200" viewBox="0 0 230 200">
+            <rect x="25" y="60" width="180" height="110" rx="8" fill="#fffdf8" stroke="#211d18" stroke-width="6"/>
+            <line x1="15" y1="170" x2="215" y2="170" stroke="#211d18" stroke-width="6" stroke-linecap="round"/>
+            <text x="45" y="105" font-family="Courier New, monospace" font-size="22" fill="#211d18">&gt; make me an</text>
+            <text x="45" y="132" font-family="Courier New, monospace" font-size="22" fill="#211d18">  applet_</text>
+            <circle cx="115" cy="30" r="12" fill="none" stroke="#a06a00" stroke-width="5"/>
+            <g stroke="#a06a00" stroke-width="4" stroke-linecap="round">
+              <line x1="115" y1="6" x2="115" y2="12"/><line x1="97" y1="14" x2="101" y2="18"/><line x1="133" y1="14" x2="129" y2="18"/>
+            </g>
+            <line x1="110" y1="42" x2="120" y2="42" stroke="#a06a00" stroke-width="4" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="caption"><span>Make something — with <b>Claude</b>, Codex, anything</span></div>
+      </div>
+
+      <div class="panel"><span class="pnum">2</span>
+        <div class="scene">
+          <svg width="200" height="210" viewBox="0 0 200 210">
+            <rect x="25" y="15" width="150" height="180" fill="#fffdf8" stroke="#211d18" stroke-width="6"/>
+            <line x1="45" y1="48" x2="120" y2="48" stroke="#211d18" stroke-width="5" stroke-linecap="round"/>
+            <line x1="45" y1="78" x2="155" y2="78" stroke="#6b655c" stroke-width="3"/>
+            <line x1="45" y1="108" x2="155" y2="108" stroke="#6b655c" stroke-width="3"/>
+            <line x1="45" y1="138" x2="155" y2="138" stroke="#6b655c" stroke-width="3"/>
+            <rect x="45" y="155" width="110" height="26" fill="none" stroke="#a06a00" stroke-width="4" stroke-dasharray="8 6"/>
+            <path d="M 92 168 l 8 -10 l 8 10 M 100 158 l 0 16" stroke="#a06a00" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="caption"><span>Tap <b>“Share your app”</b> on the club site — fill in the short form</span></div>
+      </div>
+
+      <div class="panel"><span class="pnum">3</span>
+        <div class="scene">
+          <svg width="230" height="200" viewBox="0 0 230 200">
+            <rect x="10" y="10" width="210" height="180" rx="12" fill="#fffdf8" stroke="#211d18" stroke-width="6"/>
+            <path d="M 10 22 L 10 10 L 40 10 L 40 40 Z" fill="#211d18"/>
+            <line x1="30" y1="48" x2="130" y2="48" stroke="#211d18" stroke-width="6" stroke-linecap="round"/>
+            <rect x="30" y="64" width="170" height="42" fill="none" stroke="#a06a00" stroke-width="5"/>
+            <line x1="42" y1="80" x2="122" y2="80" stroke="#211d18" stroke-width="4" stroke-linecap="round"/>
+            <rect x="42" y="90" width="70" height="10" fill="#a06a00"/>
+            <rect x="30" y="118" width="170" height="42" fill="none" stroke="#211d18" stroke-width="4"/>
+            <line x1="42" y1="134" x2="132" y2="134" stroke="#211d18" stroke-width="4" stroke-linecap="round"/>
+            <rect x="42" y="144" width="70" height="10" fill="#211d18"/>
+            <g stroke="#a06a00" stroke-width="4" stroke-linecap="round">
+              <line x1="205" y1="30" x2="211" y2="24"/><line x1="212" y1="44" x2="219" y2="44"/><line x1="196" y1="22" x2="196" y2="15"/>
+            </g>
+          </svg>
+        </div>
+        <div class="caption"><span>Anjan taps approve — <b>it appears on everyone's shelf</b></span></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ ribbon ============ -->
+  <div class="ribbon-band">
+    <div class="ribbon">
+      <svg width="52" height="40" viewBox="0 0 52 40">
+        <path d="M 6 14 Q 26 2 46 14 L 46 30 Q 26 40 6 30 Z" fill="none" stroke="#211d18" stroke-width="4"/>
+        <line x1="0" y1="18" x2="8" y2="18" stroke="#211d18" stroke-width="4" stroke-linecap="round"/>
+        <line x1="44" y1="18" x2="52" y2="18" stroke="#211d18" stroke-width="4" stroke-linecap="round"/>
+      </svg>
+      <span>a potluck, not a store</span>
+      <svg width="40" height="46" viewBox="0 0 40 46">
+        <rect x="4" y="4" width="32" height="38" fill="none" stroke="#211d18" stroke-width="4"/>
+        <line x1="10" y1="14" x2="30" y2="14" stroke="#a06a00" stroke-width="3" stroke-linecap="round"/>
+        <line x1="10" y1="22" x2="30" y2="22" stroke="#211d18" stroke-width="3" stroke-linecap="round"/>
+        <line x1="10" y1="30" x2="24" y2="30" stroke="#211d18" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <p class="ribbon-sub">every app comes with its recipe — remix anything, share it back</p>
+    <div class="linkline">a12k-a2b.github.io/daylight-computing-club-community-hub</div>
+  </div>
+
+</div>
+</body>
+</html>

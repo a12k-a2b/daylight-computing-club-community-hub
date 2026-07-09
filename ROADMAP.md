@@ -59,6 +59,14 @@ The moment someone *other than me* shelves an app, the bottleneck is the PR.
   newsletter; ours can be a page.
 - **Multiple curators** — a CODEOWNERS file so Melissa, Matt, and Jess can
   merge too. Trust scales along friendship lines, not admin hierarchies.
+- **Trusted members auto-shelve** — the middle path between "Anjan approves
+  everything" and "no approval at all": submissions from a small allowlist
+  of known GitHub usernames publish automatically; strangers still wait for
+  a human. Keeps the potluck's host-glances-at-the-dish property (apps
+  install on friends' tablets with real permissions — the approval tap is
+  the club's only quality gate) while removing friction for regulars.
+  PWAs could auto-shelve for everyone sooner: they're browser-sandboxed,
+  so the blast radius of a bad one is far smaller than an APK's.
 
 ## v2 — A community exchange (Jess's learning applets, other parents)
 
