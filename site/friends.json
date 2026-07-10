@@ -1,0 +1,10 @@
+{
+  "_about": "The warm half of an invite: first names only, one entry per friend. The trust half lives in .github/club-members.json (GitHub usernames). A friend's personal link is https://daylightcomputer.club/invite.html?f=<key> — sent by text or email, person to person. The link is warmth, not authentication.",
+  "friends": {
+    "melissa": {
+      "name": "Melissa",
+      "from": "Anjan",
+      "note": "You're the first person I wanted to show this to."
+    }
+  }
+}

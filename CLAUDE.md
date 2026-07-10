@@ -47,6 +47,27 @@ That means: add the app to the catalog so it appears on the shelf. Steps:
 5. If the owner (Anjan) is asking, commit to the default branch directly.
    If a friend is contributing, open a PR for Anjan to approve.
 
+## When asked to "invite a friend to the club"
+
+An invite has a warm half and a trust half:
+
+1. **Warm half** — add an entry to `site/friends.json` (key = lowercase
+   first name; fields: `name`, `from` (who's inviting), optional `note` —
+   one warm sentence from the inviter). Their personal link is
+   `https://daylightcomputer.club/invite.html?f=<key>` — a page that greets
+   them by name and seats them at the potluck.
+2. **Trust half** — if the inviter vouches for them ("I'd eat anything they
+   bring"), add their GitHub username to `.github/club-members.json`
+   `trusted`. Username not known yet? Skip it — add it when their first
+   dish arrives and a keeper approves that one PR.
+3. The inviter sends the link personally, by text or email. A Claude
+   session may only send it after showing the exact message and getting
+   explicit approval.
+
+The link is warmth, not authentication — nothing on the page grants
+power; trust is enforced only by `club-members.json`. So a guessed or
+shared invite URL exposes nothing but a friendly greeting.
+
 ## When asked to "shelve the app from issue #N"
 
 Friends also submit via the share form (a GitHub issue labeled

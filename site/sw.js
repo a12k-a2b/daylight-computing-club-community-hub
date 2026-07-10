@@ -5,11 +5,13 @@
 // club opens instantly but self-heals when styles change.
 // APK files: never cached — always a fresh download.
 
-const CACHE = 'dcc-v2';
+const CACHE = 'dcc-v3';
 const SHELL = [
   './',
   'index.html',
   'install.html',
+  'invite.html',
+  'friends.json',
   'share.html',
   'guestbook.html',
   'wishboard.html',
@@ -46,7 +48,8 @@ self.addEventListener('fetch', e => {
     req.mode === 'navigate' ||
     url.pathname.endsWith('.html') ||
     url.pathname.endsWith('/') ||
-    url.pathname.endsWith('apps.json');
+    url.pathname.endsWith('apps.json') ||
+    url.pathname.endsWith('friends.json');
 
   if (wantsFresh) {
     // Network-first: live site wins, cache only when offline.

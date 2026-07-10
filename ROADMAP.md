@@ -15,6 +15,24 @@ thing.
 Computing Club" (the full arguments for both names are preserved there) —
 live in [LOOSE-ENDS.md](LOOSE-ENDS.md).*
 
+## The three rings of sharing
+
+Every intention anyone has had for the club fits one of three concentric
+rings. New ideas should name their ring — most confusion dissolves when
+they do.
+
+1. **One to one** *(built)* — "I made this and I want *you* to have it."
+   The personal invite (`invite.html?f=<name>`, sent by text) plus telling
+   a friend which dish to grab. The *delivery* is personal even though the
+   shelf is shared — like pointing someone at the potluck table saying
+   "I made the middle one for you."
+2. **The circle** *(built — it IS the shelf)* — shelving an app is already
+   the broadcast: everyone with the club pinned sees it appear, no
+   individual sends. The trusted-members list defines the circle.
+3. **Public** *(deliberately later)* — strangers, other parents, other
+   clubs, federation. v2's guest-book-not-a-bouncer territory below.
+   Nothing built now should block it; nothing built now should build it.
+
 ---
 
 ## What makes a great potluck — the reciprocity layer *(built)*

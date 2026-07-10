@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>You&rsquo;re invited — Daylight Computer Club</title>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="icons/icon-192.png">
+<meta name="theme-color" content="#ffffff">
+<meta property="og:type" content="website">
+<meta property="og:title" content="You're invited — Daylight Computer Club">
+<meta property="og:description" content="A friend saved you a seat. Homebrew apps for your Daylight — a potluck, not a store.">
+<meta property="og:url" content="https://daylightcomputer.club/invite.html">
+<meta property="og:image" content="https://daylightcomputer.club/images/shelf-still-life.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="628">
+<meta name="twitter:card" content="summary_large_image">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="club">
+    <a class="club-mark" href="./">
+      <img src="icons/icon-192.png" alt="">
+      <h1>Daylight&nbsp;Computer&nbsp;Club</h1>
+    </a>
+  </header>
+
+  <main>
+    <p class="progress" id="from-line">A SEAT, SAVED FOR YOU</p>
+    <h2 class="step-title" id="headline">A friend saved you a seat.</h2>
+    <div class="step-body" id="body">
+      <noscript><p>This page needs JavaScript to greet you properly — but the
+      club itself is one tap away: <a href="./">come on in</a>.</p></noscript>
+    </div>
+    <div class="wizard-nav" id="nav"></div>
+  </main>
+
+  <footer class="club">
+    <p>The club is a potluck, not a store — <a href="why.html">here&rsquo;s why it exists</a>.</p>
+  </footer>
+
+</div>
+
+<script>
+const key = (new URLSearchParams(location.search).get('f') || '').trim().toLowerCase();
+
+fetch('friends.json')
+  .then(r => r.json())
+  .then(data => render((data.friends || {})[key]))
+  .catch(() => render(null));
+
+function render(friend) {
+  const $ = id => document.getElementById(id);
+
+  if (friend) {
+    $('from-line').textContent = 'A SEAT, SAVED FOR YOU BY ' + String(friend.from).toUpperCase();
+    $('headline').textContent = friend.name + ' — ' + friend.from + ' saved you a seat.';
+    document.title = friend.name + ', you’re invited — Daylight Computer Club';
+  }
+
+  const noteBit = friend && friend.note
+    ? '<p class="hint">“' + esc(friend.note) + '” &mdash; ' + esc(friend.from) + '</p>'
+    : '';
+
+  const trustBit = friend
+    ? `<p>And this part matters: <strong>you’re on the trusted list.</strong>
+       Take anything from the shelf — and when you make something of your own,
+       bring it. A dish from you goes straight onto the shelf, no waiting.</p>`
+    : `<p>Friends browse the shelf, take what they like, and bring dishes of
+       their own when they’re ready.</p>`;
+
+  $('body').innerHTML = `
+    <p>This is the <strong>Daylight Computer Club</strong> — a potluck of
+    homebrew apps we make for each other’s Daylights. No store, no
+    accounts, nothing to sign up for. Friends sharing what they build.</p>
+    ${noteBit}
+    ${trustBit}
+    <p class="hint">Everything works right here in Chrome on your Daylight.
+    Installing an app takes about two minutes, and the club walks you through
+    every screen — nothing will be surprising.</p>`;
+
+  const nav = document.getElementById('nav');
+  nav.innerHTML =
+    '<a class="btn" href="./">Come see the shelf →</a>';
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+}
+</script>
+</body>
+</html>
