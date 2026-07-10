@@ -77,10 +77,16 @@ public face is the domain, not the repo.
 ## 4. The antivirus gate is built but unarmed
 
 `shelve.py` blocks malicious APKs when VirusTotal flags them — but only
-once a `VT_API_KEY` repo secret exists (free key from virustotal.com →
-Settings → Secrets and variables → Actions). Until then the inspector's
-report says "antivirus scan: skipped." Worth arming before strangers find
-the share form.
+once a `VT_API_KEY` repo secret exists. Until then the inspector's report
+says "🟡 antivirus scan: skipped." Worth arming before strangers find the
+share form. Only the owner can do this (it needs a personal VirusTotal
+account and repo-secret access); the two-minute recipe:
+
+1. Sign up free at **virustotal.com** → click your avatar → **API key** → copy it.
+2. GitHub repo → **Settings → Secrets and variables → Actions → New
+   repository secret** → name `VT_API_KEY`, paste, save.
+
+Nothing else to change — the code checks for the secret and arms itself.
 
 ## 5. Which Claude model runs each robot (cost vs. judgment)
 

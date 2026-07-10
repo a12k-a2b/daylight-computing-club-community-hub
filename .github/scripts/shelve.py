@@ -214,9 +214,19 @@ def main():
         subprocess.run(["gh", "workflow", "run", "pages.yml", "--ref", "master", "--repo", REPO],
                        check=False, text=True)
         comment(f"🟢 ☀ **Shelved!** {name} is on the club shelf — live at {SITE_URL} "
-                f"in a couple of minutes. Thanks for bringing a dish.{inspection_md}")
+                f"in a couple of minutes. Thanks for bringing a dish. The inspectors "
+                f"will still stop by — their reports land below shortly.{inspection_md}")
         subprocess.run(["gh", "issue", "close", ISSUE, "--repo", REPO,
                         "--reason", "completed"], check=False, text=True)
+        # post-hoc audit: you don't taste-test a friend's casserole at the
+        # door, but the inspectors still stop by after. Their reports land on
+        # this issue; a 🔴 means a keeper can pull the dish (see RECALL.md).
+        subprocess.run(["gh", "workflow", "run", "claude-review.yml", "--ref", "master",
+                        "-f", f"issue={ISSUE}", "--repo", REPO], check=False, text=True)
+        if entry.get("apk"):
+            subprocess.run(["gh", "workflow", "run", "inspect-dynamic.yml", "--ref", "master",
+                            "-f", f"issue={ISSUE}", "-f", f"apk=site/{entry['apk']['file']}",
+                            "--repo", REPO], check=False, text=True)
     else:
         # approve once, trusted forever: merging this PR also adds the
         # author to the trusted list, so their next share is instant

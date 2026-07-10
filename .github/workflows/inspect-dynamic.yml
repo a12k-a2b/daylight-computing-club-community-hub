@@ -2,7 +2,12 @@ name: Inspector — crash and memory smoke test
 
 # Advisory only: installs a submitted APK on an emulated Android tablet,
 # pokes it with 1500 random inputs (monkey), and reports crashes and
-# memory use on the PR. It can flake (emulators do) — it never blocks.
+# memory use. It can flake (emulators do) — it never blocks.
+#
+# Two ways in:
+#   - pr:    review a shelve PR before a keeper merges (report on the PR)
+#   - issue + apk: post-hoc audit of a trusted member's auto-shelved dish —
+#     it's already on the shelf; the report lands on the submission issue
 
 on:
   pull_request:
@@ -11,14 +16,23 @@ on:
     inputs:
       pr:
         description: "PR number to smoke-test (robot-created PRs can't trigger pull_request workflows)"
-        required: true
+        required: false
+      issue:
+        description: "Submission issue for a post-hoc audit of a trusted shelving"
+        required: false
+      apk:
+        description: "Path of the shelved APK on master (issue mode), e.g. site/apps/x/x.apk"
+        required: false
 
 permissions:
   contents: read
   pull-requests: write
+  issues: write
 
 env:
   PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr }}
+  ISSUE_NUMBER: ${{ inputs.issue }}
+  APK_PATH: ${{ inputs.apk }}
 
 jobs:
   smoke:
@@ -34,6 +48,7 @@ jobs:
         run: cp .github/scripts/smoke.sh "$RUNNER_TEMP/smoke.sh"
 
       - name: Check out the PR branch
+        if: env.ISSUE_NUMBER == ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh pr checkout "$PR_NUMBER"
@@ -41,9 +56,14 @@ jobs:
       - name: Find the submitted APK
         id: find
         run: |
-          # checkout above already fetched full history — a shallow re-fetch
-          # here would erase the merge base and make the diff come up empty
-          apk=$(git diff --name-only origin/master...HEAD -- 'site/apps/*/*.apk' | head -1)
+          if [ -n "$APK_PATH" ]; then
+            # post-hoc audit: the shelve robot told us exactly which dish
+            apk="$APK_PATH"
+          else
+            # checkout above already fetched full history — a shallow re-fetch
+            # here would erase the merge base and make the diff come up empty
+            apk=$(git diff --name-only origin/master...HEAD -- 'site/apps/*/*.apk' | head -1)
+          fi
           echo "apk=$apk" >> "$GITHUB_OUTPUT"
           echo "Found: ${apk:-nothing}"
 
@@ -68,7 +88,7 @@ jobs:
           # stashed before the PR checkout)
           script: bash "$RUNNER_TEMP/smoke.sh" "${{ steps.find.outputs.apk }}"
 
-      - name: Post the report on the PR
+      - name: Post the report
         if: steps.find.outputs.apk != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -91,4 +111,9 @@ jobs:
               body="🟢 **☀ Inspector's smoke test — passed.** Installed cleanly and survived 1500 random taps on an emulated tablet without crashing.$mem_note"
             fi
           fi
-          gh pr comment "$PR_NUMBER" --body "$body"
+          if [ -n "$ISSUE_NUMBER" ]; then
+            body="$body (Post-hoc audit — this dish is already on the shelf; if it's 🔴 a keeper can pull it, see RECALL.md.)"
+            gh issue comment "$ISSUE_NUMBER" --body "$body"
+          else
+            gh pr comment "$PR_NUMBER" --body "$body"
+          fi

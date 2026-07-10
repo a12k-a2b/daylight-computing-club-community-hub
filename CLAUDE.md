@@ -13,7 +13,10 @@ submission becomes a PR for Anjan to approve. Shelve PRs also get an
 advisory Claude source review (`claude-review.yml`, needs the
 ANTHROPIC_API_KEY secret) and an emulator crash/memory smoke test
 (`inspect-dynamic.yml`); hard gates (signing, VirusTotal) live in
-`.github/scripts/shelve.py` + `inspect.py`.
+`.github/scripts/shelve.py` + `inspect.py`. Trusted members' dishes
+auto-shelve and get a post-hoc audit (inspectors comment on the
+submission issue). If an app must be pulled from the shelf, follow
+RECALL.md.
 
 ## When asked to "share/shelve/add an app to the club"
 

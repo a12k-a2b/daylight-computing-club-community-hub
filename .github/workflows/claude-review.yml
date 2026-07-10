@@ -1,9 +1,14 @@
 name: Inspector — Claude reads the recipe
 
-# The smart half of the inspector: on every shelve PR, Claude reads the
-# submission (catalog entry, honest label, and the linked source repo if
-# public) and posts a plain-English second opinion for the keeper.
+# The smart half of the inspector: Claude reads the submission (catalog
+# entry, honest label, and the linked source repo if public) and posts a
+# plain-English second opinion for the keeper.
 # Advisory only — it informs the human, it never opens the gate.
+#
+# Two ways in:
+#   - pr:    review a shelve PR before a keeper merges (report on the PR)
+#   - issue: post-hoc audit of a trusted member's auto-shelved dish —
+#     it's already on the shelf; the report lands on the submission issue
 
 on:
   pull_request:
@@ -13,7 +18,10 @@ on:
     inputs:
       pr:
         description: "PR number to review (robot-created PRs can't trigger pull_request workflows)"
-        required: true
+        required: false
+      issue:
+        description: "Submission issue for a post-hoc audit of a trusted shelving"
+        required: false
 
 permissions:
   contents: read
@@ -22,6 +30,7 @@ permissions:
 
 env:
   PR_NUMBER: ${{ github.event.pull_request.number || inputs.pr }}
+  ISSUE_NUMBER: ${{ inputs.issue }}
 
 jobs:
   read-the-recipe:
@@ -43,10 +52,24 @@ jobs:
           fetch-depth: 0
 
       - name: Check out the PR branch
-        if: steps.key.outputs.present == 'true'
+        if: steps.key.outputs.present == 'true' && env.ISSUE_NUMBER == ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh pr checkout "$PR_NUMBER"
+
+      - name: Set review target
+        if: steps.key.outputs.present == 'true'
+        id: mode
+        run: |
+          if [ -n "$ISSUE_NUMBER" ]; then
+            echo "comment_cmd=gh issue comment $ISSUE_NUMBER" >> "$GITHUB_OUTPUT"
+            echo "diff_cmd=git diff HEAD~1 HEAD" >> "$GITHUB_OUTPUT"
+            echo "context=This dish was submitted through the share form by a TRUSTED club member, so it was auto-shelved to master already — the newest commit on master is the shelving. You are the post-hoc audit: the keeper is not deciding whether to merge, but whether the already-shelved dish needs to be pulled (see RECALL.md)." >> "$GITHUB_OUTPUT"
+          else
+            echo "comment_cmd=gh pr comment $PR_NUMBER" >> "$GITHUB_OUTPUT"
+            echo "diff_cmd=git diff origin/master...HEAD" >> "$GITHUB_OUTPUT"
+            echo "context=This pull request (#$PR_NUMBER) shelves a newly submitted app. A human keeper will decide whether to merge; your briefing informs that decision." >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Claude reviews the submission
         if: steps.key.outputs.present == 'true'
@@ -54,16 +77,15 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          claude_args: '--model claude-sonnet-5 --allowedTools "Read,Grep,Glob,Bash(git diff:*),Bash(git clone:*),Bash(gh pr comment:*),Bash(gh pr view:*)"'
+          claude_args: '--model claude-sonnet-5 --allowedTools "Read,Grep,Glob,Bash(git diff:*),Bash(git show:*),Bash(git clone:*),Bash(gh pr comment:*),Bash(gh pr view:*),Bash(gh issue comment:*),Bash(gh issue view:*)"'
           prompt: |
             You are the reading inspector for the Daylight Computer Club — a
             small community where friends share homebrew apps for their
-            Daylight DC-1 tablets. This pull request (#${{ github.event.pull_request.number || inputs.pr }})
-            shelves a newly submitted app. A human keeper will decide whether
-            to merge; your job is to give them an informed, honest briefing.
+            Daylight DC-1 tablets. ${{ steps.mode.outputs.context }}
+            Your job is to give the keeper an informed, honest briefing.
 
             Do this:
-            1. Look at the diff (git diff origin/master...HEAD) — the new
+            1. Look at the diff (${{ steps.mode.outputs.diff_cmd }}) — the new
                entry in site/apps.json (description, permissions "honest
                label", afterInstall) and any added APK.
             2. If the entry's "source" field links a public repo, clone it
@@ -75,8 +97,8 @@ jobs:
                endpoints, hardcoded secrets, data leaving the device,
                copy-paste neglect (dead code, wrong package names, debug
                scaffolding) are findings.
-            4. Post ONE comment on this PR via:
-               gh pr comment ${{ github.event.pull_request.number || inputs.pr }} --body "..."
+            4. Post ONE comment via:
+               ${{ steps.mode.outputs.comment_cmd }} --body "..."
                Format: the FIRST line must be a traffic-light verdict so a
                keeper can read the outcome at a glance — exactly one of:
                  "# 🔴 Stop — this dish is not what it claims" (you caught
