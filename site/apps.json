@@ -51,6 +51,39 @@
       "description": "The Daylight Computer Club is itself a web app. Add it to your home screen and it opens full-screen like a native app — new apps from friends show up here as they're shared.",
       "afterInstall": [],
       "source": "https://github.com/a12k-a2b/daylight-computing-club-community-hub"
+    },
+    {
+      "id": "dcc-companion",
+      "name": "Club Companion",
+      "tagline": "Watches the shelf for you: new dishes, updates, recalls, one-tap installs — and it spots when apps fight.",
+      "author": "Anjan",
+      "type": "apk",
+      "version": "0.1 (build a2d565e)",
+      "updated": "2026-07-09",
+      "apk": {
+        "file": "apps/dcc-companion/dcc-companion.apk",
+        "size": "25 KB",
+        "package": "club.daylightcomputer.companion"
+      },
+      "description": "The club's own dish. A few times a day it looks at the shelf: a friend brought a dish → a quiet note; a dish got better → an update note; a dish was pulled → a recall note with what to do. Installing becomes one tap — the Companion fetches the dish and hands it to Android's installer (Android still asks you to confirm; nothing ever installs silently). Its inspector-at-home explains in plain words when two apps might fight over your keys or draw over each other, with a button to the exact Settings page. And if a dish misbehaves, one tap builds a report you can text to whoever made it — written so their Claude can read it and fix the dish. Everything it sees stays on your tablet.",
+      "permissions": [
+        "talk to the internet",
+        "send notifications",
+        "ask Android to install apps (you confirm each one)",
+        "see what apps are installed (to spot collisions — never leaves the tablet)",
+        "start itself after a reboot"
+      ],
+      "inspected": [
+        "signed with the club key",
+        "permissions read straight from the app file",
+        "built from open source you can read"
+      ],
+      "afterInstall": [
+        "Open Club Companion from your home screen.",
+        "Allow notifications when it asks — that's how it tells you a friend brought a dish.",
+        "The first time you use a one-tap install, Android asks once to let Club Companion install apps: flip the switch and come back. Every install after that is one tap plus Android's confirm."
+      ],
+      "source": "https://github.com/a12k-a2b/dcc-companion"
     }
   ]
 }
