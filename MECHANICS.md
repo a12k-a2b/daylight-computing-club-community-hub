@@ -96,6 +96,29 @@ The Companion never installs silently, never uninstalls, never phones
 home. It informs, and the human taps. (One-tap-no-confirmation is
 Sol:OS-card territory — policy, not physics, and not ours to shortcut.)
 
+## The container rule — one bar, not one format
+
+Settled 2026-07-09 (Anjan + desktop thread): **every dish leaves the
+kitchen Daylight-ready; the container follows what the dish needs.**
+We do NOT convert everything to APKs — a web dish's three-tap pin, browser
+sandbox (zero collision surface), and instant updates are virtues worth
+keeping. Instead, the "daylight-ify skill pack" (ROADMAP's on-ice section
+— now thawing) becomes a kitchen robot that runs on submissions:
+
+- **Needs device powers** (keys, overlays, sensors, background) →
+  native APK; it already is one.
+- **Self-contained applet** (games, learning tools, most vibecoded
+  things) → offer APK-ification: a thin shell with assets bundled inside,
+  so it works offline, carries a version, updates through the shelf, and
+  the Companion can manage it.
+- **Live server-backed app** → stays a web dish; the kitchen daylight-ifies
+  its screen (grayscale, borders, contrast, no animation), never its
+  packaging.
+
+Honesty rule: the kitchen is a sous-chef, not a ghostwriter — a
+transformed dish's card says "daylight-ified from <friend>'s original"
+(remix lineage), and the inspectors re-run on what actually ships.
+
 ## What stays with Sol:OS
 
 Removing the scare screens, blessing the club key as a "friends ring,"
