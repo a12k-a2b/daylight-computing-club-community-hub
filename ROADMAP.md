@@ -13,7 +13,10 @@ thing.
 
 *Open, unsettled questions — including whether to rename back to "Daylight
 Computing Club" (the full arguments for both names are preserved there) —
-live in [LOOSE-ENDS.md](LOOSE-ENDS.md).*
+live in [LOOSE-ENDS.md](LOOSE-ENDS.md). The full design for how dishes
+travel — intake, delivery, collisions, the Club Companion app, and the
+feedback loop back to each cook's kitchen — lives in
+[MECHANICS.md](MECHANICS.md).*
 
 ## The three rings of sharing
 

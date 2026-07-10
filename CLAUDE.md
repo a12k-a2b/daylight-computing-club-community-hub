@@ -68,6 +68,23 @@ The link is warmth, not authentication — nothing on the page grants
 power; trust is enforced only by `club-members.json`. So a guessed or
 shared invite URL exposes nothing but a friendly greeting.
 
+## When asked to "send a dish to a friend" (desktop sessions)
+
+Sending = a personal text or email from Anjan's own accounts, never a
+robot blast. Compose a short personal message with the app's deep link
+(`https://daylightcomputer.club/install.html?app=<id>`), or their invite
+link if they're new (see the invite section). Show Anjan the exact
+message and recipient, send only on explicit approval.
+
+## When asked to "shelve what <friend> texted/emailed me" (desktop sessions)
+
+Friends without GitHub or Claude can just text or email Anjan their APK
+(or web app URL). A desktop session: find the attachment in Messages/Mail,
+verify with Anjan it's expected and from that friend, then follow the
+shelve steps above — sign with the club key, write the catalog entry and
+`afterInstall` from what the friend said it does, open a PR for Anjan to
+approve. Mention the friend by first name as `author`.
+
 ## When asked to "shelve the app from issue #N"
 
 Friends also submit via the share form (a GitHub issue labeled
