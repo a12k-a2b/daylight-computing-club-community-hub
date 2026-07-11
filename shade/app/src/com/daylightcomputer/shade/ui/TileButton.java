@@ -34,6 +34,13 @@ public class TileButton extends View {
         invalidate();
     }
 
+    /** Stock-QS parity: the Bluetooth pill's title becomes the connected
+     *  device's name while exactly one is connected. */
+    public void setTitle(String t) {
+        this.title = t == null ? "" : t;
+        invalidate();
+    }
+
     @Override protected void drawableStateChanged() {
         super.drawableStateChanged();
         invalidate();

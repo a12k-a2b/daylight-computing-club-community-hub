@@ -3,11 +3,14 @@ package com.daylightcomputer.shade.control;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.util.Log;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /** The Bluetooth radio, defensively. Listing paired devices, discovery and
  *  pairing are public APIs (BLUETOOTH_CONNECT / BLUETOOTH_SCAN, both
@@ -64,6 +67,51 @@ public final class BtDevices {
             String n = d.getName();
             return n != null && !n.trim().isEmpty();
         } catch (Throwable t) { return false; }
+    }
+
+    // ---- connected-device names for the pill (stock-QS parity) ----
+    // A small profile-proxy cache that lives only while the panel is open:
+    // ShadeService opens it with the other panel signals, closes it on
+    // teardown. Proxies arrive async, so onChange re-paints the pills.
+
+    private static BluetoothProfile sA2dp, sHeadset;
+
+    public static void openProxies(Context c, Runnable onChange) {
+        BluetoothAdapter a = adapter(c);
+        if (a == null || !Caps.btConnect(c)) return;
+        try {
+            a.getProfileProxy(c, new BluetoothProfile.ServiceListener() {
+                @Override public void onServiceConnected(int p, BluetoothProfile proxy) {
+                    sA2dp = proxy;
+                    if (onChange != null) onChange.run();
+                }
+                @Override public void onServiceDisconnected(int p) { sA2dp = null; }
+            }, BluetoothProfile.A2DP);
+            a.getProfileProxy(c, new BluetoothProfile.ServiceListener() {
+                @Override public void onServiceConnected(int p, BluetoothProfile proxy) {
+                    sHeadset = proxy;
+                    if (onChange != null) onChange.run();
+                }
+                @Override public void onServiceDisconnected(int p) { sHeadset = null; }
+            }, BluetoothProfile.HEADSET);
+        } catch (Throwable t) { Log.w(TAG, "profile proxies: " + t); }
+    }
+
+    public static void closeProxies(Context c) {
+        BluetoothAdapter a = adapter(c);
+        if (a != null) {
+            try { if (sA2dp != null) a.closeProfileProxy(BluetoothProfile.A2DP, sA2dp); } catch (Throwable ignored) {}
+            try { if (sHeadset != null) a.closeProfileProxy(BluetoothProfile.HEADSET, sHeadset); } catch (Throwable ignored) {}
+        }
+        sA2dp = null; sHeadset = null;
+    }
+
+    /** Devices with a live audio/headset connection, deduped by address. */
+    public static List<BluetoothDevice> connected(Context c) {
+        Map<String, BluetoothDevice> out = new LinkedHashMap<>();
+        try { if (sA2dp != null) for (BluetoothDevice d : sA2dp.getConnectedDevices()) out.put(d.getAddress(), d); } catch (Throwable ignored) {}
+        try { if (sHeadset != null) for (BluetoothDevice d : sHeadset.getConnectedDevices()) out.put(d.getAddress(), d); } catch (Throwable ignored) {}
+        return new ArrayList<>(out.values());
     }
 
     public static boolean startDiscovery(Context c) {

@@ -138,7 +138,7 @@ public class MainActivity extends Activity {
                 () -> startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)));
         grant(Caps.dnd(this), "do-not-disturb toggle",
                 () -> startActivity(new Intent(Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS)));
-        grant(Caps.secureSettings(this), "warmth stand-in + more (secure settings, via adb)",
+        grant(Caps.secureSettings(this), "secure settings (via adb — dev extras)",
                 this::showAdbHelp);
         grant(Caps.statusBar(this), "silence the stock shade — arrives with Sol:OS blessing", null);
         grant(Caps.internalWindow(this), "own the status-bar swipe — arrives with Sol:OS blessing", null);
@@ -147,11 +147,12 @@ public class MainActivity extends Activity {
         section("warmth slider hookup");
         String backend = Warmth.backendName(this);
         note(backend.isEmpty()
-                ? "Not hooked up yet. The amber backlight lives behind the "
-                + "screen_brightness_amber_rate setting, which Android only lets "
-                + "system apps write — the Sol:OS build drives it directly. On a "
-                + "sideload, granting secure settings (above) enables a night-light "
-                + "stand-in."
+                ? "Waiting on the Sol:OS blessing. The amber backlight lives behind "
+                + "the screen_brightness_amber_rate setting, which Android only "
+                + "lets system apps write — the Sol:OS build drives it directly, "
+                + "and the slider unlocks itself that day. (No night-light "
+                + "stand-in here: a software tint over a hardware-amber backlight "
+                + "looks broken, not warm.)"
                 : "Active backend: " + backend + ".");
     }
 

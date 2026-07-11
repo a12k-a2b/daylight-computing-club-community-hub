@@ -12,12 +12,15 @@ import android.util.Log;
  *  Discovered on-glass 2026-07-11 by diffing `settings list system`
  *  around the stock slider.
  *
- *  Backend chain, first available wins:
- *   1. SYSTEM-TABLE KEY — a Settings.System key (the DC-1 key above, or
- *      a probed candidate on other hardware). Needs only WRITE_SETTINGS.
- *   2. NIGHT DISPLAY — AOSP night light as a stand-in warmth control.
- *      Needs WRITE_SECURE_SETTINGS (adb- or priv-grantable).
- *   3. none — slider shows a "needs Sol:OS hookup" hint. */
+ *  Backend chain:
+ *   1. SYSTEM-TABLE KEY — the real amber drive. Present on every DC-1;
+ *      writable only from a system-image install (Sol:OS blessing).
+ *   2. NIGHT DISPLAY — AOSP night light, ONLY on hardware that has no
+ *      real key at all (emulators, dev devices). On a DC-1 a software
+ *      tint over a hardware-amber backlight looks broken, not warm —
+ *      field-tested 2026-07-11 — so there the slider sits disabled with
+ *      an honest hint until the blessing instead of faking it.
+ *   3. none — slider shows the hint. */
 public final class Warmth {
     private static final String TAG = "ShadeWarmth";
     private static final String PREFS = "shade";
@@ -104,7 +107,10 @@ public final class Warmth {
     public static String backendName(Context c) {
         String k = usableKey(c);
         if (k != null) return "system key \"" + k + "\"";
-        if (Caps.secureSettings(c)) return "night display (stand-in)";
+        // the stand-in exists for key-less dev hardware only — on a real
+        // DC-1 (key present, write refused) honesty beats a fake tint
+        if (systemKey(c) == null && Caps.secureSettings(c))
+            return "night display (stand-in)";
         return "";
     }
 
@@ -120,7 +126,7 @@ public final class Warmth {
             int raw = Settings.System.getInt(c.getContentResolver(), k, min);
             return Math.max(0f, Math.min(1f, (raw - min) / (float) (max - min)));
         }
-        if (Caps.secureSettings(c)) {
+        if (systemKey(c) == null && Caps.secureSettings(c)) {
             if (Settings.Secure.getInt(c.getContentResolver(), "night_display_activated", 0) == 0)
                 return 0f;
             int t = Settings.Secure.getInt(c.getContentResolver(),
@@ -143,7 +149,7 @@ public final class Warmth {
                 Log.w(TAG, "system key write failed: " + t);
             }
         }
-        if (Caps.secureSettings(c)) {
+        if (systemKey(c) == null && Caps.secureSettings(c)) {
             try {
                 Settings.Secure.putInt(c.getContentResolver(),
                         "night_display_activated", v > 0.02f ? 1 : 0);

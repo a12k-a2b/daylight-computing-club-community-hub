@@ -34,9 +34,11 @@ public final class Toggles {
     public static boolean wifiOn(Context c) { return WifiNets.isOn(c); }
     public static boolean btOn(Context c) { return BtDevices.isOn(c); }
 
-    /** The compact system network sheet (list + toggle), not full Settings. */
+    /** Straight to the Wi-Fi settings screen. (The Settings.Panel bottom
+     *  sheet is deprecated and renders as a bare "Wi-Fi" stub on Sol:OS —
+     *  field-tested 2026-07-11: it looked shady and just led here anyway.) */
     public static void openWifiSheet(Context c) {
-        openSettings(c, Settings.Panel.ACTION_WIFI);
+        openSettings(c, Settings.ACTION_WIFI_SETTINGS);
     }
     /** No compact sheet exists for Bluetooth — full settings it is. */
     public static void openBtSettings(Context c) {
