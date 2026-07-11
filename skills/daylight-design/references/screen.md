@@ -6,7 +6,7 @@
 |---|---|
 | Panel | 10.5″ "LivePaper" — **transflective TN LCD** on an IGZO oxide TFT backplane, no color filter array (e-paper-class, not e-ink) |
 | Resolution | 1600×1200, 4:3, ~190 PPI, 8-bit |
-| Refresh | 60 Hz, no e-ink-style full-screen flashing; slight smear on fast motion |
+| Refresh | variable 30–120 Hz (IGZO VRR); practical motion ceiling unclear (~90 Hz? — LC pixel response, not refresh, seems to limit); no e-ink-style flashing; smear on fast motion |
 | Gray depth | 256 levels driven; roughly **9–16 distinguishable in practice**, fewest in the dark end |
 | Light | Transflective: lit by the room/sun by day; the **amber** (blue-free) backlight shines through the same pixels at night |
 | Viewing angle | TN mode: **gamma shifts with vertical tilt** (extreme angles can invert grays) — contrast is best head-on |
