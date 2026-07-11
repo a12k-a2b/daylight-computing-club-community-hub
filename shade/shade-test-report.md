@@ -121,9 +121,14 @@ window is up; released on close). APK 60 KB.
 4. Pair real earbuds via "find new devices".
 5. Dark panel at night on this reflective screen: pleasant or vestigial?
    (roadmap Q4)
-6. Confirm it was your fingers on the tablet ~02:56–03:10 (Lofi opened,
-   power button pressed twice). Touch recorder saw zero phantom touches
-   for the rest of the session, so hardware looks clean.
+6. ~~Confirm it was your fingers on the tablet ~02:56–03:10~~ — solved:
+   those were *other Claude sessions* driving the same tablet (five
+   collided tonight; `~/code/dc1-glass` + the CLAUDE.md glass rule were
+   born at 03:36, mid-test, in response). A touch recorder on the
+   touchscreen driver saw **zero** physical touches all session, so the
+   glass hardware is clean and every "mystery" event matches adb
+   injection. This session predates the rule; the test doc now tells the
+   next run to claim the glass first.
 
 ## Grant commands that failed
 
