@@ -339,6 +339,11 @@ public class PadService extends AccessibilityService {
         root.addView(pad, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
 
+        WetInk wet = new WetInk(this);
+        pad.setWetInk(wet);
+        root.addView(wet, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+
         // toolbar: a 2px rule, then one scrollable row of big square buttons
         barShell = new LinearLayout(this);
         barShell.setOrientation(LinearLayout.VERTICAL);
@@ -390,6 +395,9 @@ public class PadService extends AccessibilityService {
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT);
         barLp.gravity = Gravity.BOTTOM;
         root.addView(barShell, barLp);
+        // the wet layer composes above the whole window — keep it off the toolbar
+        barShell.addOnLayoutChangeListener(
+                (v, l, t, r, b, ol, ot, or2, ob) -> wet.setClipBottom(t));
 
         rootLp = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.MATCH_PARENT,

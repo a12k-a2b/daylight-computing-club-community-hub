@@ -76,6 +76,8 @@ public class GlassPadView extends View {
     private final Runnable saveNow = this::flushSave;
     private final float baseWidthPx;
     private long clearArmedAt;
+    private WetInk wet;
+    private boolean wetActive;
 
     public GlassPadView(Context c) {
         super(c);
@@ -96,6 +98,9 @@ public class GlassPadView extends View {
     }
 
     void setStateListener(StateListener l) { listener = l; }
+
+    /** Wet-ink surface for the in-progress stroke; pad falls back to the plain path without it. */
+    void setWetInk(WetInk w) { wet = w; }
 
     private static int clampFrost(int f) { return Math.max(0, Math.min(f, FROSTS.length - 1)); }
 
@@ -165,20 +170,34 @@ public class GlassPadView extends View {
 
         switch (e.getActionMasked()) {
             case MotionEvent.ACTION_DOWN:
+                // pen events straight from the digitizer, not batched to vsync
+                requestUnbufferedDispatch(e);
                 cur = new Stroke();
                 cur.eraser = erase;
                 cur.base = baseWidthPx / Math.max(1, getWidth());
-                addPoint(e.getX(), e.getY(), e.getPressure());
+                // erasing must show live on the dry layer, so only ink goes wet
+                wetActive = !erase && wet != null && wet.isReady();
+                if (wetActive) wet.begin(baseWidthPx);
+                addPoint(e.getX(), e.getY(), e.getPressure(), e.getEventTime());
+                if (wetActive) wet.present();
                 break;
             case MotionEvent.ACTION_MOVE:
                 if (cur == null) return true;
                 for (int i = 0; i < e.getHistorySize(); i++)
-                    addPoint(e.getHistoricalX(i), e.getHistoricalY(i), e.getHistoricalPressure(i));
-                addPoint(e.getX(), e.getY(), e.getPressure());
+                    addPoint(e.getHistoricalX(i), e.getHistoricalY(i),
+                            e.getHistoricalPressure(i), e.getHistoricalEventTime(i));
+                addPoint(e.getX(), e.getY(), e.getPressure(), e.getEventTime());
+                if (wetActive) wet.present();
                 break;
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
                 if (cur == null) return true;
+                if (wetActive) {
+                    render(cur); // dry the finished stroke into the bitmap
+                    invalidate();
+                    wet.end();
+                    wetActive = false;
+                }
                 pages.get(page).add(cur);
                 Op op = new Op();
                 op.page = page;
@@ -194,13 +213,17 @@ public class GlassPadView extends View {
         return true;
     }
 
-    private void addPoint(float x, float y, float rawPressure) {
+    private void addPoint(float x, float y, float rawPressure, long tMs) {
         float pr = Math.max(0.15f, Math.min(rawPressure, 1.3f));
-        renderSegment(x, y, pr);
+        if (wetActive) {
+            wet.addPoint(x, y, pr, tMs);
+        } else {
+            renderSegment(x, y, pr);
+            invalidate();
+        }
         int w = Math.max(1, getWidth()), h = Math.max(1, getHeight());
         cur.add(x / w, y / h, pr);
         lastX = x; lastY = y;
-        invalidate();
     }
 
     private static void trim(ArrayDeque<Op> stack) {

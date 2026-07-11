@@ -32,6 +32,26 @@ you can run the real thing, go support it.
   app in case a SolOS update ever remaps the hardware buttons: tap
   "Re-learn", press any hardware key, done.
 
+## Low-latency ink
+
+The pen path uses the same wet/dry-ink architecture as Android's modern ink
+stack (androidx.ink / front-buffered rendering, as used by tldraw and
+Google's own note tools), implemented with plain platform APIs so the build
+stays Gradle-free:
+
+- **Unbuffered input** — `requestUnbufferedDispatch` on pen-down, so stylus
+  events arrive at digitizer rate instead of batched to vsync.
+- **Wet layer** — the in-progress stroke is drawn to a hardware
+  `SurfaceView` canvas (`lockHardwareCanvas`) the moment each event arrives,
+  skipping the UI-thread frame wait.
+- **Prediction** — a ~12 ms tail extrapolated from pen velocity (capped so
+  flicks don't overshoot), redrawn every event, replaced by truth as it
+  arrives.
+- **Dry on pen-up** — the finished stroke is committed to the ordinary
+  bitmap layer and the wet surface is wiped; eraser strokes stay on the dry
+  path since erasing has to reveal what's underneath. If the surface isn't
+  available the pad silently falls back to the plain path.
+
 ## How the buttons are heard
 
 An `AccessibilityService` with `flagRequestFilterKeyEvents` sees hardware
