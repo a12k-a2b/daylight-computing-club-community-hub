@@ -51,6 +51,7 @@ final class Backup {
             JSONObject bo = new JSONObject();
             bo.put("n", b.name);
             bo.put("t", b.template);
+            if (b.opacity >= 0) bo.put("o", b.opacity);
             bo.put("c", b.createdTime);
             bo.put("m", b.lastModified);
             JSONArray ps = new JSONArray();
@@ -60,6 +61,7 @@ final class Backup {
                 for (GlassPadView.Stroke s : pd.strokes) {
                     JSONObject o = new JSONObject();
                     o.put("k", s.kind);
+                    if (s.shade != 0) o.put("c", s.shade);
                     o.put("w", s.base);
                     JSONArray a = new JSONArray();
                     for (int k = 0; k < s.n * 3; k++) a.put(s.pts[k]);
@@ -166,6 +168,7 @@ final class Backup {
             GlassPadView.Book b = new GlassPadView.Book();
             b.name = bo.optString("n", "Restored");
             b.template = bo.optInt("t", GlassPadView.TPL_BLANK);
+            b.opacity = bo.optInt("o", -1);
             b.createdTime = bo.optLong("c", 0);
             b.lastModified = bo.optLong("m", System.currentTimeMillis());
             JSONArray ps = bo.getJSONArray("pages");
@@ -177,6 +180,7 @@ final class Backup {
                     JSONObject o = ss.getJSONObject(k);
                     GlassPadView.Stroke s = new GlassPadView.Stroke();
                     s.kind = o.optInt("k", 0);
+                    s.shade = o.optInt("c", 0);
                     s.base = (float) o.optDouble("w", 0.003);
                     JSONArray a = o.getJSONArray("p");
                     for (int m = 0; m + 2 < a.length(); m += 3)

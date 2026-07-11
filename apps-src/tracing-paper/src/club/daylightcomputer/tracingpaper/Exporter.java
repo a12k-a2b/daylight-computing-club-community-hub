@@ -131,6 +131,8 @@ final class Exporter {
                     for (GlassPadView.Stroke s : pd.strokes) {
                         if (s.kind == GlassPadView.KIND_HIGHLIGHT) continue;
                         Paint p = s.kind == GlassPadView.KIND_ERASE ? rubber : ink;
+                        if (s.kind == GlassPadView.KIND_INK)
+                            p.setColor(GlassPadView.inkShade(s.shade));
                         float base = s.base * cw * (s.kind == GlassPadView.KIND_ERASE ? 4f : 1f);
                         if (s.n == 1) {
                             p.setStrokeWidth(base * (0.5f + s.pts[2]));

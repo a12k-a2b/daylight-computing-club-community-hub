@@ -79,6 +79,7 @@ public class PadService extends AccessibilityService {
     private long armedBookAt;
 
     private TextView pageBtn, penBtn, hiBtn, eraseBtn, pickBtn, undoBtn, redoBtn, bookBtn;
+    private SeekBar glassSeek;
 
     private final Runnable longPress = () -> {
         longFired = true;
@@ -234,22 +235,44 @@ public class PadService extends AccessibilityService {
         refreshBar();
     }
 
-    /** Once, the first time the glass appears: teach the mental model. */
+    private static final String[][] WALKTHROUGH = {
+            {"THIS IS TRACING PAPER", "A layer over your page — you never left it. Write with "
+                    + "the pen (its other end erases); press the top button and you're right "
+                    + "back where you were, place kept."},
+            {"THE GLASS SLIDER", "It sets how much of the world shows through: 0% is clear "
+                    + "glass for tracing, 100% is opaque paper. You're at 80% — enough paper "
+                    + "to write on, enough world to remember where you are. Each notebook "
+                    + "remembers its own setting."},
+            {"REACH THROUGH", "PEEK lets you scroll the page beneath while your ink stays "
+                    + "put. SNIP cuts a piece of it onto the glass — drag, resize, tilt it. "
+                    + "And the Annotate the World betas in the app let flicks and taps pass "
+                    + "through the glass entirely."}};
+
+    private int hintStep;
+
+    /** Once, the first time the glass appears: teach the mental model in three breaths. */
     private void maybeShowHint() {
         if (prefs.getInt(Prefs.K_HINTS, 0) != 0 || hintCard != null) return;
-        LinearLayout card = card("THIS IS TRACING PAPER");
+        hintStep = 0;
+        showHintStep();
+    }
+
+    private void showHintStep() {
+        if (hintCard != null) { root.removeView(hintCard); hintCard = null; }
+        if (hintStep >= WALKTHROUGH.length) {
+            prefs.edit().putInt(Prefs.K_HINTS, 1).apply();
+            return;
+        }
+        LinearLayout card = card(WALKTHROUGH[hintStep][0]
+                + "  ·  " + (hintStep + 1) + "/" + WALKTHROUGH.length);
         TextView t = new TextView(this);
-        t.setText("It lays over your page — you never left. The GLASS slider sets how much "
-                + "of the world shows through (you're at "
-                + pad.getOpacity() + "%). Write with the pen; press the top button and "
-                + "you're right back where you were. PEEK lets you scroll the page "
-                + "underneath; SNIP clips a piece of it onto the glass.");
+        t.setText(WALKTHROUGH[hintStep][1]);
         t.setTextColor(Color.BLACK);
         t.setTextSize(16);
         card.addView(t, rowLp());
-        card.addView(button("GOT IT", v -> {
-            prefs.edit().putInt(Prefs.K_HINTS, 1).apply();
-            if (hintCard != null) { root.removeView(hintCard); hintCard = null; }
+        card.addView(button(hintStep < WALKTHROUGH.length - 1 ? "NEXT →" : "GOT IT", v -> {
+            hintStep++;
+            showHintStep();
         }), rowLp());
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                 dp(380), FrameLayout.LayoutParams.WRAP_CONTENT);
@@ -586,14 +609,49 @@ public class PadService extends AccessibilityService {
                 }
                 return true;
             });
+            TextView renameBtn = button("✎", v -> showRenameBook(idx));
+            LinearLayout line = new LinearLayout(this);
+            line.setOrientation(LinearLayout.HORIZONTAL);
+            LinearLayout.LayoutParams rowLpIn = new LinearLayout.LayoutParams(0, dp(52), 1f);
+            line.addView(row, rowLpIn);
+            LinearLayout.LayoutParams penLp = new LinearLayout.LayoutParams(dp(52), dp(52));
+            penLp.setMarginStart(dp(8));
+            line.addView(renameBtn, penLp);
             LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, dp(52));
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
             rlp.bottomMargin = dp(8);
-            col.addView(row, rlp);
+            col.addView(line, rlp);
         }
         col.addView(button("+ NEW NOTEBOOK", v -> showNewBook()), rowLp());
         col.addView(button("CLOSE", v -> closePanel()), rowLp());
         addPanel(col);
+    }
+
+    private void showRenameBook(int idx) {
+        closePanel();
+        LinearLayout col = card("RENAME NOTEBOOK");
+        EditText name = new EditText(this);
+        name.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        name.setText(pad.getBooks().get(idx).name);
+        name.setSelectAllOnFocus(true);
+        name.setTextColor(Color.BLACK);
+        name.setTextSize(18);
+        GradientDrawable g = new GradientDrawable();
+        g.setColor(Color.WHITE);
+        g.setStroke(dp(2), Color.BLACK);
+        name.setBackground(g);
+        int p8 = dp(8);
+        name.setPadding(p8 * 2, p8, p8 * 2, p8);
+        col.addView(name, rowLp());
+        col.addView(button("SAVE", v -> {
+            pad.renameBook(idx, name.getText().toString());
+            closePanel();
+            showBooks();
+            refreshBar();
+        }), rowLp());
+        col.addView(button("CANCEL", v -> { closePanel(); showBooks(); }), rowLp());
+        addPanel(col);
+        setWindowFocusable(true); // so the name field can take the keyboard
     }
 
     private void showNewBook() {
@@ -777,13 +835,18 @@ public class PadService extends AccessibilityService {
         sb.setProgressBackgroundTintList(ColorStateList.valueOf(0xFF888888));
         sb.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar s, int v, boolean fromUser) {
-                if (fromUser) pad.setOpacity(v);
+                if (!fromUser) return;
+                // a soft detent at the sweet spot: near 80 means 80
+                int vv = Math.abs(v - 80) <= 3 ? 80 : v;
+                if (vv != v) s.setProgress(vv);
+                pad.setOpacity(vv);
             }
             @Override public void onStartTrackingTouch(SeekBar s) {
                 s.getParent().requestDisallowInterceptTouchEvent(true);
             }
             @Override public void onStopTrackingTouch(SeekBar s) {}
         });
+        glassSeek = sb;
         LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(0, dp(48), 1f);
         slp.setMarginStart(p8);
         box.addView(sb, slp);
@@ -824,6 +887,26 @@ public class PadService extends AccessibilityService {
             sizes.addView(tiles[i - 1], tlp);
         }
         col.addView(sizes, rowLp());
+
+        if (tool == GlassPadView.TOOL_PEN) {
+            LinearLayout shades = new LinearLayout(this);
+            shades.setOrientation(LinearLayout.HORIZONTAL);
+            final TextView[] sts = new TextView[GlassPadView.SHADE_NAMES.length];
+            int curShade = prefs.getInt(Prefs.K_PEN_SHADE, 0);
+            for (int i = 0; i < sts.length; i++) {
+                final int shade = i;
+                sts[i] = button(GlassPadView.SHADE_NAMES[i], v -> {
+                    prefs.edit().putInt(Prefs.K_PEN_SHADE, shade).apply();
+                    for (int k = 0; k < sts.length; k++) style(sts[k], k == shade);
+                });
+                sts[i].setTextSize(13);
+                style(sts[i], i == curShade);
+                LinearLayout.LayoutParams slp2 = new LinearLayout.LayoutParams(0, dp(48), 1f);
+                if (i > 0) slp2.setMarginStart(dp(8));
+                shades.addView(sts[i], slp2);
+            }
+            col.addView(shades, rowLp());
+        }
 
         if (tool == GlassPadView.TOOL_ERASE) {
             LinearLayout modes = new LinearLayout(this);
@@ -874,6 +957,9 @@ public class PadService extends AccessibilityService {
         String n = pad.bookName();
         if (n.length() > 10) n = n.substring(0, 9) + "…";
         bookBtn.setText(n.toUpperCase(java.util.Locale.US) + " ▾");
+        // each notebook remembers its own GLASS — keep the slider honest
+        if (glassSeek != null && glassSeek.getProgress() != pad.getOpacity())
+            glassSeek.setProgress(pad.getOpacity());
     }
 
     private void exportPdf() {

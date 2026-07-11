@@ -49,6 +49,14 @@ public class GlassPadView extends View {
     static final int HI_FILL = 0x59969696;
     static final int HI_EDGE = Color.BLACK;
 
+    /** ink shades for the pen: full black, pencil gray, light marginalia gray */
+    static final int[] INK_SHADES = {0xFF000000, 0xFF5A5A5A, 0xFF9E9E9E};
+    static final String[] SHADE_NAMES = {"BLACK", "DARK", "LIGHT"};
+
+    static int inkShade(int idx) {
+        return INK_SHADES[Math.max(0, Math.min(idx, INK_SHADES.length - 1))];
+    }
+
     private static final float SNAP_DEG = 4f;
 
     /** Tool size steps, 1..5, as multiples of the base width. */
@@ -60,6 +68,7 @@ public class GlassPadView extends View {
 
     static class Stroke {
         int kind;
+        int shade;               // INK_SHADES index; ink only
         float base;              // stroke width as a fraction of page width
         float[] pts = new float[64 * 3]; // x, y, pressure triplets
         int n;
@@ -112,6 +121,7 @@ public class GlassPadView extends View {
     static class Book {
         String name;
         int template;
+        int opacity = -1;        // this notebook's remembered GLASS; -1 = the shared default
         long createdTime, lastModified;
         final List<PageData> pages = new ArrayList<>();
     }
@@ -418,6 +428,7 @@ public class GlassPadView extends View {
         boolean gz = grazed.contains(s); // half-faded: the eraser has it, lift to finish
         switch (s.kind) {
             case KIND_INK: {
+                pen.setColor(inkShade(s.shade));
                 pen.setAlpha(gz ? 70 : 255);
                 float bw = s.base * w;
                 if (s.n == 1) {
@@ -475,6 +486,7 @@ public class GlassPadView extends View {
         float lx = lastX, ly = lastY - top;
         switch (cur.kind) {
             case KIND_INK:
+                pen.setColor(inkShade(cur.shade));
                 pen.setAlpha(255);
                 pen.setStrokeWidth(cur.base * w * (0.5f + pr));
                 if (cur.n == 0) inkC.drawPoint(x, y, pen);
@@ -496,7 +508,7 @@ public class GlassPadView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        canvas.drawColor(Color.argb(Math.round(opacity / 100f * 255f), 255, 255, 255));
+        canvas.drawColor(Color.argb(Math.round(getOpacity() / 100f * 255f), 255, 255, 255));
         if (ink == null) return;
         int w = getWidth(), h = pageH(), n = cb().pages.size();
         int first = Math.max(0, (int) (scrollY / (h + gapPx)));
@@ -784,13 +796,14 @@ public class GlassPadView extends View {
         }
         cur = new Stroke();
         cur.kind = kind;
+        cur.shade = kind == KIND_INK ? p.getInt(Prefs.K_PEN_SHADE, 0) : 0;
         float mul = kind == KIND_HIGHLIGHT ? sizeMul(p.getInt(Prefs.K_HI_SIZE, 2))
                 : kind == KIND_ERASE ? sizeMul(p.getInt(Prefs.K_ERASE_SIZE, 2))
                 : sizeMul(p.getInt(Prefs.K_PEN_SIZE, 2));
         float widthPx = (kind == KIND_HIGHLIGHT ? hiWidthPx : baseWidthPx) * mul;
         cur.base = widthPx / Math.max(1, getWidth());
         wetActive = kind != KIND_ERASE && wet != null && wet.isReady();
-        if (wetActive) wet.begin(widthPx, kind);
+        if (wetActive) wet.begin(widthPx, kind, inkShade(cur.shade));
         addPoint(e.getX(), e.getY(), e.getPressure(), e.getEventTime());
         if (wetActive) wet.present();
         mode = M_DRAW;
@@ -1219,6 +1232,16 @@ public class GlassPadView extends View {
         structuralChange();
     }
 
+    void renameBook(int i, String name) {
+        if (i < 0 || i >= books.size() || name == null) return;
+        String n = name.trim();
+        if (n.isEmpty()) return;
+        books.get(i).name = n;
+        books.get(i).lastModified = System.currentTimeMillis();
+        flushSave();
+        notifyState();
+    }
+
     void newBook(String name, int template) {
         flushSave();
         deselect();
@@ -1258,13 +1281,16 @@ public class GlassPadView extends View {
 
     // ----------------------------------------------------------------- glass
 
+    /** Each notebook remembers its own GLASS; the shared default follows your last choice. */
     void setOpacity(int pct) {
         opacity = Math.max(0, Math.min(pct, 100));
+        cb().opacity = opacity;
         Prefs.get(getContext()).edit().putInt(Prefs.K_OPACITY, opacity).apply();
         invalidate();
+        markChanged();
     }
 
-    int getOpacity() { return opacity; }
+    int getOpacity() { return cb().opacity >= 0 ? cb().opacity : opacity; }
 
     // ------------------------------------------------------------ persistence
 
@@ -1275,6 +1301,7 @@ public class GlassPadView extends View {
             Book nb = new Book();
             nb.name = b.name;
             nb.template = b.template;
+            nb.opacity = b.opacity;
             nb.createdTime = b.createdTime;
             nb.lastModified = b.lastModified;
             for (PageData p : b.pages) nb.pages.add(copyOf(p));

@@ -152,6 +152,7 @@ class NoteStore {
                         GlassPadView.Book b = new GlassPadView.Book();
                         b.name = bo.optString("n", "Notes");
                         b.template = bo.optInt("t", GlassPadView.TPL_BLANK);
+                        b.opacity = bo.optInt("o", -1);
                         b.createdTime = bo.optLong("c", 0);
                         b.lastModified = bo.optLong("m", 0);
                         JSONArray ps = bo.getJSONArray("pages");
@@ -207,6 +208,7 @@ class NoteStore {
             if (o.has("k")) s.kind = o.getInt("k");
             else s.kind = o.optBoolean("e", false)
                     ? GlassPadView.KIND_ERASE : GlassPadView.KIND_INK; // v1
+            s.shade = o.optInt("c", 0);
             s.base = (float) o.optDouble("w", 0.003);
             JSONArray a = o.getJSONArray("p");
             for (int k = 0; k + 2 < a.length(); k += 3)
@@ -224,6 +226,7 @@ class NoteStore {
                     JSONObject bo = new JSONObject();
                     bo.put("n", b.name);
                     bo.put("t", b.template);
+                    if (b.opacity >= 0) bo.put("o", b.opacity);
                     bo.put("c", b.createdTime);
                     bo.put("m", b.lastModified);
                     JSONArray ps = new JSONArray();
@@ -233,6 +236,7 @@ class NoteStore {
                         for (GlassPadView.Stroke s : pd.strokes) {
                             JSONObject o = new JSONObject();
                             o.put("k", s.kind);
+                            if (s.shade != 0) o.put("c", s.shade);
                             o.put("w", round(s.base));
                             JSONArray a = new JSONArray();
                             for (int k = 0; k < s.n * 3; k++) a.put(round(s.pts[k]));
