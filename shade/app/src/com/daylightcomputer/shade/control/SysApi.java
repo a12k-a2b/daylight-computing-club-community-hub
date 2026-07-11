@@ -48,6 +48,25 @@ public final class SysApi {
         }
     }
 
+    /** BluetoothProfile (A2DP / headset) connect()/disconnect() — hidden,
+     *  needs BLUETOOTH_PRIVILEGED (in the priv-app allowlist). This is what
+     *  makes tapping a paired device in the shade actually route audio. */
+    public static boolean btProfileAct(Object profileProxy,
+                                       android.bluetooth.BluetoothDevice d,
+                                       boolean connect) {
+        try {
+            Method m = profileProxy.getClass().getMethod(
+                    connect ? "connect" : "disconnect",
+                    android.bluetooth.BluetoothDevice.class);
+            Object r = m.invoke(profileProxy, d);
+            return !(r instanceof Boolean) || (Boolean) r;
+        } catch (Throwable t) {
+            Log.w(TAG, "bt profile " + (connect ? "connect" : "disconnect")
+                    + " unavailable: " + t);
+            return false;
+        }
+    }
+
     /** ConnectivityManager#setAirplaneMode — @SystemApi, works only with
      *  NETWORK_AIRPLANE_MODE / NETWORK_SETTINGS. */
     public static boolean setAirplaneMode(Context c, boolean on) {

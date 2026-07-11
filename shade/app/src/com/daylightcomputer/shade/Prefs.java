@@ -23,4 +23,9 @@ public final class Prefs {
     /** Block the stock shade from expanding (full mode only). */
     public static boolean takeOver(Context c) { return p(c).getBoolean("take_over", false); }
     public static void setTakeOver(Context c, boolean b) { p(c).edit().putBoolean("take_over", b).apply(); }
+
+    /** In-shade Wi-Fi / Bluetooth pickers (v2, young). Off = classic
+     *  hand-off to the system surfaces. */
+    public static boolean pickers(Context c) { return p(c).getBoolean("pickers", true); }
+    public static void setPickers(Context c, boolean b) { p(c).edit().putBoolean("pickers", b).apply(); }
 }

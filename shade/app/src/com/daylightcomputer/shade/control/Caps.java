@@ -29,6 +29,8 @@ public final class Caps {
                 .isNotificationListenerAccessGranted(new ComponentName(c, ShadeNLService.class));
     }
     public static boolean btConnect(Context c) { return has(c, "android.permission.BLUETOOTH_CONNECT"); }
+    public static boolean btScan(Context c) { return has(c, "android.permission.BLUETOOTH_SCAN"); }
+    public static boolean nearbyWifi(Context c) { return has(c, "android.permission.NEARBY_WIFI_DEVICES"); }
     public static boolean postNotifs(Context c) { return has(c, "android.permission.POST_NOTIFICATIONS"); }
 
     // tier 2 — adb-grantable for development

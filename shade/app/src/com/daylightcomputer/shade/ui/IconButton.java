@@ -10,7 +10,7 @@ import android.view.View;
  *  renders identically regardless of which fonts the device ships. */
 public class IconButton extends View {
 
-    public enum Glyph { PLAY, PAUSE, PREV, NEXT, BACK15, FWD15, HEART, HEART_OUTLINE, X }
+    public enum Glyph { PLAY, PAUSE, PREV, NEXT, BACK15, FWD15, HEART, HEART_OUTLINE, X, BACK }
 
     private final Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint stroke = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -101,6 +101,12 @@ public class IconButton extends View {
                 stroke.setStyle(Paint.Style.STROKE);
                 cv.drawLine(cx - u, cy - u, cx + u, cy + u, stroke);
                 cv.drawLine(cx + u, cy - u, cx - u, cy + u, stroke);
+                break;
+            case BACK:
+                stroke.setStrokeWidth(Ui.dp(getContext(), 2.5f));
+                stroke.setStyle(Paint.Style.STROKE);
+                cv.drawLine(cx + u * 0.7f, cy - u * 1.1f, cx - u * 0.7f, cy, stroke);
+                cv.drawLine(cx - u * 0.7f, cy, cx + u * 0.7f, cy + u * 1.1f, stroke);
                 break;
         }
     }

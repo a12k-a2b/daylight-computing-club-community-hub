@@ -44,12 +44,14 @@ never brick the pull-down.
 - **Light slider** — backlight, via `Settings.System.SCREEN_BRIGHTNESS`.
 - **Warmth slider** — amber ↔ paper-white (see "the warmth hookup" below).
 - **Six pills** — Wi-Fi, Bluetooth, Airplane, Quiet (do-not-disturb), Dark,
-  Rotation lock. Tap toggles; long-press goes deeper — for Wi-Fi that's the
-  *compact system network sheet* (Android's "Settings Panel" pop-up: switch
-  networks without opening full Settings), for the others the matching
-  settings screen. Any toggle that this install isn't allowed to flip
-  directly opens that same deeper surface instead — the panel never
-  silently fails.
+  Rotation lock. Tap toggles; long-press goes deeper. For Wi-Fi and
+  Bluetooth, "deeper" means **our own picker pages inside the shade**:
+  networks strongest-first with tap-to-join, paired devices with
+  connect/disconnect plus find-new-device pairing. (They're young — one
+  switch in shade setup falls back to the system surfaces: Android's
+  compact Wi-Fi sheet, the Bluetooth settings page.) Any action an install
+  isn't allowed to do directly hands off to the matching system surface —
+  the panel never silently fails.
 - **Media card** — whatever is playing (Spotify, Audible…): ⏮ ⏯ ⏭, ±15 s,
   and a heart when the app supports favorites. Appears only while something
   has an active session.
@@ -118,9 +120,12 @@ Nothing to rebuild; `shade setup` grows the extra switches.
 >        <permission name="android.permission.WRITE_SECURE_SETTINGS"/>
 >        <permission name="android.permission.MODIFY_DAY_NIGHT_MODE"/>
 >        <permission name="android.permission.NETWORK_AIRPLANE_MODE"/>
+>        <permission name="android.permission.BLUETOOTH_PRIVILEGED"/>
 >      </privapp-permissions>
 >    </permissions>
 >    ```
+>    (`BLUETOOTH_PRIVILEGED` is what lets tapping a paired device in the
+>    shade actually route audio to it.)
 >
 >    (`INTERNAL_SYSTEM_WINDOW` and `NETWORK_SETTINGS` are signature-level;
 >    the platform signature from step 1 covers them.)
@@ -128,8 +133,8 @@ Nothing to rebuild; `shade setup` grows the extra switches.
 > 3. **If any call still logs a hidden-API block** (`Accessing hidden
 >    method`), add the package to the hidden-API exemption list
 >    (`hiddenapi-package-whitelist.xml` / the product's
->    `PRODUCT_HIDDENAPI_EXEMPT` mechanism). The app touches exactly three
->    hidden members, all listed in `SysApi.java`.
+>    `PRODUCT_HIDDENAPI_EXEMPT` mechanism). The app touches a handful of
+>    hidden members, all listed in one file: `control/SysApi.java`.
 >
 > 4. **Tell us the warmth setting** — which `Settings` key (and value range)
 >    the stock quick-settings amber slider writes. Find it with:
@@ -178,10 +183,13 @@ app/src/…/shade/
   BootReceiver, PanelTrampoline…   plumbing
   Prefs.java                       strip placement, takeover switch
   ui/PanelView.java                the panel itself (header→footer)
+  ui/WifiPickerView,
+     BtPickerView, PickerPage      in-shade network + device pickers
   ui/InkSlider, TileButton,
      IconButton, Ui.java           the grayscale widget kit (canvas-drawn)
   control/Caps.java                live permission matrix
-  control/Toggles.java             wifi/bt/airplane/dnd/dark/rotation
+  control/Toggles.java             airplane/dnd/dark/rotation + hand-offs
+  control/WifiNets, BtDevices      the radios, defensively (public APIs)
   control/Brightness, Warmth,
           Media.java               sliders + media session
   control/SysApi.java              ⚠ the ONLY file touching hidden APIs
