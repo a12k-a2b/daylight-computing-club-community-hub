@@ -179,7 +179,13 @@ None of this blocks the club — everything works today via the guided
 wizard. This is the upgrade path, and a product story in its own right:
 *the tablet that treats software from your friends as first-class.*
 
-## On ice (but part of the vision): the "daylight-ify" skill pack
+## Thawed 2026-07-11: the "daylight-ify" skill pack
+
+**First pass now lives in [skills/](skills/)** — four skills, mapped from
+the sketch below: *packaging + input + offline* → `daylight-port`,
+*screen + calm* → `daylight-design`, plus `daylight-preview` (a working
+DC-1 simulator/auditor the sketch didn't anticipate) and `daylight-teach`
+(auto-generated onboarding). The original sketch, for the record:
 
 A set of Claude Code skills that takes an existing web app or PWA — maybe
 the simplest thing somebody made — and makes it *belong* on the DC-1:
