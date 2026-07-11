@@ -80,9 +80,14 @@ Install the APK, grant four things in `shade setup` (draw over apps, modify
 settings, notification access, do-not-disturb). You get: the full panel via
 a **"Daylight panel" tile** in the stock quick settings, a **swipe zone just
 below the status bar**, or the launcher button. Brightness, rotation, quiet,
-media and notifications all work for real. Wi-Fi / Bluetooth / Airplane /
-Dark pills open their settings panels (Android reserves direct flipping for
-system apps). The stock shade still owns the very top edge.
+media and notifications all work for real — and (verified on glass) so does
+tapping **Bluetooth** to flip the radio; Android 13 still allows that with
+plain BLUETOOTH_CONNECT. Wi-Fi / Airplane / Dark pills open their settings
+surfaces (Android reserves those flips for system apps), and the in-shade
+Wi-Fi *network list* is also system-reserved — scan results stay
+location-gated, `neverForLocation` excluded — so in preview the Wi-Fi
+picker offers the radio toggle plus an honest hand-off row to the system
+list. The stock shade still owns the very top edge.
 
 Optional, for development, from a computer:
 
@@ -144,26 +149,36 @@ Nothing to rebuild; `shade setup` grows the extra switches.
 >    `PRODUCT_HIDDENAPI_EXEMPT` mechanism). The app touches a handful of
 >    hidden members, all listed in one file: `control/SysApi.java`.
 >
-> 4. **Tell us the warmth setting** — which `Settings` key (and value range)
->    the stock quick-settings amber slider writes. Find it with:
->    `adb shell settings list system > before` → move the stock slider →
->    `settings list system > after` → `diff`. (Check `secure` and `global`
->    tables too if `system` shows nothing.)
+> 4. **The warmth setting — answered.** Found on-glass 2026-07-11:
+>    the stock slider writes `Settings.System screen_brightness_amber_rate`
+>    = 256 + amber (amber 0..255; 256 = paper white, 511 = full amber; the
+>    +256 sentinel must always be present). The app already drives it — it
+>    just needs the system placement from step 1, since AOSP refuses
+>    unknown system-table keys from non-system installs. One question
+>    remains: confirm nothing else (a vendor service, a sysfs watcher)
+>    needs poking after the settings write — on our test device the write
+>    alone moved the backlight via the stock path.
 
 That's the whole OS-side footprint. No SystemUI patches, no framework
 changes.
 
 ## The warmth hookup
 
-The DC-1's amber backlight is Daylight hardware, so the app can't guess its
-setting name. `Warmth.java` probes a list of likely `Settings.System` keys
-and uses the first one that exists on the device; once the platform team
-names the real key (step 4 above) we either add it to the probe list (one
-line) or configure it at runtime. Until then, with `WRITE_SECURE_SETTINGS`
-granted, the slider drives AOSP night light as a stand-in so the interaction
-can be felt today. If the backlight turns out to live behind a sysfs node or
-a vendor service instead of a settings key, `Warmth.java` is the one file
-that grows a new backend.
+**The key is found** (first on-glass session, 2026-07-11): the DC-1's amber
+backlight lives behind `Settings.System screen_brightness_amber_rate`,
+encoded `256 + amber` with amber 0..255 — 256 is paper white, 511 full
+amber, and the stock slider runs amber-on-the-left. `Warmth.java` knows the
+key, the offset encoding, and the direction (our slider matches stock:
+left = amber, right = paper white).
+
+The remaining gate is *who may write it*: AOSP's settings provider refuses
+unknown system-table keys from any non-system app — even with
+WRITE_SECURE_SETTINGS granted — so the real hookup lights up exactly when
+Sol:OS ships the app in the system image (the same blessing as everything
+else; no extra permission needed). `Warmth.java` probes writability once
+with a same-value write and reports honestly. Until then, with
+`WRITE_SECURE_SETTINGS` granted, the slider drives AOSP night light as a
+stand-in so the interaction can be felt today.
 
 ## Building
 
@@ -243,14 +258,23 @@ broken tablet:
 
 - ✅ Compiles clean against the real Android 13 SDK; APK builds, aligns,
   signs, verifies.
-- ✅ Design verified in Chromium (mock renders, interactions work, zero
-  console errors).
-- ⚠️ **Not yet run on a DC-1 or emulator** — overlay windows and gesture
-  feel always need a shake-down on real glass. Expect a round of small
-  fixes after the first sideload; that's the fast loop this project exists
-  to enable.
-- Deliberately **not on the club shelf yet** — it should pass a real-device
-  smoke test first, then shelving it is the normal one-commit club step.
+- ✅ **Ran the full on-glass protocol on a real DC-1** (2026-07-11, Sol:OS
+  AOSP 13): panel renders first try; swipe zone, scrim/BACK close, pills
+  (Quiet/Rotation flip in place, Bluetooth genuinely toggles the radio,
+  Airplane/Dark hand off), live notification list (post/dismiss/clear
+  logic), live dark-mode rebuild, force-stop recovery, airplane drill,
+  landscape, reboot re-arm — all pass. Findings + fixes from that session:
+  `shade-test-report.md`.
+- ✅ **The warmth key is discovered** (`screen_brightness_amber_rate`,
+  256+amber) — see "The warmth hookup". Writing it needs system placement,
+  so the real amber drive ships with the blessing; the night-light
+  stand-in covers preview.
+- ⚠️ Still unverified: gesture *feel* under a real finger, the media card
+  against live Spotify (heart/extras), Bluetooth pairing end-to-end, and
+  whether night-light tinting is even visible on this backlight — all
+  waiting on hands and eyes rather than adb.
+- Deliberately **not on the club shelf yet** — Anjan calls that step after
+  the feel check.
 
 ## Porting to AOSP 16/17 (the plan we're buying into)
 

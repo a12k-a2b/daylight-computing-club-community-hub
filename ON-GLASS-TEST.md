@@ -101,12 +101,17 @@ Drive with `adb shell input tap/swipe` guided by screenshots; ask the
 human for anything physical. Screenshot before/after each lettered stage.
 
 **A. Panel + gesture.** Open via the button in the control room, then via
-`adb shell am start-foreground-service -n com.daylightcomputer.shade/.ShadeService -a com.daylightcomputer.shade.SHOW`,
-then via the swipe zone (`adb shell input swipe 600 90 600 900 250` on the
-home screen — adjust x for orientation; the zone is the ~28px band below
-the status bar). Verify: sheet slides down, scrim behind it, tap-scrim
-closes, BACK closes. ⟨HUMAN⟩ drag it by finger: does it track the finger?
-settle naturally? feel fast enough?
+the swipe zone. (ShadeService is deliberately not exported, so
+`am start-foreground-service …SHOW` from the shell is refused — the
+button, the tile, and the strip are the only real surfaces.) The strip is
+the band directly below the status bar — on the DC-1 that's y≈35–70, so
+`adb shell input swipe 600 50 600 900 250` from the home screen; confirm
+the exact band via `adb shell dumpsys window windows` (the
+`com.daylightcomputer.shade` window's `frame=`). Starting lower (y=90)
+misses the strip and the launcher's own swipe-down opens the stock shade
+— that's the launcher, not a bug. Verify: sheet slides down, scrim behind
+it, tap-scrim closes, BACK closes. ⟨HUMAN⟩ drag it by finger: does it
+track the finger? settle naturally? feel fast enough?
 
 **B. Sliders.** Drag the brightness slider full left/right (input swipe
 along the track). ⟨HUMAN⟩ did the backlight actually change smoothly?
@@ -118,8 +123,9 @@ adb shell settings list system > warm-before.txt
 adb shell settings list secure >> warm-before.txt
 adb shell settings list global >> warm-before.txt
 ```
-⟨HUMAN⟩ open the STOCK quick settings and move the stock warmth/amber
-slider noticeably; then:
+Move the STOCK warmth/amber slider noticeably (adb can do this alone:
+`cmd statusbar expand-settings`, then swipe along the second slider —
+no fingers needed); then:
 ```sh
 adb shell settings list system > warm-after.txt
 adb shell settings list secure >> warm-after.txt
@@ -128,9 +134,13 @@ diff warm-before.txt warm-after.txt
 ```
 Record every changed key + its before/after values. If nothing changed,
 say so explicitly (means the slider talks to a vendor service/sysfs
-instead — also crucial to know). Also test our warmth slider: with
-WRITE_SECURE_SETTINGS granted it should drive night-light as a stand-in —
-⟨HUMAN⟩ does the screen tint change?
+instead — also crucial to know). **Answered 2026-07-11 on a real DC-1:**
+the key is `Settings.System screen_brightness_amber_rate` = 256 + amber
+(0..255); 256 = paper white, 511 = full amber. Sideloads cannot write it
+(AOSP rejects unknown system-table keys from non-system apps), so in
+preview mode our slider drives night-light as a stand-in — ⟨HUMAN⟩ does
+the screen tint change? Re-run this diff after any Sol:OS update to catch
+the key moving.
 
 **C. Pills.** Tap each of the six. Expected in preview mode: Quiet and
 Rotation flip in place (inverted pill); Wi-Fi/Bluetooth open our picker
@@ -155,8 +165,9 @@ ink-on-paper? do they work?
 
 **F. Notifications.**
 ```sh
-adb shell cmd notification post -S bigtext -t "Test note" ShadeTest "hello from the test rig"
+adb shell cmd notification post -S bigtext -t TestNote ShadeTest "hello from the test rig"
 ```
+(keep the title one word — quoting through two shells mangles spaces)
 Row appears? Tap ✕ dismisses? "clear all" clears? Tap-to-open on a real
 notification (e.g. the media one) opens the right app?
 
