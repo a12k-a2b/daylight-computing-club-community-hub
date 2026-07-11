@@ -16,8 +16,10 @@
     "aspect": "4:3",
     "ppi": 190,
     "refresh_hz": 60,
-    "type": "monochrome reflective LCD (LivePaper)",
-    "backlight": "amber (blue-free)",
+    "type": "LivePaper: transflective TN LCD, IGZO oxide TFT backplane, no color filter array (e-paper-class, NOT e-ink)",
+    "bit_depth": 8,
+    "backlight": "amber (blue-free), transmissive through the transflective panel — a backlight, not a front-light",
+    "tn_note": "TN mode: gamma shifts with vertical viewing angle (worst case grayscale inversion at steep tilt) — verify designs at ±30°; another reason adjacent mid-grays must not carry meaning",
     "gray_levels_driven": 256,
     "gray_levels_practical": { "value": 12, "measured": false, "note": "eyes resolve ~9-16 in ambient light; count on calibrate.html" }
   },

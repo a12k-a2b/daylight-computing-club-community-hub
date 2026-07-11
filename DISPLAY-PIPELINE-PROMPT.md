@@ -35,14 +35,19 @@ precise asks for third parties (display controller vendor) where not.
 
 ## The device (verified facts)
 
-- Daylight DC-1: 10.5″ "LivePaper" monochrome **reflective LCD** (RLCD, not
-  e-ink), 1600×1200 (4:3), ~190 PPI, 60 Hz, no color filter array — the
-  panel shows grayscale only. 256 gray levels driven; in practice eyes
-  resolve ~9–16 levels in ambient light, fewest in the dark quarter (the
-  dark end compresses badly).
-- Reflective: lit by ambient light by day. The backlight (front-light) is
-  **amber / blue-free** for night use — with it on, the whole image is
-  amber-tinted.
+- Daylight DC-1: 10.5″ "LivePaper" — a **transflective TN LCD** on an
+  **IGZO oxide TFT** backplane, **no color filter array**, **8-bit**,
+  1600×1200 (4:3), ~190 PPI, 60 Hz. E-paper-class but NOT e-ink — a real
+  LCD. 256 gray levels driven; in practice eyes resolve ~9–16 in ambient
+  light, fewest in the dark quarter (the dark end compresses badly).
+- Transflective: each pixel is read by reflected ambient light by day AND
+  can pass the **amber / blue-free backlight** at night (a true backlight
+  through the panel, not a front-light). With it on, the transmissive
+  contribution tints everything amber.
+- TN mode means gamma varies with vertical viewing angle (steep tilt can
+  invert grays) — any tone-curve work must be validated head-on AND at
+  ~±30° tilt, and the "practically distinguishable levels" number is
+  angle-dependent.
 - SoC: MediaTek Helio G99. OS: Sol:OS, Daylight's own Android 13 build —
   **we control SurfaceFlinger, the framework, and the kernel**; a newer
   Android base is planned.

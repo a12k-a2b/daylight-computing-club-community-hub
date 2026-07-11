@@ -4,11 +4,12 @@
 
 | Property | Value |
 |---|---|
-| Panel | 10.5″ "LivePaper" — monochrome **reflective LCD** (not e-ink) |
-| Resolution | 1600×1200, 4:3, ~190 PPI |
+| Panel | 10.5″ "LivePaper" — **transflective TN LCD** on an IGZO oxide TFT backplane, no color filter array (e-paper-class, not e-ink) |
+| Resolution | 1600×1200, 4:3, ~190 PPI, 8-bit |
 | Refresh | 60 Hz, no e-ink-style full-screen flashing; slight smear on fast motion |
 | Gray depth | 256 levels driven; roughly **9–16 distinguishable in practice**, fewest in the dark end |
-| Light | Reflective: lit by the room/sun. Backlight is **amber** (blue-free) for night |
+| Light | Transflective: lit by the room/sun by day; the **amber** (blue-free) backlight shines through the same pixels at night |
+| Viewing angle | TN mode: **gamma shifts with vertical tilt** (extreme angles can invert grays) — contrast is best head-on |
 | OS / browser | Android 13 (Sol:OS); Chrome + Android WebView |
 | CSS viewport | ≈1280×960 landscape at devicePixelRatio 1.25 (defaults; measure `window.devicePixelRatio` on a real device and correct this file) |
 
@@ -43,6 +44,13 @@
 - **Glare and angle.** It's an LCD under glass outdoors: high-contrast
   layouts survive reflections; low-contrast decoration disappears. Assume
   the worst light you'd read a paperback in.
+- **TN tilt is a design constraint.** A tablet is held at every angle, and
+  TN gamma drifts with vertical tilt — mid-grays lighten/darken and can
+  even invert at steep angles. Ink-on-paper extremes are stable; the
+  middle of the ramp is not. One more independent reason the rules above
+  keep meaning out of adjacent mid-grays and put it into edges, weight,
+  and inversion. When reviewing on hardware, check the design tilted ~30°
+  toward and away, not just head-on.
 
 ## Quick reference — the default ramp
 
