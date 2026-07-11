@@ -43,7 +43,9 @@
 </div>
 
 <script>
-const key = (new URLSearchParams(location.search).get('f') || '').trim().toLowerCase();
+const qs = new URLSearchParams(location.search);
+const key = (qs.get('f') || '').trim().toLowerCase();
+const dish = (qs.get('dish') || '').trim();
 
 fetch('friends.json')
   .then(r => r.json())
@@ -57,6 +59,8 @@ function render(friend) {
     $('from-line').textContent = 'A SEAT, SAVED FOR YOU BY ' + String(friend.from).toUpperCase();
     $('headline').textContent = friend.name + ' — ' + friend.from + ' saved you a seat.';
     document.title = friend.name + ', you’re invited — Daylight Computer Club';
+    // the club remembers you — on this tablet only, nothing leaves the device
+    try { localStorage.setItem('dcc-friend', key); } catch (e) {}
   }
 
   const noteBit = friend && friend.note
@@ -81,8 +85,16 @@ function render(friend) {
     every screen — nothing will be surprising.</p>`;
 
   const nav = document.getElementById('nav');
-  nav.innerHTML =
-    '<a class="btn" href="./">Come see the shelf →</a>';
+  if (dish) {
+    // invite + dish in one link: seat the friend AND walk them into the dish
+    nav.innerHTML =
+      '<a class="btn" href="install.html?app=' + encodeURIComponent(dish) + '">' +
+        (friend ? esc(friend.from) + ' brought you a dish — open it →' : 'Open the dish →') +
+      '</a>' +
+      '<a class="btn secondary back" href="./">the shelf</a>';
+  } else {
+    nav.innerHTML = '<a class="btn" href="./">Come see the shelf →</a>';
+  }
 }
 
 function esc(s) {

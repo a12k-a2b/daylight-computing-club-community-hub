@@ -169,6 +169,9 @@ def main():
         entry["apk"] = prepare_apk(apk_field, app_id)
         report = club_inspect.inspect(str(ROOT / "site" / entry["apk"]["file"]))
         entry["permissions"] = report["can"]
+        # contended capabilities, for collision warnings (MECHANICS Move 1);
+        # merge with any hand-set values (volume-keys etc. aren't sniffable)
+        entry["uses"] = sorted(set(entry.get("uses", [])) | set(report.get("uses", [])))
         # durable trust facts for the shelf badge (crash test is advisory, on the PR)
         checks = ["signed with the club key", "permissions read straight from the app file"]
         vt = report.get("virustotal") or {}

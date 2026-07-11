@@ -9,6 +9,9 @@ Written down now so nobody has to think under stress later.
 
 - Remove the app's entry from `site/apps.json`.
 - Delete its folder `site/apps/<app-id>/` (if it's an APK).
+- Add an entry to `site/recalled.json` — `{id, name, reason, date}` —
+  so the shelf shows a removal note to anyone whose tablet took it
+  (and the Club Companion can notify).
 - Commit straight to `master`: `Recall <app name>: <one-line reason>`.
 
 The shelf updates within a couple of minutes on both hosts. Pages are

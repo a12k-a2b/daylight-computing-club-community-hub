@@ -1,0 +1,4 @@
+{
+  "_about": "Dishes pulled from the shelf (see RECALL.md). The shelf shows a removal note to anyone whose tablet took one, and the Club Companion notifies. Entry shape: {id, name, reason, date, link?}. Keep entries forever — a recall is history, not an embarrassment.",
+  "recalled": []
+}

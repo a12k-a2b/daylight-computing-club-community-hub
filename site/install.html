@@ -31,6 +31,7 @@
 const params = new URLSearchParams(location.search);
 const appId = params.get('app');
 let app = null;
+let catalog = [];
 let steps = [];
 let idx = 0;
 
@@ -38,8 +39,23 @@ const $ = id => document.getElementById(id);
 
 function storageKey() { return 'dcc-step-' + app.id; }
 
+// What this tablet has taken from the shelf — lives in localStorage only,
+// written when a wizard reaches its last step. Nothing leaves the device.
+function taken() {
+  try { return JSON.parse(localStorage.getItem('dcc-taken') || '{}'); }
+  catch (e) { return {}; }
+}
+function rememberTaken() {
+  try {
+    const t = taken();
+    t[app.id] = { version: app.version, when: new Date().toISOString().slice(0, 10) };
+    localStorage.setItem('dcc-taken', JSON.stringify(t));
+  } catch (e) {}
+}
+
 fetch('apps.json').then(r => r.json()).then(data => {
-  app = data.apps.find(a => a.id === appId);
+  catalog = data.apps || [];
+  app = catalog.find(a => a.id === appId);
   if (!app) {
     $('step-title').textContent = 'Hmm, that app isn’t in the catalog.';
     $('nav').innerHTML = '<a class="btn" href="./">Back to the club</a>';
@@ -48,9 +64,57 @@ fetch('apps.json').then(r => r.json()).then(data => {
   $('app-title').textContent = app.name;
   document.title = app.name + ' — Daylight Computer Club';
   steps = app.type === 'apk' ? apkSteps(app) : pwaSteps(app);
+  const warn = collisionStep(app);
+  if (warn) steps.unshift(warn);
   idx = Math.min(parseInt(localStorage.getItem(storageKey()) || '0', 10), steps.length - 1);
   render();
 });
+
+/* ---------------- collision check (MECHANICS Move 2) ----------------
+   Compares this dish's `uses` and package name against the dishes this
+   tablet already took. Advisory: it explains, the human decides. */
+
+const USES_WORDS = {
+  'volume-keys': 'listen to the volume keys',
+  'accessibility': 'plug into Android’s accessibility system',
+  'overlay': 'draw over other apps',
+  'modify-system-settings': 'change system settings',
+  'notification-listener': 'read your notifications',
+  'device-admin': 'hold device-admin powers',
+  'installs-apps': 'ask Android to install apps'
+};
+
+function collisionStep(app) {
+  const mine = new Set(app.uses || []);
+  const t = taken();
+  const troubles = [];
+  for (const other of catalog) {
+    if (other.id === app.id || !t[other.id]) continue;
+    if (app.apk && other.apk && app.apk.package === other.apk.package) {
+      troubles.push('<li><strong>' + esc(other.name) + '</strong> uses the same internal name — ' +
+        'installing this will <strong>replace</strong> it entirely.</li>');
+      continue;
+    }
+    const shared = (other.uses || []).filter(u => mine.has(u));
+    if (shared.length) {
+      troubles.push('<li>You already took <strong>' + esc(other.name) + '</strong>, and both apps want to ' +
+        shared.map(u => '<strong>' + (USES_WORDS[u] || esc(u)) + '</strong>').join(' and ') + '.</li>');
+    }
+  }
+  if (!troubles.length) return null;
+  return {
+    title: 'Heads up before we start.',
+    body: `
+      <p>Nothing is broken — but this tablet already has a dish that wants
+      some of the same things:</p>
+      <ul>${troubles.join('')}</ul>
+      <p class="hint">Apps that share a power can fight over it — usually the
+      one you set up most recently wins. You can always turn either one off
+      later (Settings → Apps, or Settings → Accessibility). If you're not
+      sure, ask the friend who made it.</p>`,
+    next: 'Got it, continue →'
+  };
+}
 
 /* ---------------- step definitions ---------------- */
 
@@ -164,6 +228,8 @@ function apkSteps(app) {
       <p>${esc(app.name)} is on your tablet. It came from a friend, not a
       store — if you like it, tell ${esc(app.author)}. If something’s broken,
       tell them that too; that’s how club apps get better.</p>
+      <a class="btn secondary" href="guestbook.html?app=${encodeURIComponent(app.id)}">✎ Leave a note for the cook</a>
+      <p></p>
       <p><a href="${app.source}">Curious how it works? Here’s the source.</a></p>`,
     next: null
   });
@@ -226,6 +292,7 @@ function pwaSteps(app) {
 
 function render() {
   const step = steps[idx];
+  if (!step.next) rememberTaken(); // reached the end — the shelf remembers
   $('progress').textContent = 'STEP ' + (idx + 1) + ' OF ' + steps.length;
   $('step-title').textContent = step.title;
   $('step-body').innerHTML = step.body;
