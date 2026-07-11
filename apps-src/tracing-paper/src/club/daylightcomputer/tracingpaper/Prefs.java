@@ -1,0 +1,29 @@
+package club.daylightcomputer.tracingpaper;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+
+/** One tiny bag of settings shared by the activity, the service and the pad. */
+final class Prefs {
+    static final String CALIBRATED_ACTION = "club.daylightcomputer.tracingpaper.CALIBRATED";
+
+    static final String K_TOGGLE = "toggle_key";
+    static final String K_CALIBRATE_UNTIL = "calibrate_until";
+    static final String K_PEN_ONLY = "pen_only";
+    static final String K_SIDE_BACKLIGHT = "side_backlight";
+    static final String K_FROST = "frost";
+    static final String K_LAST_BRIGHT = "last_brightness";
+    static final String K_LAST_BRIGHT_MODE = "last_brightness_mode";
+    static final String K_LAST_PAGE = "last_page";
+    static final String K_CANVAS_W = "canvas_w";
+    static final String K_CANVAS_H = "canvas_h";
+
+    /** KEYCODE_F12 — what the DC-1's orange top button sends. Re-learnable in the app. */
+    static final int DEFAULT_TOGGLE = 142;
+
+    private Prefs() {}
+
+    static SharedPreferences get(Context c) {
+        return c.getSharedPreferences("pad", Context.MODE_PRIVATE);
+    }
+}
