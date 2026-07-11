@@ -50,13 +50,15 @@ marked *needs blessing* lights up in the same APK the day it lands.
       progress (downloads!) as a calm percentage line. *(weekend)*
 - [ ] **Media seek bar** — a thin ink line under the transport buttons with
       elapsed/total time. *(afternoon)*
-- [ ] **Make the heart work everywhere** — today the heart shows only when
-      an app supports Android's standard rating API, and Spotify mostly
-      doesn't; most players expose like/favorite as *custom actions* on
-      their media session instead. Read `PlaybackState.getCustomActions()`
-      and render them as extra ink buttons — this is also how "seek 15s"
-      arrives for apps that publish it as a custom action (Audible).
-      *(afternoon)*
+- [x] **Make the heart work everywhere** — *built:* the heart now uses the
+      standard rating API where implemented and otherwise the app's
+      like/favorite *custom action* (Spotify's route); the ±15s buttons
+      prefer a real seek, then the app's own jump action (Audible's ±30s),
+      then fast-forward/rewind; and whatever custom actions remain
+      (shuffle, repeat, sleep timer…) appear as a second row of buttons,
+      the app's own icons re-inked to match the shade, max 4. Filled-heart
+      state for custom actions is a label heuristic — verify against real
+      Spotify on-glass.
 - [ ] **Choose-your-own pills** — a "which six?" editor in shade setup
       (candidates: battery saver, flashlight-if-exists, cast, mute,
       screenshot). The user-facing half of "modifiable, editable,

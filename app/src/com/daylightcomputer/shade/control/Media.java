@@ -83,18 +83,106 @@ public final class Media {
         if (mc != null) mc.getTransportControls().skipToPrevious();
     }
 
-    /** deltaSec may be negative. Falls back to fast-forward/rewind when the
-     *  session doesn't report a position. */
+    /** deltaSec may be negative. Prefers a real seek; falls back to the
+     *  app's own jump custom action (Audible's ±30s), then fast-forward/
+     *  rewind. */
     public static void seekBy(MediaController mc, int deltaSec) {
         if (mc == null) return;
         PlaybackState s = mc.getPlaybackState();
-        if (s != null && s.getPosition() != PlaybackState.PLAYBACK_POSITION_UNKNOWN) {
+        if (s != null && s.getPosition() != PlaybackState.PLAYBACK_POSITION_UNKNOWN
+                && (s.getActions() & PlaybackState.ACTION_SEEK_TO) != 0) {
             long pos = Math.max(0, s.getPosition() + deltaSec * 1000L);
             mc.getTransportControls().seekTo(pos);
-        } else if (deltaSec > 0) {
-            mc.getTransportControls().fastForward();
-        } else {
-            mc.getTransportControls().rewind();
+            return;
+        }
+        for (PlaybackState.CustomAction a : customActions(mc)) {
+            if (isJump(a, deltaSec > 0)) { sendCustom(mc, a); return; }
+        }
+        if (deltaSec > 0) mc.getTransportControls().fastForward();
+        else mc.getTransportControls().rewind();
+    }
+
+    // ---- custom actions (how most apps expose like/favorite, jumps, …) ----
+
+    public static List<PlaybackState.CustomAction> customActions(MediaController mc) {
+        PlaybackState s = mc == null ? null : mc.getPlaybackState();
+        List<PlaybackState.CustomAction> a = s == null ? null : s.getCustomActions();
+        return a == null ? java.util.Collections.emptyList() : a;
+    }
+
+    private static boolean matches(PlaybackState.CustomAction a, String... needles) {
+        String hay = (a.getAction() + " " + a.getName())
+                .toLowerCase(java.util.Locale.ROOT).replace('-', '_');
+        for (String n : needles) if (hay.contains(n)) return true;
+        return false;
+    }
+
+    /** The app's like/favorite action, if it publishes one (Spotify does —
+     *  as a custom action, not via the rating API). */
+    public static PlaybackState.CustomAction likeAction(MediaController mc) {
+        for (PlaybackState.CustomAction a : customActions(mc)) {
+            if (matches(a, "dislike", "thumbs_down", "thumb_down")) continue;
+            if (matches(a, "like", "heart", "favorite", "favourite",
+                    "thumbs_up", "thumb_up", "add_to_collection", "add_to_library",
+                    "save_to")) return a;
+        }
+        return null;
+    }
+
+    /** Heuristic: does the like action's current label say "already liked"?
+     *  (The action list updates on every playback-state change, so the
+     *  heart re-reads this after each tap.) */
+    public static boolean likeShowsLiked(PlaybackState.CustomAction a) {
+        return a != null && matches(a, "unlike", "unfavorite", "unfavourite",
+                "remove", "liked", "saved", "added");
+    }
+
+    private static boolean isJump(PlaybackState.CustomAction a, boolean forward) {
+        if (forward) {
+            return matches(a, "fast_forward", "jump_forward", "skip_forward",
+                    "seek_forward", "forward_10", "forward_15", "forward_30",
+                    "jump_ahead", "fastforward");
+        }
+        return matches(a, "rewind", "jump_back", "skip_back", "seek_back",
+                "replay_10", "replay_15", "replay_30", "back_10", "back_15",
+                "back_30", "jumpback");
+    }
+
+    /** Everything else the app offers (shuffle, repeat, sleep timer…) —
+     *  minus the like and jump actions the card already covers. Max 4,
+     *  calm over complete. */
+    public static List<PlaybackState.CustomAction> extraActions(MediaController mc) {
+        List<PlaybackState.CustomAction> out = new java.util.ArrayList<>();
+        PlaybackState.CustomAction like = likeAction(mc);
+        for (PlaybackState.CustomAction a : customActions(mc)) {
+            if (like != null && a.getAction().equals(like.getAction())) continue;
+            if (isJump(a, true) || isJump(a, false)) continue;
+            out.add(a);
+            if (out.size() == 4) break;
+        }
+        return out;
+    }
+
+    public static void sendCustom(MediaController mc, PlaybackState.CustomAction a) {
+        if (mc == null || a == null) return;
+        try { mc.getTransportControls().sendCustomAction(a, null); }
+        catch (Throwable t) { Log.w(TAG, "sendCustomAction: " + t); }
+    }
+
+    /** The action's icon, loaded from the media app's own package and
+     *  re-inked to match the shade. Null when unloadable (caller skips). */
+    public static android.graphics.drawable.Drawable customIcon(
+            Context c, MediaController mc, PlaybackState.CustomAction a, int tint) {
+        try {
+            android.content.res.Resources res = c.getPackageManager()
+                    .getResourcesForApplication(mc.getPackageName());
+            android.graphics.drawable.Drawable d = res.getDrawable(a.getIcon(), null);
+            if (d == null) return null;
+            d = d.mutate();
+            d.setTint(tint);
+            return d;
+        } catch (Throwable t) {
+            return null;
         }
     }
 
