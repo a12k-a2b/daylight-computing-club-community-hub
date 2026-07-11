@@ -107,6 +107,18 @@ Android app label to "The Clubhouse" (the package name
 club.daylightcomputer.companion stays, so existing installs update in
 place).
 
+**The clean rename (queued — one shot, after Anjan's testing):** since
+nobody has installed it yet, the internals can be renamed honestly rather
+than aliased. When testing settles, in ONE coordinated pass:
+1. *Desktop thread:* rebuild dcc-companion with package
+   `club.daylightcomputer.clubhouse`, app label "The Clubhouse"
+   (optionally rename the repo to dcc-clubhouse — GitHub redirects).
+2. *Website thread:* re-sign and reshelve the new APK; sweep the catalog
+   (id `dcc-companion` → `clubhouse`, folder `site/apps/clubhouse/`),
+   and grep the repo for stragglers.
+No half-states: the launcher, the shelf, and the package must change in
+the same breath. Cheap while installs ≈ 0; annoying forever after.
+
 ## The gift path — receiving should feel like AirDrop at a potluck
 
 Settled 2026-07-11. The highest bar for leg 3→4: **a friend should never
