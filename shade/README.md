@@ -44,9 +44,12 @@ never brick the pull-down.
 - **Light slider** — backlight, via `Settings.System.SCREEN_BRIGHTNESS`.
 - **Warmth slider** — amber ↔ paper-white (see "the warmth hookup" below).
 - **Six pills** — Wi-Fi, Bluetooth, Airplane, Quiet (do-not-disturb), Dark,
-  Rotation lock. Tap toggles; long-press opens the full settings page. Any
-  toggle that this install isn't allowed to flip directly opens the matching
-  settings screen instead — the panel never silently fails.
+  Rotation lock. Tap toggles; long-press goes deeper — for Wi-Fi that's the
+  *compact system network sheet* (Android's "Settings Panel" pop-up: switch
+  networks without opening full Settings), for the others the matching
+  settings screen. Any toggle that this install isn't allowed to flip
+  directly opens that same deeper surface instead — the panel never
+  silently fails.
 - **Media card** — whatever is playing (Spotify, Audible…): ⏮ ⏯ ⏭, ±15 s,
   and a heart when the app supports favorites. Appears only while something
   has an active session.
@@ -227,6 +230,24 @@ which is exactly the point.
 
 Own status bar (clock/battery drawn our way), richer notification rows
 (expand, actions, grouping), lock-screen variant, per-app volume, a
-"reading light" preset row, Wi-Fi network picker inline, warmth scheduling
-("candlelight after sunset"), club-shelf "new dish" notices… every one of
-these is an afternoon in `PanelView.java`, not an AOSP rebuild.
+"reading light" preset row, warmth scheduling ("candlelight after sunset"),
+club-shelf "new dish" notices… every one of these is an afternoon in
+`PanelView.java`, not an AOSP rebuild.
+
+Two bigger v2 pieces, both unlocked by the platform blessing:
+
+- **Native Wi-Fi picker in the shade** — scan results + saved networks drawn
+  in our grayscale style, connect on tap (`NEARBY_WIFI_DEVICES` +
+  `ACCESS_FINE_LOCATION` runtime grants, privileged connect path — the same
+  APIs the Settings app uses). Brand-new secured networks would still hop to
+  a password screen at first.
+- **Native Bluetooth device list** — paired devices with connect/disconnect,
+  plus discovery for pairing (`BLUETOOTH_SCAN`/`CONNECT`, `createBond()` is
+  public API; the pairing-code confirmation stays a system dialog). Android
+  has no compact pop-up sheet for Bluetooth the way it does for Wi-Fi, so
+  this is the only route to a no-context-switch Bluetooth experience.
+
+Until those land, the hand-off surfaces (Wi-Fi pop-up sheet, Settings
+pages, pairing dialogs) are stock-Material-looking. A cheap OS-side softener
+is a grayscale theme overlay (RRO) on the Settings app — noted in the
+platform-team ask.

@@ -45,7 +45,8 @@ public final class Toggles {
                 if (wm.setWifiEnabled(target)) return true;
             } catch (Throwable t) { Log.w(TAG, "setWifiEnabled: " + t); }
         }
-        openSettings(c, Settings.Panel.ACTION_INTERNET_CONNECTIVITY);
+        // the small system sheet (network list + toggle), not full Settings
+        openSettings(c, Settings.Panel.ACTION_WIFI);
         return false;
     }
 
