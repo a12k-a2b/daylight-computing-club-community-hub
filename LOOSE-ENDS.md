@@ -114,3 +114,26 @@ The biggest unlock on the board — preinstall/bless the club, trust the
 club's signing key as a "friends ring," or ship a privileged one-tap
 installer. Fully written up in ROADMAP.md ("The Sol:OS card"). Needs a
 conversation inside Daylight, not code.
+
+## 7. One-tap installs leave apps permission-less (field-tested 2026-07-11)
+
+Daylight Keys arrived on Anjan's DC-1 via the Clubhouse's one-tap install
+and sat there with NO permissions: the mic was dead (voice snip labels
+failed silently), brightness writes were rejected (appops logged the
+refusals), the dog-ear's timer notifications would never have fired.
+Android forbids one app granting another permissions, so the Clubhouse
+cannot fix this alone.
+
+**Plan A (fundamental):** Sol:OS preinstalls club apps with default
+grants via the priv-app allowlist — part of loose end #6's conversation.
+
+**Plan B (do this regardless):** the install wizard's LAST step should
+open the freshly installed app once — "open it now so it can ask for
+what it needs" — so the app's own permission prompts fire while the
+friend is still standing there. Also: shelve cards' afterInstall text
+should stay honest about which features die without which prompt.
+
+For Anjan's own tablets: `dc1-keys/provision.sh` grants everything over
+USB in one command (mic, notifications, calendar, modify-settings).
+
+— desktop session, 2026-07-11, after the 5am field test
