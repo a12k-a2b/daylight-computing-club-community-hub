@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lofi — the lab</title>
+<meta name="description" content="Experimental sounds: solfeggio tones, noise colors, entrainment pulses. Made for the Daylight DC-1.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<meta name="theme-color" content="#ffffff">
+<link rel="stylesheet" href="lofi.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="mark">
+    <svg viewBox="0 0 48 48" width="44" height="44" aria-hidden="true">
+      <circle cx="24" cy="20" r="10" fill="none" stroke="#000" stroke-width="3"/>
+      <circle cx="24" cy="20" r="3" fill="#000"/>
+      <path d="M6 35 q6 -5 12 0 t12 0 t12 0" fill="none" stroke="#000" stroke-width="3"/>
+      <path d="M6 42 q6 -5 12 0 t12 0 t12 0" fill="none" stroke="#000" stroke-width="3"/>
+    </svg>
+    <div>
+      <h1>The Lab</h1>
+      <p class="tagline">experimental sounds — some science, some folklore, all quiet</p>
+    </div>
+  </div>
+  <a class="lab-link" href="./">← back to Lofi</a>
+</header>
+
+<main class="lab-wrap">
+
+  <p class="lab-intro">One sound at a time; tap a tile to start it, tap again to
+  stop. An honest word on each shelf: <em>noise</em> has the best evidence
+  (it masks the room — that's real and well studied). <em>Pulses</em> are
+  brainwave-entrainment territory — promising small studies, not settled
+  science; unlike the binaural undertones in the main app, they work on
+  speakers. <em>Solfeggio</em> is beloved folklore — if the tones help you,
+  it's probably the listening that helps, and that's fine. Take what works.</p>
+
+  <section class="lab-sec">
+    <h2>Noise <span class="lab-note">— the honest workhorse: masks the room, steadies the ear</span></h2>
+    <div class="lab-grid" id="grid-noise"></div>
+  </section>
+
+  <section class="lab-sec">
+    <h2>Pulses <span class="lab-note">— one soft tone, switched on and off at a brainwave rate</span></h2>
+    <div class="lab-grid" id="grid-pulse"></div>
+  </section>
+
+  <section class="lab-sec">
+    <h2>Solfeggio <span class="lab-note">— nine tones from the folklore, softened so they don't pierce</span></h2>
+    <div class="lab-grid" id="grid-solfeggio"></div>
+  </section>
+
+  <section class="lab-sec">
+    <h2>Textures <span class="lab-note">— other old comforts</span></h2>
+    <div class="lab-grid" id="grid-texture"></div>
+    <button id="strike" class="knob strike" hidden>strike the bowl again</button>
+  </section>
+
+</main>
+
+<footer class="player">
+  <button id="playpause" class="pp" aria-label="Stop" disabled>&#9654;</button>
+  <div class="now">
+    <p class="now-name" id="now-name">Pick a sound</p>
+    <p class="now-desc" id="now-desc">Everything here is generated live, like the main app.</p>
+  </div>
+  <div class="knobs">
+    <label class="vol">
+      <span>volume</span>
+      <input type="range" id="vol" min="0" max="100" value="70">
+    </label>
+  </div>
+</footer>
+
+<script src="engine.js"></script>
+<script src="lab.js"></script>
+</body>
+</html>
