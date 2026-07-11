@@ -13,6 +13,7 @@ webview-shell/
   build.sh                          ← point at your SDK + the club keystore
   res/drawable/icon.png             ← you supply: 192×192+, bold, grayscale-legible
   assets/                           ← your entire web app; index.html at the root
+  assets-extras/daylight-voice.js   ← copy into assets/ if the app uses voice
 ```
 
 ## Use it
@@ -51,11 +52,23 @@ Requirements: Java 11+, Android command-line tools with `build-tools;33.0.2`
 - No zoom controls, no autoplay gesture requirement, white background
   (no black flash on launch).
 
-## Known limits (design around or extend)
+## Voice
 
-- **`SpeechRecognition` does not exist in WebView.** Dictation via the
-  keyboard mic still works in any text field. A voice-driven app should stay
-  a PWA or add a `RecognizerIntent` JS bridge (see collisions.md §5).
+`SpeechRecognition` does not exist in WebView, so the shell ships a bridge:
+a `DaylightVoice` JavaScript interface that opens the system speech dialog
+(`RecognizerIntent` — it owns the mic permission, so the APK needs none).
+Copy `assets-extras/daylight-voice.js` into your `assets/`, include it, and
+call one API that works in both Chrome and the shell:
+
+```js
+if (daylightVoice.available()) {
+  const text = await daylightVoice.listen({ lang: 'en-US' });
+}
+```
+
+Keyboard-mic dictation into text fields works everywhere with zero code.
+
+## Known limits (design around or extend)
 - **`blob:` downloads** need a bridge: in JS, fetch the blob, base64 it, and
   call a `@JavascriptInterface` that writes via MediaStore — mirror the
   `data:` branch in `MainActivity.saveDataUrl`. Only needed if your app

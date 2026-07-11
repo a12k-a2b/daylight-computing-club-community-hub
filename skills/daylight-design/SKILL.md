@@ -31,7 +31,11 @@ deliberately — full algorithm and worked example in
 [references/grayscale-mapping.md](references/grayscale-mapping.md). The short version:
 
 1. Inventory every color in the app **by role** (primary action, danger,
-   success, selected, disabled, surface, borders, text tiers…).
+   success, selected, disabled, surface, borders, text tiers…). Then let
+   `scripts/daylight-map.mjs` compute optimized gray assignments — it
+   measures distinguishability *after* the panel's response curve and
+   flags pairs that need a second channel. For pictures and sprites,
+   `daylight-map.mjs image` decolorizes with the palette-aware algorithm.
 2. Map roles onto a small gray ramp — default five tones:
    `#000` ink · `#555` mid · `#999` faint · `#ccc` hairline/fill · `#fff` paper.
    Two states a user must tell apart at a glance get grays ≥2 ramp steps
@@ -84,9 +88,9 @@ a crammed desktop layout is untappable. The DC-1's CSS viewport is roughly
 - **Typing on glass is the DC-1's worst input; voice is its best.** Rank
   inputs: tap a choice > slider/stepper > dictation > typing. Replace
   free-text where a set of chips would do. Keep text inputs big, few, and
-  keyboard-smart (`inputmode`, `enterkeyhint`). For voice-driven features,
-  mind the container: Web Speech API works in Chrome/PWA, not in a WebView
-  shell (see daylight-port's collisions.md §5).
+  keyboard-smart (`inputmode`, `enterkeyhint`). For voice-driven features
+  use `daylightVoice.listen()` — daylight-port's shim + shell bridge make
+  one API work in both Chrome and the WebView shell (collisions.md §5).
 - Stylus (Wacom EMR, hover + pressure): a bonus channel, never a
   requirement. If the app draws or annotates: pointer events, pressure →
   stroke width, hover → precise cursor, palm rejection by ignoring touch

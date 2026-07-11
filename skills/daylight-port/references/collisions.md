@@ -82,15 +82,18 @@ The difference between "web page" and "app" is mostly here.
 - Dictation into any focused text field works everywhere via the keyboard's
   mic key. Zero code — this alone makes forms bearable.
 - The Web Speech API (`webkitSpeechRecognition`) works in **Chrome only —
-  it is absent in WebView**. A voice-driven app must either stay a PWA or
-  add ~30 lines to the shell: a `@JavascriptInterface` method that fires
-  `RecognizerIntent.ACTION_RECOGNIZE_SPEECH` and calls back into JS with the
-  transcript. Sketch:
-  ```java
-  @JavascriptInterface public void listen() {
-      startActivityForResult(new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH), VOICE);
-  }   // onActivityResult → web.evaluateJavascript("onVoice(" + json(results.get(0)) + ")", null)
+  it is absent in WebView**. The shell template closes this gap: it injects
+  a `DaylightVoice` Java bridge (system speech dialog via
+  `RecognizerIntent`, which owns the mic permission), and
+  `assets-extras/daylight-voice.js` wraps both worlds in one API:
+  ```js
+  if (daylightVoice.available()) {
+    const text = await daylightVoice.listen({ lang: 'en-US' });
+  }
   ```
+  Copy `daylight-voice.js` into `assets/`, include it, and voice features
+  work identically as a PWA and as a shell APK. If `available()` is false,
+  hide the mic button — the keyboard's dictation key still works.
 - `speechSynthesis` (text-to-speech) works in both Chrome and WebView.
 
 ## 6. Offline & storage — the DC-1 is Wi-Fi-only and leaves the house

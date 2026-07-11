@@ -10,7 +10,9 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.speech.RecognizerIntent;
 import android.util.Base64;
+import android.webkit.JavascriptInterface;
 import android.view.WindowManager;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
@@ -42,6 +44,7 @@ public class MainActivity extends Activity {
     private static final boolean KEEP_SCREEN_ON = false;
 
     private static final int PICK_FILE = 1;
+    private static final int VOICE = 2;
 
     private WebView web;
     private ValueCallback<Uri[]> pendingFileChooser;
@@ -131,9 +134,46 @@ public class MainActivity extends Activity {
             }
         });
 
+        // Voice bridge: the Web Speech API (SpeechRecognition) doesn't exist
+        // in WebView, so the shell exposes the system recognizer instead.
+        // Pair with daylight-voice.js in assets/ for one API in both worlds.
+        web.addJavascriptInterface(new VoiceBridge(), "DaylightVoice");
+
         setContentView(web);
         if (state != null) web.restoreState(state);
         else web.loadUrl(START_URL);
+    }
+
+    private class VoiceBridge {
+        @JavascriptInterface
+        public boolean available() {
+            return new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH)
+                    .resolveActivity(getPackageManager()) != null;
+        }
+
+        /** Opens the system speech dialog (it owns the mic permission), then
+         *  calls window.__daylightVoiceResult(transcript, error) in the page. */
+        @JavascriptInterface
+        public void listen(String lang) {
+            Intent i = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+            i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
+                    RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+            if (lang != null && !lang.isEmpty())
+                i.putExtra(RecognizerIntent.EXTRA_LANGUAGE, lang);
+            runOnUiThread(() -> {
+                try {
+                    startActivityForResult(i, VOICE);
+                } catch (Exception e) {
+                    voiceResult(null, "no speech recognizer on this device");
+                }
+            });
+        }
+    }
+
+    private void voiceResult(String transcript, String error) {
+        String t = transcript == null ? "null" : org.json.JSONObject.quote(transcript);
+        String e = error == null ? "null" : org.json.JSONObject.quote(error);
+        web.evaluateJavascript("window.__daylightVoiceResult && window.__daylightVoiceResult(" + t + "," + e + ")", null);
     }
 
     /** data:[<mime>][;base64],<payload> → a real file in Downloads. */
@@ -161,6 +201,11 @@ public class MainActivity extends Activity {
             pendingFileChooser.onReceiveValue(
                     WebChromeClient.FileChooserParams.parseResult(result, data));
             pendingFileChooser = null;
+        } else if (code == VOICE) {
+            java.util.ArrayList<String> r = data == null ? null
+                    : data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
+            if (result == RESULT_OK && r != null && !r.isEmpty()) voiceResult(r.get(0), null);
+            else voiceResult(null, "cancelled");
         } else {
             super.onActivityResult(code, result, data);
         }

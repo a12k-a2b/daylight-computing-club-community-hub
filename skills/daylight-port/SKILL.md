@@ -86,11 +86,12 @@ device.
    `file://` — ES modules and fetch break), external links opened in Chrome,
    back button = history back, file pickers and downloads actually wired up
    (by default they do *nothing* — the classic "button is dead" jank).
-3. Know the shell's one big limitation: **the Web Speech API
-   (`SpeechRecognition`) does not work inside WebView** — only in Chrome.
-   Keyboard-mic dictation into text fields still works everywhere. A
-   voice-*driven* app should stay a PWA, or the shell needs a small
-   `RecognizerIntent` bridge (sketch in collisions.md §5).
+3. Voice: the Web Speech API (`SpeechRecognition`) doesn't exist inside
+   WebView, so the shell ships a `RecognizerIntent` bridge plus a JS shim
+   (`assets-extras/daylight-voice.js`) giving apps **one voice API that
+   works in both Chrome and the shell**. Copy the shim into `assets/` for
+   any app with voice features; keyboard-mic dictation works everywhere
+   regardless.
 4. Fix the web↔Android collisions:
    [references/collisions.md](references/collisions.md)
 5. Build, then sign with the club key and shelve as `type: "apk"`.

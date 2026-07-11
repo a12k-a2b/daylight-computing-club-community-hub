@@ -4,6 +4,16 @@ Naive desaturation fails because hue carries meaning that luminance doesn't:
 `filter: grayscale(1)` turns a red delete button and a green save button
 into twins (~the same mid-gray). Map by **role**, not by pixel.
 
+**Tooling**: `scripts/daylight-map.mjs` automates steps 3 and 5 — it takes
+the palette (hex=role pairs), compares colors in OKLab with a
+Helmholtz–Kohlrausch lift (vivid colors *look* brighter than their
+luminance), and optimizes gray assignments in panel-effective space, so
+"distinguishable" is measured after the DC-1's shadow-crushing curve.
+`daylight-map.mjs image in.png out.png` decolorizes pictures: flat-color
+art gets palette-aware spreading (red/green/blue stay apart), photos get a
+global apparent-lightness mapping. Run it; then do steps 2 and 4 — the
+judgment calls — yourself.
+
 ## Step 1 — inventory colors by role
 
 Grep the styles (CSS custom properties, Tailwind config, theme files) and
