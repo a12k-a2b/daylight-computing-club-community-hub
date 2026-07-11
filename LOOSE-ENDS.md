@@ -136,4 +136,12 @@ should stay honest about which features die without which prompt.
 For Anjan's own tablets: `dc1-keys/provision.sh` grants everything over
 USB in one command (mic, notifications, calendar, modify-settings).
 
+**Also bundle into the same Sol:OS preinstall ask:** zero-tap cloud
+backups. Note Overlay mirrors backups to a user-picked cloud folder
+(Drive/Dropbox via the system picker — the Android-permitted floor is
+one 15-second choice, once). A preinstalled/privileged build could set
+that up silently, so a brand-new tablet backs up to the owner's cloud
+from day one with literally zero taps. Same conversation, same ask
+list: default permission grants + default backup destination.
+
 — desktop session, 2026-07-11, after the 5am field test
