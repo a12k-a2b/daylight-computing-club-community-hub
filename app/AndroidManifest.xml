@@ -28,6 +28,10 @@
         android:usesPermissionFlags="neverForLocation" />
     <uses-permission android:name="android.permission.BLUETOOTH_SCAN"
         android:usesPermissionFlags="neverForLocation" />
+    <!-- Android 11+ package visibility: the media card names whatever app
+         is playing and re-inks its action icons — any app, not a fixed
+         list. Sideloaded/priv-app, so the Play-policy caveat is moot. -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 
     <!-- tier 2 -->
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
@@ -100,6 +104,7 @@
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
     </application>

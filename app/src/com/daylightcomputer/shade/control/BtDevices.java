@@ -57,6 +57,15 @@ public final class BtDevices {
         } catch (Throwable t) { return "device"; }
     }
 
+    /** Nameless finds are neighborhood BLE noise (randomized MACs);
+     *  anything actually in pairing mode broadcasts a name. */
+    public static boolean hasName(BluetoothDevice d) {
+        try {
+            String n = d.getName();
+            return n != null && !n.trim().isEmpty();
+        } catch (Throwable t) { return false; }
+    }
+
     public static boolean startDiscovery(Context c) {
         try {
             BluetoothAdapter a = adapter(c);

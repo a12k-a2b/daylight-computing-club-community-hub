@@ -46,6 +46,16 @@ public final class WifiNets {
         try { wm(c).startScan(); } catch (Throwable t) { Log.w(TAG, "startScan: " + t); }
     }
 
+    /** Whether this install may read scan results at all. Android 13 keeps
+     *  them location-gated and neverForLocation NEARBY_WIFI_DEVICES is
+     *  explicitly excluded from that gate — the service just hands
+     *  sideloads an empty list (verified on a real DC-1, location off:
+     *  "Permission violation - getScanResults not allowed"). The blessed
+     *  build's NETWORK_SETTINGS is the carve-out the stock picker uses. */
+    public static boolean canListNetworks(Context c) {
+        return Caps.networkSettings(c);
+    }
+
     /** Cached scan results, deduped per SSID (strongest kept), best first. */
     public static List<ScanResult> results(Context c) {
         List<ScanResult> out = new ArrayList<>();

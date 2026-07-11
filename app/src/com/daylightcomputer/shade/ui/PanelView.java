@@ -153,9 +153,11 @@ public class PanelView extends FrameLayout {
         col.addView(brightness, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, Ui.dp(c, 60)));
 
+        // slider runs amber→white left-to-right, matching the stock shade
+        // (and "right = more light" on both sliders), so position = 1 − warmth
         warmth = new InkSlider(c, InkSlider.EndGlyphs.WARMTH);
         warmth.setListener((v, fromUser) -> {
-            if (fromUser && throttleOk()) Warmth.set(c, v);
+            if (fromUser && throttleOk()) Warmth.set(c, 1f - v);
         });
         col.addView(warmth, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, Ui.dp(c, 60)));
@@ -432,7 +434,7 @@ public class PanelView extends FrameLayout {
         if (Brightness.available(c)) brightness.setValue(Brightness.get(c));
         warmth.setSliderEnabled(Warmth.available(c),
                 "warmth needs its Sol:OS hookup — see shade setup");
-        if (Warmth.available(c)) warmth.setValue(Warmth.get(c));
+        if (Warmth.available(c)) warmth.setValue(1f - Warmth.get(c));
 
         refreshTiles();
         refreshMedia();
@@ -526,20 +528,23 @@ public class PanelView extends FrameLayout {
         }
 
         List<StatusBarNotification> all = ShadeNLService.current();
-        int shown = 0; boolean anyClearable = false;
+        int shown = 0, listed = 0; boolean anyClearable = false;
         for (StatusBarNotification sbn : all) {
+            // the shade's own plumbing ("standing by") is not news
+            if (c.getPackageName().equals(sbn.getPackageName())) continue;
             CharSequence title = sbn.getNotification().extras
                     .getCharSequence(Notification.EXTRA_TITLE);
             CharSequence text = sbn.getNotification().extras
                     .getCharSequence(Notification.EXTRA_TEXT);
             if (title == null && text == null) continue;
+            listed++;
             if (sbn.isClearable()) anyClearable = true;
-            if (shown >= 6) continue; // keep counting clearables, stop adding rows
+            if (shown >= 6) continue; // keep counting, stop adding rows
             notifList.addView(notifRow(c, sbn, title, text));
             shown++;
         }
-        notifCount.setText(all.isEmpty() ? "all quiet"
-                : "notifications · " + all.size());
+        notifCount.setText(listed == 0 ? "all quiet"
+                : "notifications · " + listed);
         clearAll.setVisibility(anyClearable ? VISIBLE : GONE);
     }
 

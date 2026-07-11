@@ -147,10 +147,11 @@ public class MainActivity extends Activity {
         section("warmth slider hookup");
         String backend = Warmth.backendName(this);
         note(backend.isEmpty()
-                ? "Not hooked up yet. The DC-1’s amber backlight is Daylight hardware; "
-                + "once the platform team names the setting it writes, the slider drives "
-                + "it directly. Until then, granting secure settings (above) enables a "
-                + "night-light stand-in."
+                ? "Not hooked up yet. The amber backlight lives behind the "
+                + "screen_brightness_amber_rate setting, which Android only lets "
+                + "system apps write — the Sol:OS build drives it directly. On a "
+                + "sideload, granting secure settings (above) enables a night-light "
+                + "stand-in."
                 : "Active backend: " + backend + ".");
     }
 
