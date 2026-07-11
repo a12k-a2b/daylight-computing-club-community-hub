@@ -29,6 +29,12 @@ AOSP 13) · APK: `shade/dist/daylight-shade.apk` on branch
 
 ## 1. Prerequisites
 
+0. **Claim the glass.** On Anjan's Mac several sessions share the DC-1:
+   run `~/code/dc1-glass claim "shade-test"` first (exit 0 = yours; if
+   busy, wait — never drive a tablet someone else holds), `touch` it
+   between long stages, `release` the moment device work ends. The first
+   run of this protocol predated the rule and five sessions collided —
+   sleeping screens and stray taps mid-test. Don't repeat that.
 1. `adb` on PATH. If missing: macOS `brew install android-platform-tools`;
    Debian/Ubuntu `sudo apt-get install android-sdk-platform-tools` (or
    download platform-tools from dl.google.com/android/repository/).
