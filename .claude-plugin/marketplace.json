@@ -1,0 +1,22 @@
+{
+  "name": "daylight-computer-club",
+  "owner": {
+    "name": "Daylight Computer Club",
+    "url": "https://daylightcomputer.club"
+  },
+  "metadata": {
+    "description": "Skills from the Daylight Computer Club — teach your AI to make apps belong on the DC-1 tablet.",
+    "version": "0.1.0"
+  },
+  "plugins": [
+    {
+      "name": "daylight-ify",
+      "source": "./",
+      "description": "Port, redesign, preview, and teach: four skills plus working tools (DC-1 simulator/auditor, color→grayscale mapper, icon generator, collision tests, WebView shell template) that turn any web app into something at home on the Daylight DC-1's grayscale reflective screen.",
+      "version": "0.1.0",
+      "author": { "name": "Daylight Computer Club" },
+      "homepage": "https://daylightcomputer.club",
+      "keywords": ["daylight", "dc-1", "e-paper", "grayscale", "tablet", "android", "pwa"]
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "_": "Canonical Daylight DC-1 facts. Every tool in the skill pack reads this file; correct it here and the whole pack recalibrates. Fields marked measured:false are educated defaults awaiting a reading from a real device — see site/calibrate.html.",
+  "device": {
+    "name": "Daylight DC-1",
+    "os": "Android 13 (Sol:OS)",
+    "soc": "MediaTek Helio G99",
+    "ram_gb": 8,
+    "network": "wifi-only",
+    "camera": false,
+    "stylus": "Wacom EMR (hover + pressure)"
+  },
+  "panel": {
+    "diagonal_in": 10.5,
+    "resolution": [1600, 1200],
+    "aspect": "4:3",
+    "ppi": 190,
+    "refresh_hz": 60,
+    "type": "monochrome reflective LCD (LivePaper)",
+    "backlight": "amber (blue-free)",
+    "gray_levels_driven": 256,
+    "gray_levels_practical": { "value": 12, "measured": false, "note": "eyes resolve ~9-16 in ambient light; count on calibrate.html" }
+  },
+  "viewport": {
+    "devicePixelRatio": { "value": 1.25, "measured": false, "note": "read from calibrate.html on a real DC-1" },
+    "css_landscape": [1280, 960],
+    "css_portrait": [960, 1280]
+  },
+  "curve": {
+    "_": "LivePaper simulation: luminance -> shadow-crushing gamma -> compressed range -> paper tint. Tuned by eye, not measured.",
+    "day":   { "gamma": 1.35, "floor": 48, "ceil": 228, "tint": [1.0, 0.975, 0.90], "measured": false },
+    "night": { "gamma": 1.45, "floor": 40, "ceil": 200, "tint": [1.0, 0.72, 0.38], "measured": false }
+  },
+  "ramp": {
+    "_": "the default five-tone UI ramp",
+    "ink": "#000000", "mid": "#555555", "faint": "#999999", "hairline": "#cccccc", "paper": "#ffffff"
+  },
+  "hk_lift": { "value": 0.18, "measured": false, "note": "Helmholtz-Kohlrausch chroma-to-lightness factor used by daylight-map" },
+  "input": { "min_touch_target_css_px": 48, "min_body_font_css_px": 16 }
+}

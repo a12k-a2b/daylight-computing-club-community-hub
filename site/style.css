@@ -12,7 +12,12 @@
 
 * { box-sizing: border-box; }
 
-html { -webkit-text-size-adjust: 100%; }
+html {
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;      /* no double-tap zoom surprises */
+}
+
+html, body { overscroll-behavior-y: none; }  /* no pull-to-refresh state loss */
 
 body {
   margin: 0;

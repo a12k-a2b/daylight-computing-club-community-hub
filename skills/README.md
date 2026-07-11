@@ -22,15 +22,33 @@ copy, remix — like everything in the club.
 Typical order: **port → design → teach**, running **preview** after every
 visual pass.
 
+The tools, at a glance: `daylight-preview/scripts/dc1-preview.mjs` (see it
+as the DC-1 will show it + audits), `daylight-port/scripts/collision-tests.mjs`
+(the port checklist as an executable harness), `daylight-design/scripts/daylight-map.mjs`
+(palette & image color→grayscale mapping), `daylight-design/scripts/daylight-icon.mjs`
+(grayscale-legible launcher icon set from a glyph).
+
 ## Using them
 
 Any of these works:
 
+- **One command (Claude Code plugin)**:
+  `/plugin marketplace add a12k-a2b/daylight-computing-club-community-hub`
+  then `/plugin install daylight-ify@daylight-computer-club`.
 - **Copy into your project**: `cp -r skills/daylight-* your-app/.claude/skills/`
   — Claude Code picks them up automatically.
 - **Copy for all your projects**: into `~/.claude/skills/`.
 - **No install at all**: point any capable agent at a skill file —
   "read skills/daylight-port/SKILL.md and apply it to this app."
+
+## The shared facts file
+
+`daylight-facts.json` is the single source of device truth (panel, viewport,
+simulation curve) — every tool reads it, with sane fallbacks if a script is
+copied out alone. Several values are educated defaults awaiting a reading
+from a real DC-1: open **https://daylightcomputer.club/calibrate.html** on
+the tablet, tap "copy my readings", and send them back. One edit here
+recalibrates the entire pack.
 
 ## Remixing
 

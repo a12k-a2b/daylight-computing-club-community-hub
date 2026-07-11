@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calibrate — Daylight Computer Club</title>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+  /* page-local bits, following the house rules: grayscale, real borders */
+  .readout {
+    font-family: ui-monospace, 'Courier New', monospace;
+    font-size: 34px;
+    border: 2px solid #000;
+    padding: 16px 20px;
+    margin: 12px 0;
+  }
+  .ramp { display: flex; border: 2px solid #000; height: 72px; }
+  .ramp div { flex: 1; }
+  .pairs { display: flex; flex-wrap: wrap; gap: 16px; margin: 12px 0; }
+  .pair { border: 2px solid #000; }
+  .pair .halves { display: flex; width: 132px; height: 66px; }
+  .pair .halves div { flex: 1; }
+  .pair p { margin: 0; text-align: center; font-size: 16px; padding: 6px 0; border-top: 2px solid #000; }
+  .textsample p { margin: 8px 0; font-size: 20px; }
+  button.big {
+    display: block; width: 100%; min-height: 56px; margin: 16px 0;
+    background: #000; color: #fff; border: 2px solid #000;
+    font-family: Georgia, serif; font-size: 20px;
+  }
+  ol li { margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="club">
+    <a class="club-mark" href="./">
+      <img src="icons/icon-192.png" alt="">
+      <h1>Calibrating your Daylight</h1>
+    </a>
+    <p class="club-tagline">Ten minutes with your DC-1 makes every tool in the club's kitchen more accurate.</p>
+  </header>
+
+  <p>This page measures what your tablet reports about itself, and asks your
+  eyes four questions no simulation can answer. Do it twice if you can:
+  once in <strong>daylight</strong> (backlight off) and once at
+  <strong>night</strong> (amber backlight on).</p>
+
+  <div class="card">
+    <h2>1 · What the browser reports</h2>
+    <div class="readout" id="numbers">measuring…</div>
+    <p class="muted">These numbers set the geometry every preview tool uses.</p>
+  </div>
+
+  <div class="card">
+    <h2>2 · Count the bands</h2>
+    <p>This bar has <strong>16 steps</strong> from black to white. How many
+    distinct bands can you actually see?</p>
+    <div class="ramp" id="ramp16"></div>
+  </div>
+
+  <div class="card">
+    <h2>3 · The dark end</h2>
+    <p>Each box is split in half, two different dark grays. For each letter:
+    can you see the split line?</p>
+    <div class="pairs" id="darkpairs"></div>
+  </div>
+
+  <div class="card">
+    <h2>4 · Reading grays</h2>
+    <div class="textsample">
+      <p style="color:#555">[A] Text in #555 — secondary text uses this gray.</p>
+      <p style="color:#767676">[B] Text in #767676 — passes contrast rules on a lit monitor.</p>
+      <p style="color:#999">[C] Text in #999 — the pack currently bans this for body text.</p>
+    </div>
+    <p>Which of A, B, C are comfortable to read?</p>
+  </div>
+
+  <div class="card">
+    <h2>Send it to the kitchen</h2>
+    <ol>
+      <li>Tap the button — it copies the numbers plus a short fill-in form.</li>
+      <li>Paste into a text or email to Anjan (or a GitHub issue on the club repo).</li>
+      <li>Answers land in <span style="font-family:ui-monospace,monospace">skills/daylight-facts.json</span>, and every tool recalibrates.</li>
+    </ol>
+    <button class="big" id="copy">Copy my readings</button>
+    <p class="muted" id="copied"></p>
+  </div>
+</div>
+
+<script>
+  // 1 · geometry readout
+  var lines = [
+    'devicePixelRatio: ' + window.devicePixelRatio,
+    'innerWidth × innerHeight: ' + window.innerWidth + ' × ' + window.innerHeight,
+    'screen.width × screen.height: ' + screen.width + ' × ' + screen.height
+  ];
+  document.getElementById('numbers').innerHTML = lines.join('<br>');
+
+  // 2 · 16-step ramp
+  var ramp = document.getElementById('ramp16');
+  for (var i = 0; i < 16; i++) {
+    var v = Math.round(i * 255 / 15);
+    var d = document.createElement('div');
+    d.style.background = 'rgb(' + v + ',' + v + ',' + v + ')';
+    ramp.appendChild(d);
+  }
+
+  // 3 · dark-end pairs
+  var steps = ['#000000', '#111111', '#222222', '#333333', '#444444', '#555555'];
+  var letters = 'ABCDE';
+  var pairs = document.getElementById('darkpairs');
+  for (var p = 0; p < 5; p++) {
+    var box = document.createElement('div');
+    box.className = 'pair';
+    box.innerHTML = '<div class="halves"><div style="background:' + steps[p] + '"></div>' +
+      '<div style="background:' + steps[p + 1] + '"></div></div>' +
+      '<p>' + letters[p] + '</p>';
+    pairs.appendChild(box);
+  }
+
+  // report
+  var report = [
+    'DC-1 calibration readings — ' + new Date().toISOString().slice(0, 10),
+    '',
+    lines.join('\n'),
+    '',
+    'Light when I looked: (daylight / amber backlight / dim room)',
+    '2. Bands I can count in the 16-step bar: ___ of 16',
+    '3. Dark pairs where I can see the split: (A B C D E) → ___',
+    '4. Reading grays that are comfortable: (A=#555 B=#767676 C=#999) → ___'
+  ].join('\n');
+
+  document.getElementById('copy').addEventListener('click', function () {
+    function done() { document.getElementById('copied').textContent = 'Copied — paste it into a text or email to Anjan.'; }
+    if (navigator.clipboard) navigator.clipboard.writeText(report).then(done);
+    else {
+      var ta = document.createElement('textarea');
+      ta.value = report; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); ta.remove(); done();
+    }
+  });
+</script>
+</body>
+</html>

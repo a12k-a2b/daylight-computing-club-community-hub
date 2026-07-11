@@ -25,8 +25,28 @@
 // somewhere unusual, set DC1_CHROMIUM=/path/to/chromium.
 
 import { chromium } from 'playwright';
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// Canonical device constants live in the pack's daylight-facts.json —
+// correct THAT file (ideally from a real device via site/calibrate.html)
+// and every tool recalibrates. Fallback defaults keep a lone copy of this
+// script working.
+function loadFacts() {
+  for (const start of [dirname(fileURLToPath(import.meta.url)), process.cwd()]) {
+    let dir = start;
+    for (let i = 0; i < 6; i++) {
+      const f = join(dir, 'daylight-facts.json');
+      if (existsSync(f)) { try { return JSON.parse(readFileSync(f, 'utf8')); } catch { /* fall through */ } }
+      const up = dirname(dir);
+      if (up === dir) break;
+      dir = up;
+    }
+  }
+  return null;
+}
+const FACTS = loadFacts();
 
 // ---------- CLI ----------
 
@@ -42,13 +62,14 @@ const opt = name => {
 };
 const outDir = typeof opt('out') === 'string' ? opt('out') : './dc1-preview';
 const portrait = args.includes('--portrait');
-const dpr = Number(opt('dpr')) || 1.25;
+const dpr = Number(opt('dpr')) || FACTS?.viewport?.devicePixelRatio?.value || 1.25;
 const posterize = args.includes('--posterize');
 const fullPage = args.includes('--full');
 const strict = args.includes('--strict');
 
 // DC-1 panel: 1600×1200. CSS viewport = panel / dpr.
-const panel = portrait ? { w: 1200, h: 1600 } : { w: 1600, h: 1200 };
+const [pw, ph] = FACTS?.panel?.resolution ?? [1600, 1200];
+const panel = portrait ? { w: ph, h: pw } : { w: pw, h: ph };
 const viewport = { width: Math.round(panel.w / dpr), height: Math.round(panel.h / dpr) };
 
 // ---------- LivePaper simulation curve ----------
@@ -58,9 +79,12 @@ const viewport = { width: Math.round(panel.w / dpr), height: Math.round(panel.h 
 // compressed output range → paper tint. Numbers are tuned by eye against the
 // device, not measured; treat them as a good pessimist, not ground truth.
 const CURVES = {
-  day:   { gamma: 1.35, floor: 48, ceil: 228, tint: [1.0, 0.975, 0.90] },  // ambient light, cream paper
-  night: { gamma: 1.45, floor: 40, ceil: 200, tint: [1.0, 0.72, 0.38] },   // amber backlight, blue-free
+  day:   FACTS?.curve?.day   ?? { gamma: 1.35, floor: 48, ceil: 228, tint: [1.0, 0.975, 0.90] },  // ambient light, cream paper
+  night: FACTS?.curve?.night ?? { gamma: 1.45, floor: 40, ceil: 200, tint: [1.0, 0.72, 0.38] },   // amber backlight, blue-free
 };
+const PRACTICAL_LEVELS = FACTS?.panel?.gray_levels_practical?.value ?? 12;
+const MIN_TARGET = FACTS?.input?.min_touch_target_css_px ?? 48;
+const MIN_FONT = FACTS?.input?.min_body_font_css_px ?? 16;
 
 function simulateGray(r, g, b, curve) {
   const lum = 0.2126 * r + 0.7152 * g + 0.0722 * b;
@@ -180,7 +204,7 @@ const audit = await page.evaluate(({ minTarget, minFont }) => {
   const viewportMeta = !!document.querySelector('meta[name=viewport]');
 
   return { smallTargets, inlineProseLinks, tinyText, textPairs, overflowX, viewportMeta };
-}, { minTarget: 48, minFont: 16 });
+}, { minTarget: MIN_TARGET, minFont: MIN_FONT });
 
 const lowContrast = [];
 const seenPair = new Set();
@@ -231,7 +255,7 @@ async function transform(pngBuffer, curve, levels) {
 
 writeFileSync(join(outDir, 'dc1-day.png'), await transform(shot, CURVES.day));
 writeFileSync(join(outDir, 'dc1-night.png'), await transform(shot, CURVES.night));
-if (posterize) writeFileSync(join(outDir, 'dc1-levels.png'), await transform(shot, CURVES.day, 12));
+if (posterize) writeFileSync(join(outDir, 'dc1-levels.png'), await transform(shot, CURVES.day, PRACTICAL_LEVELS));
 
 await browser.close();
 

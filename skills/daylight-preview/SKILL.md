@@ -68,12 +68,14 @@ The curve is a tuned pessimist, not a measurement. Two facts to calibrate
 against a real device when you can:
 
 - **devicePixelRatio**: the script defaults to 1.25 (panel 1600×1200 ÷ 1.25 =
-  1280×960 CSS px landscape). Measure the real value once in Chrome on a DC-1
-  — `window.devicePixelRatio` in devtools or a bookmarklet — and pass
-  `--dpr` accordingly. Update this skill's default if you learn better.
+  1280×960 CSS px landscape). Open the club's calibration page
+  (`https://daylightcomputer.club/calibrate.html`) once on a real DC-1 —
+  it reads out the true value and shows gray-step patterns to count.
 - **The gray floor**: the panel shows ~256 levels but eyes resolve roughly
   9–16 in ambient light, fewest in the dark end. `--posterize` approximates
-  this; the real panel is the judge.
+  this; the real panel (and the calibration page) is the judge.
+- Both land in `skills/daylight-facts.json` — the shared facts file every
+  tool reads. Correct it there once; the whole pack recalibrates.
 
 Simulation limits worth remembering: it can't show glare, paper texture,
 ambient-light contrast swings, or touch latency; the contrast audit assumes

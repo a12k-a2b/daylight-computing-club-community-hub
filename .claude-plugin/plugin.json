@@ -1,0 +1,6 @@
+{
+  "name": "daylight-ify",
+  "description": "Make any app belong on the Daylight DC-1: daylight-port (packaging + web↔Android collisions), daylight-design (grayscale, tablet layout, voice), daylight-preview (simulator + audits), daylight-teach (onboarding generator) — with working tools for each.",
+  "version": "0.1.0",
+  "author": { "name": "Daylight Computer Club", "url": "https://daylightcomputer.club" }
+}

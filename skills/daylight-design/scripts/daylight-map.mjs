@@ -28,7 +28,27 @@
 // and — where grayscale alone cannot carry a distinction — a concrete
 // suggestion for a second channel (inversion, weight, pattern, icon).
 
-import { readFileSync } from 'node:fs';
+import { readFileSync, existsSync } from 'node:fs';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// Device constants come from the pack's daylight-facts.json when present
+// (correct that file from a real device via site/calibrate.html and every
+// tool recalibrates); fallbacks keep a lone copy of this script working.
+function loadFacts() {
+  for (const start of [dirname(fileURLToPath(import.meta.url)), process.cwd()]) {
+    let dir = start;
+    for (let i = 0; i < 6; i++) {
+      const f = join(dir, 'daylight-facts.json');
+      if (existsSync(f)) { try { return JSON.parse(readFileSync(f, 'utf8')); } catch { /* fall through */ } }
+      const up = dirname(dir);
+      if (up === dir) break;
+      dir = up;
+    }
+  }
+  return null;
+}
+const FACTS = loadFacts();
 
 // ---------- sRGB ↔ OKLab (Björn Ottosson's constants) ----------
 
@@ -58,14 +78,14 @@ function rgbToOklab([r8, g8, b8]) {
 // to gray, honor the APPARENT lightness so a vivid mid-red doesn't land in
 // the same gray as a drab mid-gray-blue. K_HK is a pragmatic default —
 // tune against the research notes in ../references/.
-const K_HK = 0.18;
+const K_HK = FACTS?.hk_lift?.value ?? 0.18;
 function apparentL(lab) {
   const chroma = Math.hypot(lab.a, lab.b);
   return Math.min(1, lab.L + K_HK * chroma);
 }
 
 // ---------- the panel's response (same model as dc1-preview) ----------
-const PANEL = { gamma: 1.35, floor: 48, ceil: 228 };
+const PANEL = FACTS?.curve?.day ?? { gamma: 1.35, floor: 48, ceil: 228 };
 const panelGray = v => PANEL.floor + (PANEL.ceil - PANEL.floor) * Math.pow(v, PANEL.gamma); // v in 0..1
 function effContrast(v1, v2) { // WCAG ratio of two grays AS RENDERED
   const lin = v => {
@@ -354,7 +374,9 @@ for (let round = 0; round < 200; round++) {
 
 // ---------- optional snap to the club ramp ----------
 
-const RAMP = [0x00, 0x55, 0x99, 0xcc, 0xff].map(v => v / 255);
+const RAMP = (FACTS?.ramp
+  ? Object.entries(FACTS.ramp).filter(([k]) => k !== '_').map(([, hex]) => parseInt(hex.slice(1, 3), 16))
+  : [0x00, 0x55, 0x99, 0xcc, 0xff]).map(v => v / 255);
 let snapped = null;
 if (flag('ramp')) {
   snapped = g.map(v => RAMP.reduce((a, b) => Math.abs(b - v) < Math.abs(a - v) ? b : a));

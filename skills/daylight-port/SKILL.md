@@ -101,6 +101,10 @@ device.
 - Run **daylight-preview** (sibling skill) on every visual pass: grayscale
   simulation + audits for touch targets, effective contrast, tiny text,
   overflow, console errors.
+- Run `scripts/collision-tests.mjs <url>` — the checklist below as an
+  executable harness (rotation reflow, offline relaunch, back navigation,
+  overscroll/touch CSS, input hygiene), honest about what still needs a
+  real device.
 - Exercise the seams by hand or with Playwright: rotate (state must survive),
   background-and-return, airplane mode relaunch, back button from three
   screens deep (must not exit), a file upload and a download/export if the
