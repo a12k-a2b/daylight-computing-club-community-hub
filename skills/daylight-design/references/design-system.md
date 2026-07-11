@@ -119,6 +119,30 @@ flag it for promotion back into the system.
   `guidelines/*.html` (grayscale, night, high-contrast, elevation, type),
   `components/**`, `ui_kits/sol-os/`, `templates/sol-os-screen/`.
 
+## Validated against the pack's simulator (2026-07-11)
+
+The hand-calibrated values above were run through daylight-preview's
+LivePaper model, numerically and visually. Everything agrees:
+
+- The three brand grays sit 37–41 effective levels apart — clearly three
+  steps in the day simulation.
+- Text tiers land exactly on their designed roles: `#1A1A1A` on paper
+  9.2:1 (body), `#535353` 5.6:1 (body-capable secondary), `#858585` 3.3:1
+  (large/low-emphasis only — the model draws the same line the designers
+  drew). Pairs designed as near-equivalents (max ink vs primary ink,
+  surface vs paper) are the only ones that collapse.
+- The Night theme is legible and warm under the night curve, and turns to
+  mush under the day curve — as it should. **Judge each theme under its
+  intended light: light themes in `dc1-day.png`, dark themes in
+  `dc1-night.png`.**
+- The system's 12–14px meta/label sizes trip daylight-preview's tiny-text
+  audit. They are house-sanctioned **for metadata only**, tuned on real
+  hardware with the licensed faces — treat those flags as advisory for
+  meta/label roles, and keep ≥16px (18px with fallback fonts) for anything
+  meant to be *read*.
+
+Absolute confirmation still needs eyes on hardware: `site/calibrate.html`.
+
 ## Precedence, restated
 
 For club-made and Sol:OS-native dishes: this system, fully. For

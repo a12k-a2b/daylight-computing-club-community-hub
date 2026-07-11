@@ -38,7 +38,10 @@ Three images in the output directory:
   affordances, and state are still obvious, the design works.
 - `dc1-night.png` — the amber backlight at night: everything washes warm and
   contrast drops further. Anything relying on subtle gray distinctions dies
-  here first.
+  here first. If the app has a dark theme, judge it HERE (dark themes are
+  designed for the backlight and legitimately look muddy in the day
+  simulation) — and judge light themes in `dc1-day.png`. Each theme under
+  its intended light.
 
 And a report:
 
