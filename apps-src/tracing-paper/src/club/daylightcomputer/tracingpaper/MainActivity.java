@@ -1,0 +1,327 @@
+package club.daylightcomputer.tracingpaper;
+
+import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.graphics.Color;
+import android.graphics.Typeface;
+import android.graphics.drawable.GradientDrawable;
+import android.os.Build;
+import android.os.Bundle;
+import android.provider.Settings;
+import android.view.Gravity;
+import android.view.View;
+import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.Switch;
+import android.widget.TextView;
+import android.widget.Toast;
+
+/**
+ * The little home screen: turn the service on, learn the button, set the
+ * pen and backlight preferences, export everything. Big type, black on
+ * white, 2px borders — made for a monochrome reflective screen.
+ */
+public class MainActivity extends Activity {
+
+    private TextView status;
+    private TextView keyLabel;
+    private SharedPreferences prefs;
+
+    private final BroadcastReceiver calibrated = new BroadcastReceiver() {
+        @Override public void onReceive(Context c, Intent i) { refresh(); }
+    };
+
+    @Override
+    protected void onCreate(Bundle b) {
+        super.onCreate(b);
+        prefs = Prefs.get(this);
+
+        LinearLayout col = new LinearLayout(this);
+        col.setOrientation(LinearLayout.VERTICAL);
+        int p = dp(20);
+        col.setPadding(p, p, p, p);
+
+        TextView title = text("Tracing Paper", 30, true);
+        col.addView(title);
+        TextView sub = text("A sheet of glass over whatever you're reading. "
+                + "Press the top button, jot the thought, press it again — "
+                + "you never lost your place.", 17, false);
+        sub.setPadding(0, dp(6), 0, dp(14));
+        col.addView(sub);
+
+        status = text("", 18, true);
+        status.setPadding(dp(14), dp(14), dp(14), dp(14));
+        status.setBackground(border(false));
+        col.addView(status, fill());
+
+        col.addView(gap());
+        col.addView(bigButton("Turn the pad service on", v ->
+                startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))));
+        col.addView(gap());
+        col.addView(bigButton("Open the pad now", v -> {
+            if (!PadService.togglePad(this))
+                Toast.makeText(this, "Turn the pad service on first", Toast.LENGTH_SHORT).show();
+        }));
+
+        col.addView(sectionRule("The button"));
+        keyLabel = text("", 17, false);
+        col.addView(keyLabel);
+        col.addView(gap());
+        col.addView(bigButton("Re-learn the button", v -> {
+            if (PadService.instance == null) {
+                Toast.makeText(this, "Turn the pad service on first", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            prefs.edit().putLong(Prefs.K_CALIBRATE_UNTIL,
+                    System.currentTimeMillis() + 15000).apply();
+            Toast.makeText(this, "Now press the hardware button you want (15s)…",
+                    Toast.LENGTH_LONG).show();
+        }));
+
+        col.addView(sectionRule("How it writes"));
+        Switch penOnly = mkSwitch("Only the pen draws (rest your palm anywhere)",
+                prefs.getBoolean(Prefs.K_PEN_ONLY, false));
+        penOnly.setOnCheckedChangeListener((v, on) ->
+                prefs.edit().putBoolean(Prefs.K_PEN_ONLY, on).apply());
+        col.addView(penOnly);
+
+        TextView volNote = text("The volume keys are left alone on purpose — "
+                + "Daylight Keys owns those.", 15, false);
+        volNote.setTextColor(0xFF333333);
+        col.addView(volNote);
+
+        col.addView(sectionRule("Annotate the World — beta"));
+        TextView betaNote = text("Two experiments for writing over a live page. They're new — "
+                + "if either feels broken, switch it off and the pad is back to normal.", 15, false);
+        betaNote.setTextColor(0xFF333333);
+        col.addView(betaNote);
+        Switch flick = mkSwitch("Flick-through: finger flicks & taps pass through the glass "
+                + "to the app beneath (pen still draws; two fingers scroll your roll)",
+                prefs.getBoolean(Prefs.K_BETA_FLICK, false));
+        flick.setOnCheckedChangeListener((v, on) ->
+                prefs.edit().putBoolean(Prefs.K_BETA_FLICK, on).apply());
+        col.addView(flick);
+        Switch follow = mkSwitch("Follow the world: your roll scrolls in step with the app "
+                + "beneath (only works where apps report how far they scrolled)",
+                prefs.getBoolean(Prefs.K_BETA_FOLLOW, false));
+        follow.setOnCheckedChangeListener((v, on) ->
+                prefs.edit().putBoolean(Prefs.K_BETA_FOLLOW, on).apply());
+        col.addView(follow);
+
+        col.addView(sectionRule("Your notes"));
+        col.addView(bigButton("Export every page to PDF", v -> exportAll()));
+        col.addView(gap());
+        col.addView(bigButton("Back up notebooks now", v -> backupNow()));
+        col.addView(gap());
+        col.addView(bigButton("Restore from a backup file", v -> pickRestore()));
+        col.addView(gap());
+        TextView fine = text("Snapshots land in Pictures/Tracing Paper, PDFs in "
+                + "Download/Tracing Paper. Notes live only on this tablet — and once a day, "
+                + "when you put the pad away, everything is backed up to Download/Tracing "
+                + "Paper/Backups (the last seven are kept). Restore never overwrites: backup "
+                + "notebooks come back as additions. It reads Glassnote backups (.gn_2.json) "
+                + "too, so old notebooks can move in.\n\n"
+                + "On the glass: PEN, HILITE and ERASE to switch nibs (the pen's other end "
+                + "erases too) — tap the tool you're already holding for its size card; the "
+                + "eraser also picks STROKE (graze lines, lift to erase) or PIXEL. HILITE is "
+                + "a light-gray marker with a thin black ring so it still stands out on this "
+                + "screen. The pad opens at 80% opacity — paper enough to write on, world "
+                + "enough to remember where you are. Pages scroll past in one motion — drag "
+                + "with a finger (with pen-only on) or use ◀ ▶; CLEAR wipes a page (hold it "
+                + "to tear the page out). Your notebooks live under the ▾ button — each one "
+                + "gets its own paper: blank, lined, dots, or school. SNIP cuts a box out of "
+                + "whatever's on screen and pastes it on the glass, already selected — drag "
+                + "it, resize by a corner, tilt it by the ⟳ handle (it snaps straight when "
+                + "you're close). PICK re-selects a snip later. The GLASS slider sets how "
+                + "see-through the pad is, 0 to 100%. PEEK lets you scroll the page "
+                + "underneath without closing your notes. SNAP saves a picture of "
+                + "notes-over-page, and holding the top button snaps one too.", 15, false);
+        fine.setTextColor(0xFF333333);
+        col.addView(fine);
+
+        ScrollView sc = new ScrollView(this);
+        sc.setBackgroundColor(Color.WHITE);
+        sc.addView(col);
+        setContentView(sc);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        IntentFilter f = new IntentFilter(Prefs.CALIBRATED_ACTION);
+        if (Build.VERSION.SDK_INT >= 33)
+            registerReceiver(calibrated, f, Context.RECEIVER_NOT_EXPORTED);
+        else registerReceiver(calibrated, f);
+        refresh();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        try { unregisterReceiver(calibrated); } catch (Exception ignored) {}
+    }
+
+    private void refresh() {
+        boolean on = PadService.instance != null;
+        status.setText(on ? "Pad service: ON — the top button is listening"
+                : "Pad service: OFF — turn it on below, under Accessibility");
+        int key = prefs.getInt(Prefs.K_TOGGLE, Prefs.DEFAULT_TOGGLE);
+        keyLabel.setText("The pad opens with: " + PadService.keyName(key)
+                + (key == Prefs.DEFAULT_TOGGLE ? " (the DC-1's orange top button)" : ""));
+    }
+
+    private static final int PICK_BACKUP = 41;
+
+    private void backupNow() {
+        if (PadService.isShown()) {
+            Toast.makeText(this, "Put the pad away first (press the top button), then back up",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+        Toast.makeText(this, "Backing up…", Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            try {
+                String name = Backup.writeBackup(this, new NoteStore(this).load().books);
+                prefs.edit().putLong(Prefs.K_LAST_BACKUP, System.currentTimeMillis()).apply();
+                runOnUiThread(() -> Toast.makeText(this,
+                        "Saved " + name + " in Download/Tracing Paper/Backups",
+                        Toast.LENGTH_LONG).show());
+            } catch (Exception e) {
+                runOnUiThread(() -> Toast.makeText(this, "Backup failed",
+                        Toast.LENGTH_SHORT).show());
+            }
+        }).start();
+    }
+
+    private void pickRestore() {
+        if (PadService.isShown()) {
+            Toast.makeText(this, "Put the pad away first (press the top button), then restore",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+        Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        i.addCategory(Intent.CATEGORY_OPENABLE);
+        i.setType("*/*");
+        i.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"application/json",
+                "application/octet-stream", "text/plain"});
+        try {
+            startActivityForResult(i, PICK_BACKUP);
+        } catch (Exception e) {
+            Toast.makeText(this, "No file picker on this tablet?", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int req, int res, Intent data) {
+        super.onActivityResult(req, res, data);
+        if (req != PICK_BACKUP || res != RESULT_OK || data == null || data.getData() == null) return;
+        final android.net.Uri uri = data.getData();
+        Toast.makeText(this, "Restoring…", Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            try {
+                java.util.List<GlassPadView.Book> restored = Backup.read(this, uri);
+                NoteStore store = new NoteStore(this);
+                NoteStore.Loaded cur = store.load();
+                cur.books.addAll(restored); // append, never overwrite
+                store.saveAsync(cur.books, cur.cur);
+                PadService.dropPadIfHidden();
+                int pages = 0;
+                for (GlassPadView.Book b : restored) pages += b.pages.size();
+                final String msg = "Restored " + restored.size() + " notebook(s), "
+                        + pages + " page(s) — open the pad and tap the ▾ button";
+                runOnUiThread(() -> Toast.makeText(this, msg, Toast.LENGTH_LONG).show());
+            } catch (Exception e) {
+                runOnUiThread(() -> Toast.makeText(this,
+                        "Couldn't read that file as a backup", Toast.LENGTH_LONG).show());
+            }
+        }).start();
+    }
+
+    private void exportAll() {
+        Toast.makeText(this, "Making the PDF…", Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            try {
+                float aspect = (float) prefs.getInt(Prefs.K_CANVAS_W, 1200)
+                        / Math.max(1, prefs.getInt(Prefs.K_CANVAS_H, 1600));
+                String name = Exporter.exportPdf(this, new NoteStore(this).load().books, aspect);
+                runOnUiThread(() -> Toast.makeText(this,
+                        "Saved " + name + " in Download", Toast.LENGTH_LONG).show());
+            } catch (Exception e) {
+                runOnUiThread(() -> Toast.makeText(this,
+                        "PDF export failed", Toast.LENGTH_SHORT).show());
+            }
+        }).start();
+    }
+
+    // ------------------------------------------------------------ ui helpers
+
+    private TextView text(String s, int size, boolean bold) {
+        TextView t = new TextView(this);
+        t.setText(s);
+        t.setTextSize(size);
+        t.setTextColor(Color.BLACK);
+        if (bold) t.setTypeface(Typeface.DEFAULT_BOLD);
+        return t;
+    }
+
+    private TextView bigButton(String label, View.OnClickListener tap) {
+        TextView t = text(label, 18, true);
+        t.setGravity(Gravity.CENTER);
+        t.setMinHeight(dp(56));
+        t.setPadding(dp(16), dp(14), dp(16), dp(14));
+        t.setBackground(border(false));
+        t.setOnClickListener(tap);
+        return t;
+    }
+
+    private Switch mkSwitch(String label, boolean checked) {
+        Switch s = new Switch(this);
+        s.setText(label);
+        s.setChecked(checked);
+        s.setTextSize(17);
+        s.setTextColor(Color.BLACK);
+        s.setMinHeight(dp(56));
+        s.setPadding(0, dp(10), 0, dp(10));
+        return s;
+    }
+
+    private View sectionRule(String label) {
+        LinearLayout wrap = new LinearLayout(this);
+        wrap.setOrientation(LinearLayout.VERTICAL);
+        wrap.setPadding(0, dp(22), 0, dp(8));
+        View rule = new View(this);
+        rule.setBackgroundColor(Color.BLACK);
+        wrap.addView(rule, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, dp(2)));
+        TextView t = text(label, 20, true);
+        t.setPadding(0, dp(10), 0, 0);
+        wrap.addView(t);
+        return wrap;
+    }
+
+    private View gap() {
+        View v = new View(this);
+        v.setMinimumHeight(dp(10));
+        return v;
+    }
+
+    private LinearLayout.LayoutParams fill() {
+        return new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+    }
+
+    private GradientDrawable border(boolean filled) {
+        GradientDrawable g = new GradientDrawable();
+        g.setColor(filled ? Color.BLACK : Color.WHITE);
+        g.setStroke(dp(2), Color.BLACK);
+        return g;
+    }
+
+    private int dp(int v) {
+        return Math.round(v * getResources().getDisplayMetrics().density);
+    }
+}

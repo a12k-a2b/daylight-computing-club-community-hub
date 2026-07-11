@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="app_name">Tracing Paper</string>
+  <string name="service_label">Tracing Paper — glass pad</string>
+  <string name="service_desc">Tracing Paper uses this service to notice presses of the tablet\'s
+    hardware buttons (so the top button can open and close the glass pad), to draw the pad over
+    whatever you\'re reading, and — when you ask for a snapshot — to save a picture of the screen
+    with your notes on it. If you turn on the “Annotate the World” beta in the app, it also replays
+    your finger flicks as touches beneath the glass and listens for how far the app under it
+    scrolled. It never reads what\'s on your screen, and nothing leaves the tablet.</string>
+</resources>

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="club.daylightcomputer.tracingpaper"
+    android:versionCode="7"
+    android:versionName="1.5">
+
+  <uses-sdk android:minSdkVersion="30" android:targetSdkVersion="33"/>
+
+  <application
+      android:label="@string/app_name"
+      android:icon="@mipmap/ic_launcher"
+      android:theme="@style/AppTheme"
+      android:allowBackup="true">
+
+    <activity android:name=".MainActivity" android:exported="true">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="android.intent.category.LAUNCHER"/>
+      </intent-filter>
+    </activity>
+
+    <service android:name=".PadService"
+        android:label="@string/service_label"
+        android:exported="true"
+        android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+      <intent-filter>
+        <action android:name="android.accessibilityservice.AccessibilityService"/>
+      </intent-filter>
+      <meta-data android:name="android.accessibilityservice"
+          android:resource="@xml/pad_service_config"/>
+    </service>
+
+    <service android:name=".PadTile"
+        android:label="@string/app_name"
+        android:icon="@drawable/ic_glyph"
+        android:exported="true"
+        android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+      <intent-filter>
+        <action android:name="android.service.quicksettings.action.QS_TILE"/>
+      </intent-filter>
+    </service>
+
+  </application>
+</manifest>

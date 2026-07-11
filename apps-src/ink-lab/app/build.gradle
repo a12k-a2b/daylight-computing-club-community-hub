@@ -1,0 +1,42 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'club.daylightcomputer.inklab'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'club.daylightcomputer.inklab'
+        minSdk 30
+        targetSdk 33
+        versionCode 1
+        versionName '0.1-throwaway'
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+    lint {
+        abortOnError false
+    }
+}
+
+dependencies {
+    implementation 'androidx.ink:ink-authoring:1.0.0'
+    implementation 'androidx.ink:ink-rendering:1.0.0'
+    implementation 'androidx.ink:ink-strokes:1.0.0'
+    implementation 'androidx.ink:ink-brush:1.0.0'
+    implementation 'androidx.input:input-motionprediction:1.0.0'
+}

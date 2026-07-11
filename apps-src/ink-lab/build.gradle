@@ -1,0 +1,6 @@
+// Throwaway A/B latency rig — NOT a club dish. Needs Gradle because
+// androidx.ink is AndroidX + Kotlin; the club's real apps stay plain-Java.
+plugins {
+    id 'com.android.application' version '8.10.1' apply false
+    id 'org.jetbrains.kotlin.android' version '2.0.21' apply false
+}

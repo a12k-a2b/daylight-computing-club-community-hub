@@ -1,0 +1,75 @@
+name: Inspector — chaos monkey (data-loss hunt)
+
+# On demand only: builds a debuggable Tracing Paper, seeds a giant synthetic
+# library (dozens of notebooks, hundreds of pages, tens of thousands of
+# strokes, snips throughout), opens the pad via the hardware key, hammers it
+# with unthrottled random input, and then checks: no crashes billed to the
+# app, memory sane, and — the point — the notes file still parses cleanly.
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch or ref to test"
+        required: false
+        default: "claude/glassnote-solos-replication-ndtqry"
+      events:
+        description: "Monkey events"
+        required: false
+        default: "20000"
+
+permissions:
+  contents: read
+
+jobs:
+  chaos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Build a debuggable Tracing Paper
+        run: |
+          export ANDROID_SDK="$ANDROID_HOME"
+          BT_DIR=$(ls -d "$ANDROID_HOME"/build-tools/35.* 2>/dev/null | tail -1)
+          if [ -z "$BT_DIR" ]; then yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "build-tools;35.0.0"; fi
+          PLAT="$ANDROID_HOME/platforms/android-33"
+          if [ ! -d "$PLAT" ]; then yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-33"; fi
+          CHAOS=1 DCC_KEYSTORE="$PWD/signing/dcc.keystore" bash apps-src/tracing-paper/build.sh
+
+      - name: Enable KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Seed, open, and hammer it on an emulated tablet
+        continue-on-error: true
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          disable-animations: true
+          script: bash .github/scripts/chaos.sh "${{ inputs.events }}"
+
+      - name: Keep the wreckage for reading
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: chaos-logs
+          path: |
+            chaos-report.env
+            monkey.log
+            logcat.txt
+            after.json
+            seed-stats.txt
+          if-no-files-found: ignore
+
+      - name: Summarize
+        if: always()
+        run: |
+          echo "## ☀ Chaos monkey report" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          cat chaos-report.env 2>/dev/null >> "$GITHUB_STEP_SUMMARY" || echo "no report — emulator flaked" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
