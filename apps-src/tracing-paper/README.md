@@ -18,19 +18,27 @@ you can run the real thing, go support it.
   notes over the page (saved to `Pictures/Tracing Paper`).
 - **Writes with the pen**, pressure-sensitive, and the pen's eraser end
   erases. Optional pen-only mode ignores your resting palm.
-- **Pages**: flip back and forth, add pages, wipe or tear out a page.
-  Everything autosaves to app-private storage and is still there next time.
-- **FROST** cycles the glass: clear → frosted → opaque paper.
+- **HILITE** — a highlighter in light gray (dark enough to read on the
+  grayscale panel) with a thin black ring so highlights stand out when you
+  scan a page. It sits under your ink, so pen lines stay crisp.
+- **SNIP** — drag a box over whatever's on screen; the clipping is pasted
+  onto the glass right where it was cut from. Snips are undoable, saved
+  with the page, and come along into PDF exports.
+- **Notebooks**: as many as you like, each named and each with its own
+  paper — blank, lined, dots, or school (ruled with a margin). Pages flip,
+  add, wipe, or tear out; everything autosaves to app-private storage.
+- **GLASS slider** — the pad's opacity, 0 to 100%, right in the toolbar:
+  clear glass at one end, opaque paper at the other.
 - **PEEK** makes the glass untouchable so you can scroll the app underneath
   while your notes stay visible; a WRITE pill (or the top button) brings the
   ink back under your pen.
-- **PDF export** of all pages (vector ink) to `Download/Tracing Paper`.
-- **Volume-down flips the backlight** while the pad is open (opt-in; asks
-  for "Modify system settings"). Off by default so it won't fight
-  Daylight Keys.
+- **PDF export** of every notebook (vector ink, templates and snips
+  included) to `Download/Tracing Paper`.
 - **Quick-settings tile** as a second way in, and a **re-learn flow** in the
   app in case a SolOS update ever remaps the hardware buttons: tap
   "Re-learn", press any hardware key, done.
+- The **volume keys are deliberately untouched** — Daylight Keys owns those.
+  Tracing Paper only ever consumes its one toggle button.
 
 ## Low-latency ink
 

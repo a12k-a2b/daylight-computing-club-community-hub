@@ -7,39 +7,46 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.content.res.ColorStateList;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.PixelFormat;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
-import android.provider.Settings;
+import android.text.InputType;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
+import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
- * The keeper of the glass. Watches the DC-1's hardware buttons (top button by
- * default — re-learnable), lays the pad over whatever you're doing, snaps
- * screenshots, and flips the backlight if you ask it to.
+ * The keeper of the glass. Watches the DC-1's top button (re-learnable), lays
+ * the pad over whatever you're doing, snips clippings onto it, and snaps
+ * pictures of your notes over the page.
  *
  * Button events arrive two ways on a DC-1: as filtered key events (the top
  * button is KEYCODE_F12) and as SolOS's own broadcasts. We listen to both and
- * debounce, so the pad works whichever path a given SolOS build takes.
+ * debounce, so the pad works whichever path a given SolOS build takes. The
+ * volume keys are left alone on purpose — Daylight Keys owns those.
  */
 public class PadService extends AccessibilityService {
 
@@ -56,14 +63,20 @@ public class PadService extends AccessibilityService {
 
     private FrameLayout root;
     private GlassPadView pad;
+    private WetInk wet;
     private LinearLayout barShell;      // bottom toolbar (border + scroll row)
     private TextView chip;              // "back to writing" pill shown while peeking
     private WindowManager.LayoutParams rootLp;
 
-    private boolean shown, peeking, longFired;
+    private boolean shown, peeking, longFired, snipMode;
     private long lastKeyHandled;
 
-    private TextView pageBtn, penBtn, eraseBtn, undoBtn, redoBtn, frostBtn, peekBtn;
+    private SnipVeil veil;
+    private View panel;                 // notebooks / new-notebook card
+    private int armedBookDelete = -1;
+    private long armedBookAt;
+
+    private TextView pageBtn, penBtn, hiBtn, eraseBtn, undoBtn, redoBtn, bookBtn;
 
     private final Runnable longPress = () -> {
         longFired = true;
@@ -131,8 +144,7 @@ public class PadService extends AccessibilityService {
             }
         }
 
-        int code = e.getKeyCode();
-        if (code == prefs.getInt(Prefs.K_TOGGLE, Prefs.DEFAULT_TOGGLE)) {
+        if (e.getKeyCode() == prefs.getInt(Prefs.K_TOGGLE, Prefs.DEFAULT_TOGGLE)) {
             lastKeyHandled = SystemClock.uptimeMillis();
             if (e.getAction() == KeyEvent.ACTION_DOWN) {
                 if (e.getRepeatCount() == 0) {
@@ -145,13 +157,6 @@ public class PadService extends AccessibilityService {
             }
             return true;
         }
-
-        if (code == KeyEvent.KEYCODE_VOLUME_DOWN && shown && !peeking
-                && prefs.getBoolean(Prefs.K_SIDE_BACKLIGHT, false)) {
-            lastKeyHandled = SystemClock.uptimeMillis();
-            if (e.getAction() == KeyEvent.ACTION_UP) toggleBacklight();
-            return true;
-        }
         return false;
     }
 
@@ -161,10 +166,11 @@ public class PadService extends AccessibilityService {
 
     // --------------------------------------------------------- pad states
 
-    /** hidden -> open; open -> hidden; peeking -> back to writing. */
+    /** hidden -> open; snipping -> back to the pad; peeking -> back to writing; open -> hidden. */
     private void shortPress() {
         handler.post(() -> {
             if (!shown) showPad();
+            else if (snipMode) cancelSnip();
             else if (peeking) exitPeek();
             else hidePad();
         });
@@ -202,6 +208,8 @@ public class PadService extends AccessibilityService {
 
     private void hidePad() {
         if (!shown) return;
+        cancelSnip();
+        closePanel();
         if (peeking) exitPeek();
         pad.flushSave();
         try { wm.removeView(root); } catch (Exception ignored) {}
@@ -216,11 +224,13 @@ public class PadService extends AccessibilityService {
         }
         shown = false;
         peeking = false;
+        snipMode = false;
     }
 
     /** Glass stays visible but touches fall through to the app beneath. */
     private void peek() {
-        if (!shown || peeking) return;
+        if (!shown || peeking || snipMode) return;
+        closePanel();
         peeking = true;
         rootLp.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
         wm.updateViewLayout(root, rootLp);
@@ -250,10 +260,76 @@ public class PadService extends AccessibilityService {
         if (chip != null) { try { wm.removeView(chip); } catch (Exception ignored) {} chip = null; }
     }
 
+    // ------------------------------------------------------------------ snip
+
+    /** Drag a box over the page below; the clipping is pasted onto the glass. */
+    private void startSnip() {
+        if (!shown || snipMode) return;
+        closePanel();
+        if (peeking) exitPeek();
+        snipMode = true;
+        pad.setVisibility(View.INVISIBLE);
+        barShell.setVisibility(View.INVISIBLE);
+        veil = new SnipVeil(this, this::finishSnip, this::cancelSnip);
+        root.addView(veil, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
+    }
+
+    private void cancelSnip() {
+        if (!snipMode) return;
+        snipMode = false;
+        if (veil != null) { root.removeView(veil); veil = null; }
+        pad.setVisibility(View.VISIBLE);
+        barShell.setVisibility(View.VISIBLE);
+    }
+
+    private void finishSnip(Rect sel) {
+        if (veil != null) { root.removeView(veil); veil = null; }
+        // the pad is already invisible; give the frame a beat to settle, then shoot
+        handler.postDelayed(() -> takeScreenshot(Display.DEFAULT_DISPLAY, getMainExecutor(),
+                new TakeScreenshotCallback() {
+                    @Override public void onSuccess(ScreenshotResult res) {
+                        try {
+                            Bitmap hw = Bitmap.wrapHardwareBuffer(
+                                    res.getHardwareBuffer(), res.getColorSpace());
+                            if (hw == null) throw new IllegalStateException("null bitmap");
+                            Bitmap sw = hw.copy(Bitmap.Config.ARGB_8888, false);
+                            res.getHardwareBuffer().close();
+                            int[] loc = new int[2];
+                            root.getLocationOnScreen(loc);
+                            int x = Math.max(0, sel.left + loc[0]);
+                            int y = Math.max(0, sel.top + loc[1]);
+                            int w = Math.min(sel.width(), sw.getWidth() - x);
+                            int h = Math.min(sel.height(), sw.getHeight() - y);
+                            if (w < 4 || h < 4) throw new IllegalStateException("empty crop");
+                            Bitmap crop = Bitmap.createBitmap(sw, x, y, w, h);
+                            String file = NoteStore.saveSnip(PadService.this, crop);
+                            float pw = Math.max(1, pad.getWidth()), ph = Math.max(1, pad.getHeight());
+                            pad.addSnip(file, new RectF(sel.left / pw, sel.top / ph,
+                                    sel.right / pw, sel.bottom / ph));
+                            toast("Snipped onto the glass");
+                        } catch (Exception ex) {
+                            toast("Snip failed");
+                        } finally {
+                            snipMode = false;
+                            pad.setVisibility(View.VISIBLE);
+                            barShell.setVisibility(View.VISIBLE);
+                        }
+                    }
+                    @Override public void onFailure(int code) {
+                        snipMode = false;
+                        pad.setVisibility(View.VISIBLE);
+                        barShell.setVisibility(View.VISIBLE);
+                        toast("Snip failed (" + code + ")");
+                    }
+                }), 180);
+    }
+
     // ------------------------------------------------------------ screenshot
 
     private void screenshot() {
         if (!shown) return;
+        if (snipMode) { cancelSnip(); return; }
         handler.post(() -> {
             barShell.setVisibility(View.INVISIBLE);
             if (chip != null) chip.setVisibility(View.INVISIBLE);
@@ -291,43 +367,151 @@ public class PadService extends AccessibilityService {
                 });
     }
 
-    // ------------------------------------------------------------- backlight
+    // ------------------------------------------------------------- notebooks
 
-    private void toggleBacklight() {
-        if (!Settings.System.canWrite(this)) {
-            toast("Allow “Modify system settings” in the Tracing Paper app first");
-            Intent i = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS,
-                    Uri.parse("package:" + getPackageName()));
-            i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            try { startActivity(i); } catch (Exception ignored) {}
-            return;
+    private void closePanel() {
+        if (panel != null) {
+            root.removeView(panel);
+            panel = null;
+            setWindowFocusable(false);
         }
-        try {
-            int cur = Settings.System.getInt(getContentResolver(),
-                    Settings.System.SCREEN_BRIGHTNESS, 100);
-            if (cur > 0) {
-                int mode = Settings.System.getInt(getContentResolver(),
-                        Settings.System.SCREEN_BRIGHTNESS_MODE,
-                        Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL);
-                prefs.edit().putInt(Prefs.K_LAST_BRIGHT, cur)
-                        .putInt(Prefs.K_LAST_BRIGHT_MODE, mode).apply();
-                Settings.System.putInt(getContentResolver(),
-                        Settings.System.SCREEN_BRIGHTNESS_MODE,
-                        Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL);
-                Settings.System.putInt(getContentResolver(),
-                        Settings.System.SCREEN_BRIGHTNESS, 0);
-            } else {
-                Settings.System.putInt(getContentResolver(),
-                        Settings.System.SCREEN_BRIGHTNESS,
-                        prefs.getInt(Prefs.K_LAST_BRIGHT, 96));
-                Settings.System.putInt(getContentResolver(),
-                        Settings.System.SCREEN_BRIGHTNESS_MODE,
-                        prefs.getInt(Prefs.K_LAST_BRIGHT_MODE,
-                                Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL));
-            }
-        } catch (Exception e) {
-            toast("Couldn't reach the backlight");
+    }
+
+    private void setWindowFocusable(boolean f) {
+        if (!shown) return;
+        if (f) rootLp.flags &= ~WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+        else rootLp.flags |= WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
+        try { wm.updateViewLayout(root, rootLp); } catch (Exception ignored) {}
+    }
+
+    private LinearLayout card(String title) {
+        LinearLayout col = new LinearLayout(this);
+        col.setOrientation(LinearLayout.VERTICAL);
+        int p = dp(16);
+        col.setPadding(p, p, p, p);
+        GradientDrawable g = new GradientDrawable();
+        g.setColor(Color.WHITE);
+        g.setStroke(dp(2), Color.BLACK);
+        col.setBackground(g);
+        TextView t = new TextView(this);
+        t.setText(title);
+        t.setTextSize(20);
+        t.setTextColor(Color.BLACK);
+        t.setTypeface(Typeface.DEFAULT_BOLD);
+        t.setPadding(0, 0, 0, dp(10));
+        col.addView(t);
+        return col;
+    }
+
+    private void addPanel(View card) {
+        ScrollView sc = new ScrollView(this);
+        sc.addView(card);
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                dp(400), FrameLayout.LayoutParams.WRAP_CONTENT);
+        lp.gravity = Gravity.CENTER;
+        panel = sc;
+        root.addView(sc, lp);
+    }
+
+    private void showBooks() {
+        if (!shown || snipMode) return;
+        closePanel();
+        LinearLayout col = card("NOTEBOOKS");
+        List<GlassPadView.Book> books = pad.getBooks();
+        for (int i = 0; i < books.size(); i++) {
+            final int idx = i;
+            GlassPadView.Book b = books.get(i);
+            TextView row = button((idx == pad.curBook() ? "▸ " : "") + b.name
+                            + "  ·  " + b.pages.size() + " pg  ·  "
+                            + GlassPadView.TPL_NAMES[b.template],
+                    v -> { pad.switchBook(idx); closePanel(); refreshBar(); });
+            row.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
+            row.setOnLongClickListener(v -> {
+                long now = System.currentTimeMillis();
+                if (armedBookDelete == idx && now - armedBookAt < 3000) {
+                    pad.deleteBook(idx);
+                    armedBookDelete = -1;
+                    closePanel();
+                    showBooks();
+                    refreshBar();
+                } else {
+                    armedBookDelete = idx;
+                    armedBookAt = now;
+                    toast("Long-press again to delete “" + b.name + "”");
+                }
+                return true;
+            });
+            LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, dp(52));
+            rlp.bottomMargin = dp(8);
+            col.addView(row, rlp);
         }
+        col.addView(button("+ NEW NOTEBOOK", v -> showNewBook()), rowLp());
+        col.addView(button("CLOSE", v -> closePanel()), rowLp());
+        addPanel(col);
+    }
+
+    private void showNewBook() {
+        closePanel();
+        LinearLayout col = card("NEW NOTEBOOK");
+
+        EditText name = new EditText(this);
+        name.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        name.setText("Notebook " + (pad.getBooks().size() + 1));
+        name.setSelectAllOnFocus(true);
+        name.setTextColor(Color.BLACK);
+        name.setTextSize(18);
+        GradientDrawable g = new GradientDrawable();
+        g.setColor(Color.WHITE);
+        g.setStroke(dp(2), Color.BLACK);
+        name.setBackground(g);
+        int p8 = dp(8);
+        name.setPadding(p8 * 2, p8, p8 * 2, p8);
+        col.addView(name, rowLp());
+
+        TextView lbl = new TextView(this);
+        lbl.setText("Paper:");
+        lbl.setTextColor(Color.BLACK);
+        lbl.setTextSize(16);
+        lbl.setPadding(0, dp(10), 0, dp(6));
+        col.addView(lbl);
+
+        LinearLayout tplRow = new LinearLayout(this);
+        tplRow.setOrientation(LinearLayout.HORIZONTAL);
+        final int[] sel = {GlassPadView.TPL_BLANK};
+        final TextView[] tiles = new TextView[GlassPadView.TPL_NAMES.length];
+        for (int t = 0; t < GlassPadView.TPL_NAMES.length; t++) {
+            final int tv = t;
+            tiles[t] = button(GlassPadView.TPL_NAMES[t], v -> {
+                sel[0] = tv;
+                for (int k = 0; k < tiles.length; k++) style(tiles[k], k == tv);
+            });
+            tiles[t].setTextSize(13);
+            LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(0, dp(48), 1f);
+            if (t > 0) tlp.setMarginStart(p8);
+            tplRow.addView(tiles[t], tlp);
+        }
+        style(tiles[0], true);
+        col.addView(tplRow, rowLp());
+
+        col.addView(button("CREATE", v -> {
+            String n = name.getText().toString().trim();
+            if (n.isEmpty()) n = "Notebook " + (pad.getBooks().size() + 1);
+            pad.newBook(n, sel[0]);
+            closePanel();
+            refreshBar();
+        }), rowLp());
+        col.addView(button("CANCEL", v -> closePanel()), rowLp());
+
+        addPanel(col);
+        setWindowFocusable(true); // so the name field can take the keyboard
+    }
+
+    private LinearLayout.LayoutParams rowLp() {
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+        lp.topMargin = dp(8);
+        return lp;
     }
 
     // ------------------------------------------------------------------- ui
@@ -339,7 +523,7 @@ public class PadService extends AccessibilityService {
         root.addView(pad, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
 
-        WetInk wet = new WetInk(this);
+        wet = new WetInk(this);
         pad.setWetInk(wet);
         root.addView(wet, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
@@ -363,8 +547,9 @@ public class PadService extends AccessibilityService {
         barShell.addView(scroll, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
-        penBtn = button("PEN", v -> { pad.setTool(GlassPadView.TOOL_PEN); });
-        eraseBtn = button("ERASE", v -> { pad.setTool(GlassPadView.TOOL_ERASE); });
+        penBtn = button("PEN", v -> pad.setTool(GlassPadView.TOOL_PEN));
+        hiBtn = button("HILITE", v -> pad.setTool(GlassPadView.TOOL_HIGHLIGHT));
+        eraseBtn = button("ERASE", v -> pad.setTool(GlassPadView.TOOL_ERASE));
         undoBtn = button("UNDO", v -> pad.undo());
         redoBtn = button("REDO", v -> pad.redo());
         TextView clearBtn = button("CLEAR", v -> pad.clearPage());
@@ -373,20 +558,20 @@ public class PadService extends AccessibilityService {
         pageBtn = button("1/1", null);
         TextView nextBtn = button("▶", v -> pad.nextPage());
         TextView plusBtn = button("+PAGE", v -> pad.newPage());
-        frostBtn = button("FROST", v -> {
-            int f = pad.cycleFrost();
-            frostBtn.setText(GlassPadView.FROST_NAMES[f]);
-        });
-        peekBtn = button("PEEK", v -> peek());
+        bookBtn = button("NOTES ▾", v -> showBooks());
+        TextView snipBtn = button("SNIP", v -> startSnip());
+        View glassBox = buildGlassSlider();
+        TextView peekBtn = button("PEEK", v -> peek());
         TextView shotBtn = button("SNAP", v -> screenshot());
         TextView pdfBtn = button("PDF", v -> exportPdf());
         TextView hideBtn = button("✕ HIDE", v -> hidePad());
 
-        TextView[] order = {hideBtn, penBtn, eraseBtn, undoBtn, redoBtn, clearBtn,
-                prevBtn, pageBtn, nextBtn, plusBtn, frostBtn, peekBtn, shotBtn, pdfBtn};
-        for (TextView b : order) {
+        View[] order = {hideBtn, penBtn, hiBtn, eraseBtn, undoBtn, redoBtn, clearBtn,
+                prevBtn, pageBtn, nextBtn, plusBtn, bookBtn, snipBtn, glassBox,
+                peekBtn, shotBtn, pdfBtn};
+        for (View b : order) {
             LinearLayout.LayoutParams blp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.WRAP_CONTENT, dp(48));
+                    b == glassBox ? dp(220) : LinearLayout.LayoutParams.WRAP_CONTENT, dp(48));
             blp.setMarginEnd(p8);
             row.addView(b, blp);
         }
@@ -410,25 +595,68 @@ public class PadService extends AccessibilityService {
         refreshBar();
     }
 
+    /** GLASS ▁▁▂▄ — the 0–100% white-wash slider, right in the bar. */
+    private View buildGlassSlider() {
+        LinearLayout box = new LinearLayout(this);
+        box.setOrientation(LinearLayout.HORIZONTAL);
+        box.setGravity(Gravity.CENTER_VERTICAL);
+        GradientDrawable g = new GradientDrawable();
+        g.setColor(Color.WHITE);
+        g.setStroke(dp(2), Color.BLACK);
+        box.setBackground(g);
+        int p8 = dp(8);
+        box.setPadding(p8, 0, p8, 0);
+
+        TextView lbl = new TextView(this);
+        lbl.setText("GLASS");
+        lbl.setTextSize(13);
+        lbl.setTypeface(Typeface.DEFAULT_BOLD);
+        lbl.setTextColor(Color.BLACK);
+        box.addView(lbl);
+
+        SeekBar sb = new SeekBar(this);
+        sb.setMax(100);
+        sb.setProgress(pad.getOpacity());
+        sb.setThumbTintList(ColorStateList.valueOf(Color.BLACK));
+        sb.setProgressTintList(ColorStateList.valueOf(Color.BLACK));
+        sb.setProgressBackgroundTintList(ColorStateList.valueOf(0xFF888888));
+        sb.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override public void onProgressChanged(SeekBar s, int v, boolean fromUser) {
+                if (fromUser) pad.setOpacity(v);
+            }
+            @Override public void onStartTrackingTouch(SeekBar s) {
+                s.getParent().requestDisallowInterceptTouchEvent(true);
+            }
+            @Override public void onStopTrackingTouch(SeekBar s) {}
+        });
+        LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(0, dp(48), 1f);
+        slp.setMarginStart(p8);
+        box.addView(sb, slp);
+        return box;
+    }
+
     private void refreshBar() {
         if (pageBtn == null) return;
         pageBtn.setText(pad.pageLabel());
-        boolean penSel = pad.getTool() == GlassPadView.TOOL_PEN;
-        style(penBtn, penSel);
-        style(eraseBtn, !penSel);
+        int tool = pad.getTool();
+        style(penBtn, tool == GlassPadView.TOOL_PEN);
+        style(hiBtn, tool == GlassPadView.TOOL_HIGHLIGHT);
+        style(eraseBtn, tool == GlassPadView.TOOL_ERASE);
         undoBtn.setAlpha(pad.canUndo() ? 1f : 0.35f);
         redoBtn.setAlpha(pad.canRedo() ? 1f : 0.35f);
-        frostBtn.setText(GlassPadView.FROST_NAMES[pad.getFrost()]);
+        String n = pad.bookName();
+        if (n.length() > 10) n = n.substring(0, 9) + "…";
+        bookBtn.setText(n.toUpperCase(java.util.Locale.US) + " ▾");
     }
 
     private void exportPdf() {
         toast("Making the PDF…");
+        pad.flushSave();
+        final List<GlassPadView.Book> snap = pad.snapshotBooks();
+        final float aspect = (float) Math.max(1, pad.getWidth()) / Math.max(1, pad.getHeight());
         new Thread(() -> {
             try {
-                pad.flushSave();
-                float aspect = (float) Math.max(1, pad.getWidth())
-                        / Math.max(1, pad.getHeight());
-                String name = Exporter.exportPdf(this, pad.pages, aspect);
+                String name = Exporter.exportPdf(this, snap, aspect);
                 handler.post(() -> toast("Saved " + name + " in Download"));
             } catch (Exception e) {
                 handler.post(() -> toast("PDF export failed"));

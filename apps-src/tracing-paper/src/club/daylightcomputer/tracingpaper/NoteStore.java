@@ -1,36 +1,71 @@
 package club.daylightcomputer.tracingpaper;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * Notes live in one JSON file in app-private storage — nothing ever leaves
- * the tablet unless you export it yourself.
+ * Notebooks live in one JSON file in app-private storage, snips as PNGs in a
+ * private folder next to it — nothing ever leaves the tablet unless you
+ * export it yourself.
+ *
+ * v2 format: {v:2, cur, books:[{n,t,pages:[{s:[{k,w,p:[x,y,pr,...]}], i:[{f,x,y,w,h}]}]}]}
+ * v1 files (a bare page list) are migrated into a single "Notes" book.
  */
 class NoteStore {
+
+    static class Loaded {
+        final List<GlassPadView.Book> books = new ArrayList<>();
+        int cur;
+    }
 
     private static final ExecutorService IO = Executors.newSingleThreadExecutor();
     private final File file;
     private final File tmp;
+    private final Context ctx;
 
     NoteStore(Context c) {
+        ctx = c.getApplicationContext();
         file = new File(c.getFilesDir(), "notes.json");
         tmp = new File(c.getFilesDir(), "notes.json.tmp");
     }
 
-    List<List<GlassPadView.Stroke>> load() {
-        List<List<GlassPadView.Stroke>> pages = new ArrayList<>();
+    static File snipDir(Context c) {
+        File d = new File(c.getFilesDir(), "snips");
+        d.mkdirs();
+        return d;
+    }
+
+    static File snipFile(Context c, String name) {
+        return new File(snipDir(c), name);
+    }
+
+    /** Saves a snip bitmap and returns its stored file name. */
+    static String saveSnip(Context c, Bitmap b) throws Exception {
+        String name = "snip-" + new SimpleDateFormat("yyyyMMdd-HHmmss-SSS", Locale.US)
+                .format(new Date()) + ".png";
+        try (FileOutputStream out = new FileOutputStream(snipFile(c, name))) {
+            b.compress(Bitmap.CompressFormat.PNG, 100, out);
+        }
+        return name;
+    }
+
+    Loaded load() {
+        Loaded out = new Loaded();
         try {
             if (file.exists()) {
                 byte[] buf = new byte[(int) file.length()];
@@ -39,51 +74,128 @@ class NoteStore {
                     while (off < buf.length && (r = in.read(buf, off, buf.length - off)) > 0) off += r;
                 }
                 JSONObject root = new JSONObject(new String(buf, StandardCharsets.UTF_8));
-                JSONArray ps = root.getJSONArray("pages");
-                for (int i = 0; i < ps.length(); i++) {
-                    List<GlassPadView.Stroke> pg = new ArrayList<>();
-                    JSONArray ss = ps.getJSONArray(i);
-                    for (int j = 0; j < ss.length(); j++) {
-                        JSONObject o = ss.getJSONObject(j);
-                        GlassPadView.Stroke s = new GlassPadView.Stroke();
-                        s.eraser = o.optBoolean("e", false);
-                        s.base = (float) o.optDouble("w", 0.003);
-                        JSONArray a = o.getJSONArray("p");
-                        for (int k = 0; k + 2 < a.length(); k += 3)
-                            s.add((float) a.getDouble(k), (float) a.getDouble(k + 1),
-                                    (float) a.getDouble(k + 2));
-                        pg.add(s);
+                if (root.has("books")) {
+                    out.cur = root.optInt("cur", 0);
+                    JSONArray bs = root.getJSONArray("books");
+                    for (int i = 0; i < bs.length(); i++) {
+                        JSONObject bo = bs.getJSONObject(i);
+                        GlassPadView.Book b = new GlassPadView.Book();
+                        b.name = bo.optString("n", "Notes");
+                        b.template = bo.optInt("t", GlassPadView.TPL_BLANK);
+                        JSONArray ps = bo.getJSONArray("pages");
+                        for (int j = 0; j < ps.length(); j++) b.pages.add(readPage(ps.getJSONObject(j)));
+                        if (b.pages.isEmpty()) b.pages.add(new GlassPadView.PageData());
+                        out.books.add(b);
                     }
-                    pages.add(pg);
+                } else if (root.has("pages")) {
+                    // v1: one implicit notebook of bare stroke lists
+                    GlassPadView.Book b = new GlassPadView.Book();
+                    b.name = "Notes";
+                    b.template = GlassPadView.TPL_BLANK;
+                    JSONArray ps = root.getJSONArray("pages");
+                    for (int i = 0; i < ps.length(); i++) {
+                        GlassPadView.PageData pd = new GlassPadView.PageData();
+                        readStrokes(ps.getJSONArray(i), pd.strokes);
+                        b.pages.add(pd);
+                    }
+                    if (b.pages.isEmpty()) b.pages.add(new GlassPadView.PageData());
+                    out.books.add(b);
                 }
             }
         } catch (Exception ignored) {
-            // A corrupt file just means a fresh pad; the old file is overwritten on next save.
+            // A corrupt file just means a fresh pad; it is overwritten on next save.
+            out.books.clear();
         }
-        if (pages.isEmpty()) pages.add(new ArrayList<>());
-        return pages;
+        if (out.books.isEmpty()) {
+            GlassPadView.Book b = new GlassPadView.Book();
+            b.name = "Notes";
+            b.template = GlassPadView.TPL_BLANK;
+            b.pages.add(new GlassPadView.PageData());
+            out.books.add(b);
+            out.cur = 0;
+        }
+        return out;
     }
 
-    void saveAsync(List<List<GlassPadView.Stroke>> snapshot) {
+    private static GlassPadView.PageData readPage(JSONObject po) throws Exception {
+        GlassPadView.PageData pd = new GlassPadView.PageData();
+        readStrokes(po.getJSONArray("s"), pd.strokes);
+        JSONArray si = po.optJSONArray("i");
+        if (si != null) {
+            for (int k = 0; k < si.length(); k++) {
+                JSONObject so = si.getJSONObject(k);
+                GlassPadView.Snip s = new GlassPadView.Snip();
+                s.file = so.getString("f");
+                s.x = (float) so.getDouble("x");
+                s.y = (float) so.getDouble("y");
+                s.w = (float) so.getDouble("w");
+                s.h = (float) so.getDouble("h");
+                pd.snips.add(s);
+            }
+        }
+        return pd;
+    }
+
+    private static void readStrokes(JSONArray ss, List<GlassPadView.Stroke> into) throws Exception {
+        for (int j = 0; j < ss.length(); j++) {
+            JSONObject o = ss.getJSONObject(j);
+            GlassPadView.Stroke s = new GlassPadView.Stroke();
+            if (o.has("k")) s.kind = o.getInt("k");
+            else s.kind = o.optBoolean("e", false)
+                    ? GlassPadView.KIND_ERASE : GlassPadView.KIND_INK; // v1
+            s.base = (float) o.optDouble("w", 0.003);
+            JSONArray a = o.getJSONArray("p");
+            for (int k = 0; k + 2 < a.length(); k += 3)
+                s.add((float) a.getDouble(k), (float) a.getDouble(k + 1),
+                        (float) a.getDouble(k + 2));
+            into.add(s);
+        }
+    }
+
+    void saveAsync(List<GlassPadView.Book> snapshot, int cur) {
         IO.execute(() -> {
             try {
-                JSONArray ps = new JSONArray();
-                for (List<GlassPadView.Stroke> pg : snapshot) {
-                    JSONArray ss = new JSONArray();
-                    for (GlassPadView.Stroke s : pg) {
-                        JSONObject o = new JSONObject();
-                        o.put("e", s.eraser);
-                        o.put("w", round(s.base));
-                        JSONArray a = new JSONArray();
-                        for (int k = 0; k < s.n * 3; k++) a.put(round(s.pts[k]));
-                        o.put("p", a);
-                        ss.put(o);
+                JSONArray bs = new JSONArray();
+                for (GlassPadView.Book b : snapshot) {
+                    JSONObject bo = new JSONObject();
+                    bo.put("n", b.name);
+                    bo.put("t", b.template);
+                    JSONArray ps = new JSONArray();
+                    for (GlassPadView.PageData pd : b.pages) {
+                        JSONObject po = new JSONObject();
+                        JSONArray ss = new JSONArray();
+                        for (GlassPadView.Stroke s : pd.strokes) {
+                            JSONObject o = new JSONObject();
+                            o.put("k", s.kind);
+                            o.put("w", round(s.base));
+                            JSONArray a = new JSONArray();
+                            for (int k = 0; k < s.n * 3; k++) a.put(round(s.pts[k]));
+                            o.put("p", a);
+                            ss.put(o);
+                        }
+                        po.put("s", ss);
+                        if (!pd.snips.isEmpty()) {
+                            JSONArray si = new JSONArray();
+                            for (GlassPadView.Snip s : pd.snips) {
+                                JSONObject so = new JSONObject();
+                                so.put("f", s.file);
+                                so.put("x", round(s.x));
+                                so.put("y", round(s.y));
+                                so.put("w", round(s.w));
+                                so.put("h", round(s.h));
+                                si.put(so);
+                            }
+                            po.put("i", si);
+                        }
+                        ps.put(po);
                     }
-                    ps.put(ss);
+                    bo.put("pages", ps);
+                    bs.put(bo);
                 }
                 JSONObject root = new JSONObject();
-                root.put("v", 1);
-                root.put("pages", ps);
+                root.put("v", 2);
+                root.put("cur", cur);
+                root.put("books", bs);
                 try (FileOutputStream out = new FileOutputStream(tmp)) {
                     out.write(root.toString().getBytes(StandardCharsets.UTF_8));
                 }

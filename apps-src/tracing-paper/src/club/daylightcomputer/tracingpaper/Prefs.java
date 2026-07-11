@@ -10,10 +10,7 @@ final class Prefs {
     static final String K_TOGGLE = "toggle_key";
     static final String K_CALIBRATE_UNTIL = "calibrate_until";
     static final String K_PEN_ONLY = "pen_only";
-    static final String K_SIDE_BACKLIGHT = "side_backlight";
-    static final String K_FROST = "frost";
-    static final String K_LAST_BRIGHT = "last_brightness";
-    static final String K_LAST_BRIGHT_MODE = "last_brightness_mode";
+    static final String K_OPACITY = "opacity_pct";
     static final String K_LAST_PAGE = "last_page";
     static final String K_CANVAS_W = "canvas_w";
     static final String K_CANVAS_H = "canvas_h";

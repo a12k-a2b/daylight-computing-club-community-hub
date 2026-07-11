@@ -9,7 +9,6 @@ import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
@@ -90,29 +89,25 @@ public class MainActivity extends Activity {
                 prefs.edit().putBoolean(Prefs.K_PEN_ONLY, on).apply());
         col.addView(penOnly);
 
-        Switch backlight = mkSwitch("Volume-down flips the backlight while the pad is open",
-                prefs.getBoolean(Prefs.K_SIDE_BACKLIGHT, false));
-        backlight.setOnCheckedChangeListener((v, on) -> {
-            prefs.edit().putBoolean(Prefs.K_SIDE_BACKLIGHT, on).apply();
-            if (on && !Settings.System.canWrite(this)) {
-                Toast.makeText(this, "Allow “Modify system settings” so the pad can reach the backlight",
-                        Toast.LENGTH_LONG).show();
-                startActivity(new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS,
-                        Uri.parse("package:" + getPackageName())));
-            }
-        });
-        col.addView(backlight);
+        TextView volNote = text("The volume keys are left alone on purpose — "
+                + "Daylight Keys owns those.", 15, false);
+        volNote.setTextColor(0xFF333333);
+        col.addView(volNote);
 
         col.addView(sectionRule("Your notes"));
         col.addView(bigButton("Export every page to PDF", v -> exportAll()));
         col.addView(gap());
         TextView fine = text("Snapshots land in Pictures/Tracing Paper, PDFs in "
                 + "Download/Tracing Paper. Notes live only on this tablet.\n\n"
-                + "On the glass: PEN and ERASE to switch nibs (the pen's other end erases too), "
-                + "CLEAR wipes a page (hold it to tear the page out), FROST cycles clear glass → "
-                + "frosted → paper, PEEK lets you scroll the page underneath without closing your "
-                + "notes, SNAP saves a picture of notes-over-page, and holding the top button "
-                + "snaps one too.", 15, false);
+                + "On the glass: PEN, HILITE and ERASE to switch nibs (the pen's other end "
+                + "erases too). HILITE is a light-gray marker with a thin black ring so it "
+                + "still stands out on this screen. CLEAR wipes a page (hold it to tear the "
+                + "page out). Your notebooks live under the ▾ button — each one gets its own "
+                + "paper: blank, lined, dots, or school. The GLASS slider sets how see-through "
+                + "the pad is, 0 to 100%. SNIP cuts a box out of whatever's on screen and "
+                + "pastes it on the glass. PEEK lets you scroll the page underneath without "
+                + "closing your notes. SNAP saves a picture of notes-over-page, and holding "
+                + "the top button snaps one too.", 15, false);
         fine.setTextColor(0xFF333333);
         col.addView(fine);
 
@@ -153,7 +148,7 @@ public class MainActivity extends Activity {
             try {
                 float aspect = (float) prefs.getInt(Prefs.K_CANVAS_W, 1200)
                         / Math.max(1, prefs.getInt(Prefs.K_CANVAS_H, 1600));
-                String name = Exporter.exportPdf(this, new NoteStore(this).load(), aspect);
+                String name = Exporter.exportPdf(this, new NoteStore(this).load().books, aspect);
                 runOnUiThread(() -> Toast.makeText(this,
                         "Saved " + name + " in Download", Toast.LENGTH_LONG).show());
             } catch (Exception e) {
