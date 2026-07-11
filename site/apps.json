@@ -10,11 +10,11 @@
       "tagline": "Volume keys become brightness keys, a snip screenshot tool, and the dog-ear corner.",
       "author": "Anjan",
       "type": "apk",
-      "version": "1.0 (build 0e3367e)",
-      "updated": "2026-07-09",
+      "version": "1.0 (build bb4dafd)",
+      "updated": "2026-07-11",
       "apk": {
         "file": "apps/dc1-keys/dc1-keys.apk",
-        "size": "775 KB",
+        "size": "778 KB",
         "package": "com.anjan.dc1keys"
       },
       "for": [
@@ -41,7 +41,7 @@
       ],
       "afterInstall": [
         "Open the Daylight Keys app from your home screen.",
-        "Turn on its accessibility service: open Settings, then Accessibility, find “dc1-keys”, and switch it on. (This is what lets it listen to the volume keys.)",
+        "Turn on its accessibility service: open Settings, then Accessibility, find “Daylight Keys”, and switch it on. (This is what lets it listen to the volume keys.)",
         "Allow “Modify system settings” if the app asks — that's how it changes brightness.",
         "Say yes to the notification, microphone, and calendar prompts if you want the dog-ear's timer and next-event features."
       ],
