@@ -54,6 +54,11 @@ public class PadService extends AccessibilityService {
     private static final String SOLOS_LONG = "com.daylightcomputer.solosserver.ACTION_BUTTON_LONG_PRESS";
     private static final long LONG_PRESS_MS = 500;
     private static final long DEBOUNCE_MS = 600;
+    // The DC-1's top button chatters: one physical press arrives as a train
+    // of F12 DOWN/UP pairs (seen on Anjan's unit, 2026-07-11 — ~13 pairs per
+    // press), so the pad flickered open-shut. Edges inside this window of the
+    // previous edge are electrical noise, not presses.
+    private static final long KEY_BOUNCE_MS = 300;
 
     static volatile PadService instance;
 
@@ -70,6 +75,8 @@ public class PadService extends AccessibilityService {
 
     private boolean shown, peeking, longFired, snipMode;
     private long lastKeyHandled;
+    private long lastToggleEdge;         // last toggle-key edge, real or chatter
+    private boolean toggleDownAccepted;  // this press-group's DOWN was real
 
     private SnipVeil veil;
     private View panel;                 // notebooks / new-notebook card
@@ -159,21 +166,33 @@ public class PadService extends AccessibilityService {
                             .putLong(Prefs.K_CALIBRATE_UNTIL, 0).apply();
                     sendBroadcast(new Intent(Prefs.CALIBRATED_ACTION).setPackage(getPackageName()));
                     toast("Pad button set to " + keyName(e.getKeyCode()));
+                    // swallow this press's trailing chatter in the toggle branch
+                    lastToggleEdge = SystemClock.uptimeMillis();
                 }
                 return true;
             }
         }
 
         if (e.getKeyCode() == prefs.getInt(Prefs.K_TOGGLE, Prefs.DEFAULT_TOGGLE)) {
-            lastKeyHandled = SystemClock.uptimeMillis();
+            long now = SystemClock.uptimeMillis();
+            lastKeyHandled = now;
             if (e.getAction() == KeyEvent.ACTION_DOWN) {
-                if (e.getRepeatCount() == 0) {
+                boolean chatter = now - lastToggleEdge < KEY_BOUNCE_MS;
+                lastToggleEdge = now; // sliding window: chatter keeps it closed
+                if (!chatter && e.getRepeatCount() == 0) {
+                    toggleDownAccepted = true;
                     longFired = false;
                     handler.postDelayed(longPress, LONG_PRESS_MS);
                 }
             } else if (e.getAction() == KeyEvent.ACTION_UP) {
-                handler.removeCallbacks(longPress);
-                if (!longFired) shortPress();
+                lastToggleEdge = now;
+                // Only the UP that completes a real DOWN acts — a long hold's
+                // release stays valid no matter how much chatter came between.
+                if (toggleDownAccepted) {
+                    toggleDownAccepted = false;
+                    handler.removeCallbacks(longPress);
+                    if (!longFired) shortPress();
+                }
             }
             return true;
         }
@@ -234,13 +253,11 @@ public class PadService extends AccessibilityService {
         }
         shown = true;
         peeking = false;
-        // the notebook slides down over the page — a layer, not a place-change.
-        // 160ms on open only; closing stays instant so going back costs nothing.
+        // No entrance animation — the slide didn't feel right on the real
+        // panel (Anjan, 2026-07-11), so the pad appears the way it leaves:
+        // instantly.
         root.animate().cancel();
-        root.setTranslationY(-getResources().getDisplayMetrics().heightPixels);
-        root.animate().translationY(0).setDuration(160)
-                .setInterpolator(new android.view.animation.DecelerateInterpolator(1.5f))
-                .start();
+        root.setTranslationY(0);
         maybeShowHint();
         refreshBar();
     }
