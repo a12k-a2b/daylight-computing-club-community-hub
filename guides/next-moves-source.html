@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Your next moves</title>
+<style>
+  :root { --paper:#faf6ee; --ink:#211d18; --mid:#6b655c; --amber:#a06a00; --amber-soft:#e9d9b8; }
+  * { box-sizing:border-box; margin:0; }
+  body { background:#888; }
+  .page {
+    width: 1275px; height: 1650px;
+    background: var(--paper); color: var(--ink);
+    font-family: Charter, Georgia, 'Times New Roman', serif;
+    padding: 56px 64px 44px; position: relative;
+    display: flex; flex-direction: column;
+  }
+  .page::before { content:''; position:absolute; top:0; left:0; border-style:solid; border-width:70px 70px 0 0; border-color:var(--ink) transparent transparent transparent; }
+  .page::after  { content:''; position:absolute; top:0; left:0; border-style:solid; border-width:34px 34px 0 0; border-color:var(--paper) transparent transparent transparent; }
+  .head { text-align:center; border-bottom:4px solid var(--ink); padding-bottom:20px; margin-bottom:26px; }
+  h1 { font-size:44px; letter-spacing:3px; font-weight:normal; }
+  .sub { font-size:22px; font-style:italic; color:var(--mid); margin-top:8px; }
+  .corner { position:absolute; right:64px; top:44px; font-family:'Bradley Hand','Segoe Script','Comic Sans MS',cursive; font-size:24px; color:var(--amber); transform:rotate(-3deg); }
+  .rule-note { font-size:19px; text-align:center; font-style:italic; color:var(--mid); margin-bottom:22px; }
+  .item { display:flex; gap:20px; align-items:flex-start; border:3px solid var(--ink); background:#fffdf8; padding:18px 22px; margin-bottom:16px; }
+  .box { width:44px; height:44px; border:3px solid var(--ink); background:#fff; flex-shrink:0; margin-top:2px; }
+  .what { flex:1; }
+  .what b { font-size:24px; font-weight:normal; }
+  .what .how { font-size:19px; color:var(--mid); margin-top:5px; line-height:1.4; }
+  .what .how code { font-family:ui-monospace,'Courier New',monospace; font-size:17px; background:var(--amber-soft); padding:1px 6px; }
+  .t { font-family:ui-monospace,'Courier New',monospace; font-size:16px; letter-spacing:1px; background:var(--ink); color:var(--paper); padding:6px 12px; flex-shrink:0; margin-top:6px; }
+  .footer { margin-top:auto; border-top:3px solid var(--ink); padding-top:16px; text-align:center; }
+  .footer .big { font-size:21px; }
+  .footer .small { font-size:17px; color:var(--mid); font-style:italic; margin-top:6px; }
+  .amber { color: var(--amber); }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="corner">one at a time ☀</div>
+  <div class="head">
+    <h1>YOUR NEXT MOVES</h1>
+    <p class="sub">the human parts — everything else, the robots and I handle</p>
+  </div>
+  <p class="rule-note">Rule of the page: pick the top unchecked box. Ignore the rest. Any single box is a win.</p>
+
+  <div class="item"><div class="box"></div>
+    <div class="what"><b>Text Melissa her invite</b>
+      <div class="how">Send her: <code>daylightcomputer.club/invite.html?f=melissa</code> — it greets her by name, has your note on it, and one button to the shelf. Add: “I made you something.”</div>
+    </div><div class="t">1 MIN</div>
+  </div>
+
+  <div class="item"><div class="box"></div>
+    <div class="what"><b>Watch her install Daylight Keys — and don't help</b>
+      <div class="how">The wizard is what's being tested, not Melissa. Stay quiet unless she asks. <span class="amber">Every place she hesitates = a bug.</span> Note where (photo of her screen is perfect).</div>
+    </div><div class="t">10 MIN</div>
+  </div>
+
+  <div class="item"><div class="box"></div>
+    <div class="what"><b>Tell Claude what you saw</b>
+      <div class="how">Paste your notes/photos into any Claude session on this repo: “Melissa got stuck here.” That's the entire bug-reporting process. Fixes ship the same day.</div>
+    </div><div class="t">5 MIN</div>
+  </div>
+
+  <div class="item"><div class="box"></div>
+    <div class="what"><b>Ask her two questions</b>
+      <div class="how">① “Leave a note?” → the ✎ button right at the end of her install. ② “What do you wish existed?” → post it on the Wish Board together. That's the reciprocity engine starting.</div>
+    </div><div class="t">5 MIN</div>
+  </div>
+
+  <div class="item"><div class="box"></div>
+    <div class="what"><b>Arm the antivirus gate (the one chore)</b>
+      <div class="how">Chrome extension: “Sign me into virustotal.com with Google, open my profile → API key, show me the key.” Then desktop Claude Code: “Set repo secret VT_API_KEY on a12k-a2b/daylight-computing-club-community-hub to: &lt;key&gt;.” Tell cloud Claude “done” — I'll verify.</div>
+    </div><div class="t">2 MIN</div>
+  </div>
+
+  <div class="item"><div class="box"></div>
+    <div class="what"><b>Send Jesse + Jake their invites</b>
+      <div class="how"><code>…/invite.html?f=jesse</code> and <code>…/invite.html?f=jake</code> — their seats are already saved and they're already trusted. Same drill as Melissa.</div>
+    </div><div class="t">2 MIN</div>
+  </div>
+
+  <div class="item"><div class="box"></div>
+    <div class="what"><b>Put demo night №1 on the calendar</b>
+      <div class="how">30 minutes, you + Melissa + Jesse + Jake. Everyone shows one thing, five minutes each, be kind. A potluck is an event, not a pantry — this is the multiplier.</div>
+    </div><div class="t">2 MIN</div>
+  </div>
+
+  <div class="footer">
+    <p class="big">☀ &nbsp;a potluck, not a store — <b>daylightcomputer.club</b></p>
+    <p class="small">when in doubt: text a friend the link, and tell Claude what happened next</p>
+  </div>
+</div>
+</body>
+</html>
