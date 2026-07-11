@@ -68,8 +68,11 @@ the club's dc1-keys listens for), and the same service hosts the overlay
 window (`TYPE_ACCESSIBILITY_OVERLAY`) and takes the screenshots. As a
 belt-and-braces fallback the service also listens for SolOS's own button
 broadcasts (`com.daylightcomputer.solosserver.ACTION_BUTTON_SINGLE_PRESS`
-/ `..._LONG_PRESS`), debounced so a press never lands twice. The service
-never reads screen content.
+/ `..._LONG_PRESS`), debounced so a press never lands twice. Because that
+receiver must be exported for SolOS to reach it, any local app could spoof
+those broadcasts — so the broadcast path is only ever allowed to toggle the
+pad; screenshots can only be triggered by the un-spoofable hardware-key
+path or the on-glass SNAP button. The service never reads screen content.
 
 ## Building
 

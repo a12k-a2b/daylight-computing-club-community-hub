@@ -84,12 +84,17 @@ public class PadService extends AccessibilityService {
         else shortPress();
     };
 
+    /**
+     * Exported so SolOS's button broadcasts can reach us — which also means any
+     * local app could spoof one. So this path may only ever toggle the pad;
+     * screenshots stay exclusive to the un-spoofable key path and the SNAP button.
+     */
     private final BroadcastReceiver solosButtons = new BroadcastReceiver() {
         @Override public void onReceive(Context c, Intent i) {
             if (SystemClock.uptimeMillis() - lastKeyHandled < DEBOUNCE_MS) return;
             String a = i.getAction();
             if (SOLOS_SINGLE.equals(a)) shortPress();
-            else if (SOLOS_LONG.equals(a)) { if (shown) screenshot(); else shortPress(); }
+            else if (SOLOS_LONG.equals(a)) { if (!shown) shortPress(); }
         }
     };
 
