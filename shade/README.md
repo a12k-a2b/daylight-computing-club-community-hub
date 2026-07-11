@@ -226,28 +226,8 @@ The app deliberately depends on boring, stable contracts. When Sol:OS jumps:
 SystemUI's own quick-settings rewrite in newer AOSP never touches us —
 which is exactly the point.
 
-## Where this can go next (iteration list)
+## Where this can go next
 
-Own status bar (clock/battery drawn our way), richer notification rows
-(expand, actions, grouping), lock-screen variant, per-app volume, a
-"reading light" preset row, warmth scheduling ("candlelight after sunset"),
-club-shelf "new dish" notices… every one of these is an afternoon in
-`PanelView.java`, not an AOSP rebuild.
-
-Two bigger v2 pieces, both unlocked by the platform blessing:
-
-- **Native Wi-Fi picker in the shade** — scan results + saved networks drawn
-  in our grayscale style, connect on tap (`NEARBY_WIFI_DEVICES` +
-  `ACCESS_FINE_LOCATION` runtime grants, privileged connect path — the same
-  APIs the Settings app uses). Brand-new secured networks would still hop to
-  a password screen at first.
-- **Native Bluetooth device list** — paired devices with connect/disconnect,
-  plus discovery for pairing (`BLUETOOTH_SCAN`/`CONNECT`, `createBond()` is
-  public API; the pairing-code confirmation stays a system dialog). Android
-  has no compact pop-up sheet for Bluetooth the way it does for Wi-Fi, so
-  this is the only route to a no-context-switch Bluetooth experience.
-
-Until those land, the hand-off surfaces (Wi-Fi pop-up sheet, Settings
-pages, pairing dialogs) are stock-Material-looking. A cheap OS-side softener
-is a grayscale theme overlay (RRO) on the Settings app — noted in the
-platform-team ask.
+The living queue — native Wi-Fi/Bluetooth pickers, a grayscale Settings
+re-theme, our own status bar, warmth scheduling, reading-light presets and
+more, each with its dependency and rough size — is **[ROADMAP.md](ROADMAP.md)**.
