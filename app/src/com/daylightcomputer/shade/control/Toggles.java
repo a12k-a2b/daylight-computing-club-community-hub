@@ -82,13 +82,29 @@ public final class Toggles {
         return m == Configuration.UI_MODE_NIGHT_YES;
     }
     public static boolean darkToggle(Context c) {
+        boolean target = !darkOn(c);
         UiModeManager um = c.getSystemService(UiModeManager.class);
         if (Caps.dayNight(c)) {
             try {
-                um.setNightMode(darkOn(c)
-                        ? UiModeManager.MODE_NIGHT_NO : UiModeManager.MODE_NIGHT_YES);
+                um.setNightMode(target
+                        ? UiModeManager.MODE_NIGHT_YES : UiModeManager.MODE_NIGHT_NO);
                 return true;
             } catch (Throwable t) { Log.w(TAG, "setNightMode: " + t); }
+        }
+        // preview-mode flip: ui_night_mode is an ordinary secure setting
+        // (2 = dark, 1 = light), and a momentary car-mode nudge makes
+        // UiModeManagerService re-read it now instead of at the next
+        // screen cycle. Public SDK; needs only the adb-grantable
+        // WRITE_SECURE_SETTINGS. The blessed setNightMode path above
+        // replaces this the day MODIFY_DAY_NIGHT_MODE exists.
+        if (Caps.secureSettings(c)) {
+            try {
+                Settings.Secure.putInt(c.getContentResolver(),
+                        "ui_night_mode", target ? 2 : 1);
+                um.enableCarMode(0);
+                um.disableCarMode(0);
+                return true;
+            } catch (Throwable t) { Log.w(TAG, "ui_night_mode flip: " + t); }
         }
         openSettings(c, Settings.ACTION_DISPLAY_SETTINGS);
         return false;

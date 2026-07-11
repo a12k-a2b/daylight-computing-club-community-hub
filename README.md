@@ -82,8 +82,10 @@ a **"Daylight panel" tile** in the stock quick settings, a **swipe zone just
 below the status bar**, or the launcher button. Brightness, rotation, quiet,
 media and notifications all work for real — and (verified on glass) so does
 tapping **Bluetooth** to flip the radio; Android 13 still allows that with
-plain BLUETOOTH_CONNECT. Wi-Fi / Airplane / Dark pills open their settings
-surfaces (Android reserves those flips for system apps), and the in-shade
+plain BLUETOOTH_CONNECT. With the adb-grantable secure-settings grant,
+**Dark** flips for real too (`ui_night_mode` + a car-mode nudge so it
+applies immediately). Wi-Fi / Airplane pills open their settings surfaces
+(Android reserves those flips for system apps), and the in-shade
 Wi-Fi *network list* is also system-reserved — scan results stay
 location-gated, `neverForLocation` excluded — so in preview the Wi-Fi
 picker offers the radio toggle plus an honest hand-off row to the system
