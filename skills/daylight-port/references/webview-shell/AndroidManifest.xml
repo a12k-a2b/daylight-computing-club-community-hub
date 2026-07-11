@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Rename package to club.daylight.<app-id> — then NEVER change it: updates
+     require the same package name and the same signing key forever. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="club.daylight.CHANGEME"
+    android:versionCode="1"
+    android:versionName="1.0">
+
+    <uses-sdk android:minSdkVersion="29" android:targetSdkVersion="33" />
+
+    <!-- Uncomment ONLY if the dish talks to the network. Left out, the app
+         provably cannot phone home — say so on its club card. -->
+    <!-- <uses-permission android:name="android.permission.INTERNET" /> -->
+
+    <application
+        android:label="CHANGEME"
+        android:icon="@drawable/icon"
+        android:allowBackup="true"
+        android:theme="@android:style/Theme.DeviceDefault.Light.NoActionBar">
+
+        <!-- configChanges: keep the WebView alive across rotation (state,
+             scroll, form contents survive). adjustResize: the keyboard
+             shrinks the page instead of covering the focused field. -->
+        <activity
+            android:name="club.daylight.shell.MainActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden|density"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

@@ -1,0 +1,48 @@
+{
+  "_": "Canonical Daylight DC-1 facts. Every tool in the skill pack reads this file; correct it here and the whole pack recalibrates. Fields marked measured:false are educated defaults awaiting a reading from a real device — see site/calibrate.html.",
+  "device": {
+    "name": "Daylight DC-1",
+    "os": "Android 13 (Sol:OS)",
+    "os_note": "a newer Android base is expected — on OS bumps re-check: predictive back (onBackPressed migration), targetSdk in the shell manifest, WebView behavior changes",
+    "soc": "MediaTek Helio G99",
+    "ram_gb": 8,
+    "network": "wifi-only",
+    "camera": false,
+    "stylus": "Wacom EMR (hover + pressure)"
+  },
+  "panel": {
+    "diagonal_in": 10.5,
+    "resolution": [1600, 1200],
+    "aspect": "4:3",
+    "ppi": 190,
+    "refresh_hz": 60,
+    "type": "LivePaper: transflective TN LCD, IGZO oxide TFT backplane, no color filter array (e-paper-class, NOT e-ink)",
+    "bit_depth": 8,
+    "backlight": "amber (blue-free), transmissive through the transflective panel — a backlight, not a front-light",
+    "tn_note": "TN mode: gamma shifts with vertical viewing angle (worst case grayscale inversion at steep tilt) — verify designs at ±30°; another reason adjacent mid-grays must not carry meaning",
+    "gray_levels_driven": 256,
+    "gray_levels_practical": { "value": 12, "measured": false, "note": "eyes resolve ~9-16 in ambient light; count on calibrate.html" }
+  },
+  "viewport": {
+    "devicePixelRatio": { "value": 1.25, "measured": false, "note": "read from calibrate.html on a real DC-1" },
+    "css_landscape": [1280, 960],
+    "css_portrait": [960, 1280]
+  },
+  "curve": {
+    "_": "LivePaper simulation: luminance -> shadow-crushing gamma -> compressed range -> paper tint. Tuned by eye, not measured.",
+    "day":   { "gamma": 1.35, "floor": 48, "ceil": 228, "tint": [1.0, 0.975, 0.90], "measured": false },
+    "night": { "gamma": 1.45, "floor": 40, "ceil": 200, "tint": [1.0, 0.72, 0.38], "measured": false, "note": "review photos suggest the real amber is considerably MORE saturated than this tint, and backlight warmth is user-adjustable — recalibrate from photos of calibrate.html at min/max warmth" }
+  },
+  "ramp": {
+    "_": "the default five-tone UI ramp (club-site flavor; see solos_scale for the design system's)",
+    "ink": "#000000", "mid": "#555555", "faint": "#999999", "hairline": "#cccccc", "paper": "#ffffff"
+  },
+  "solos_scale": {
+    "_": "the Daylight/Sol:OS design system's Day-mode grays — authoritative for Sol:OS-native dishes (see daylight-design/references/design-system.md)",
+    "ink_primary": "#1A1A1A", "ink_max": "#000000", "secondary": "#535353", "tertiary": "#858585",
+    "disabled": "#CCCCCC", "recessed": "#F5F5F5", "surface": "#F7F7F7", "paper": "#FFFFFF",
+    "brand_to_gray": { "yellow #FFC70D": "#CECECE", "amber #FF9D00": "#9D9D9E", "orange #FC6900": "#6C6C6D" }
+  },
+  "hk": { "model": "Nayatani 1997 VAC chromatic lightness (CIELUV, hue-dependent)", "adapting_luminance_cdm2": 20, "measured": false, "note": "used by daylight-map; L_a default from Smith et al. 2008 — the right value for a reflective panel in ambient light, and the object-vs-luminous variant choice, await hardware validation" },
+  "input": { "min_touch_target_css_px": 48, "min_body_font_css_px": 16 }
+}

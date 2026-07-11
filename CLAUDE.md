@@ -94,6 +94,14 @@ above using the form's answers for the catalog entry. Open a PR for
 Anjan to approve, close the issue from the PR (`Closes #N`), and if
 anything essential is missing, ask in an issue comment.
 
+## When asked to "daylight-ify" / port / redesign an app for the DC-1
+
+Use the skill pack in `skills/`: `daylight-port` (choose PWA / WebView
+shell / native, fix web↔Android jank), `daylight-design` (grayscale
+mapping, tablet layout, voice), `daylight-teach` (onboarding), with
+`daylight-preview` as the feedback loop after every visual pass. Fold
+lessons learned on real dishes back into those skills.
+
 ## Design rules for the site itself
 
 Built for a monochrome reflective LCD: pure grayscale, high contrast, real
