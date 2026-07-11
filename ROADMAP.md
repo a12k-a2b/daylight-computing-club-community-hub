@@ -37,10 +37,12 @@ marked *needs blessing* lights up in the same APK the day it lands.
 
 ## v1 — polish that needs nothing
 
-- [ ] **Dark-mode variant of the panel itself** — today the sheet is always
-      paper-white; when the Dark pill is on it should invert to ink-paper
-      (white type on black), which is lovely on a reflective LCD at night.
-      *(afternoon)*
+- [x] **Dark-mode variant of the panel itself** — *built:* the panel
+      follows the system theme — day is ink on paper, night the same page
+      inverted — and an open panel rebuilds itself the moment the theme
+      flips (Dark pill or schedule). The mock mirrors it via the viewer's
+      color scheme. (Open question 4 below still stands: confirm on real
+      glass that inverted is what night wants.)
 - [ ] **Landscape pass** — the DC-1 lives in both orientations; check the
       660dp sheet, maybe 6 pills in one row when wide. *(afternoon)*
 - [ ] **Richer notification rows** — tap-to-expand long text, inline action

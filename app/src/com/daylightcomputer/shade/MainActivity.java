@@ -24,11 +24,12 @@ import java.util.List;
 public class MainActivity extends Activity {
 
     private LinearLayout page;
+    private ScrollView rootScroll;
 
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
         ScrollView sc = new ScrollView(this);
-        sc.setBackgroundColor(Ui.PAPER);
+        rootScroll = sc;
         page = new LinearLayout(this);
         page.setOrientation(LinearLayout.VERTICAL);
         int p = Ui.dp(this, 22);
@@ -52,11 +53,27 @@ public class MainActivity extends Activity {
     }
 
     private void rebuild() {
+        Ui.applyTheme(this);
+        rootScroll.setBackgroundColor(Ui.PAPER);
         page.removeAllViews();
 
         TextView h = Ui.text(this, 30, Ui.INK, true, true);
         h.setText("Daylight Shade");
         page.addView(h);
+
+        if (Prefs.safeTripped(this)) {
+            TextView warn = Ui.text(this, 15, Ui.INK, true, false);
+            warn.setBackground(Ui.box(this, 3, Ui.PAPER, Ui.INK));
+            int wp = Ui.dp(this, 14);
+            warn.setPadding(wp, wp, wp, wp);
+            warn.setText("The shade hit trouble a few times in a row, so it stepped "
+                    + "aside: swipe takeover and the catch strip are off and the stock "
+                    + "shade is back. Everything else still works. Tap here when you've "
+                    + "read this.");
+            warn.setClickable(true);
+            warn.setOnClickListener(v -> { Prefs.clearSafeTripped(this); rebuild(); });
+            page.addView(warn, lpFull(-2, 12));
+        }
         TextView tag = Ui.text(this, 16, Ui.MID, true, false);
         tag.setText("your own pull-down panel — calm, grayscale, ours to shape");
         tag.setPadding(0, Ui.dp(this, 4), 0, Ui.dp(this, 18));
