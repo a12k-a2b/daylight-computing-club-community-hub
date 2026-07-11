@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Daylight Shade — a replaceable, iterable quick-settings panel for Sol:OS.
+
+     Permissions are declared in three tiers (see shade/README.md):
+       tier 1: normal / user-grantable — preview mode works with these alone
+       tier 2: adb- or dev-grantable  — WRITE_SECURE_SETTINGS
+       tier 3: signature|privileged   — granted only when Sol:OS ships this
+               app as a priv-app (or platform-signs it); silently ignored
+               otherwise, so the same APK runs in both worlds. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.daylightcomputer.shade"
+    android:versionCode="1"
+    android:versionName="0.1">
+
+    <!-- tier 1 -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
+
+    <!-- tier 2 -->
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
+
+    <!-- tier 3 -->
+    <uses-permission android:name="android.permission.STATUS_BAR" />
+    <uses-permission android:name="android.permission.INTERNAL_SYSTEM_WINDOW" />
+    <uses-permission android:name="android.permission.NETWORK_SETTINGS" />
+    <uses-permission android:name="android.permission.NETWORK_AIRPLANE_MODE" />
+    <uses-permission android:name="android.permission.MODIFY_DAY_NIGHT_MODE" />
+
+    <application
+        android:name=".ShadeApp"
+        android:label="@string/app_name"
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="false"
+        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+
+        <!-- The control room: capability checklist, mode switches, preview. -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Invisible trampoline so the stock-QS tile can collapse the stock
+             shade and open ours. -->
+        <activity
+            android:name=".PanelTrampolineActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <!-- Owns the overlay windows (gesture strip + panel). -->
+        <service
+            android:name=".ShadeService"
+            android:exported="false" />
+
+        <!-- Media sessions + notification list both come from here. -->
+        <service
+            android:name=".ShadeNLService"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <!-- Stepping stone: a tile inside the stock shade that opens ours.
+             Useful in preview mode; redundant once full mode takes over. -->
+        <service
+            android:name=".ShadeTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_tile"
+            android:label="@string/tile_label"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+
+        <receiver
+            android:name=".BootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>
