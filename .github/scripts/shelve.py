@@ -137,6 +137,7 @@ def main():
     description = field(fields, "What does it do")
     setup = field(fields, "Any setup after installing")
     source = field(fields, "Where's the source code")
+    made_for = field(fields, "Who's it for")
 
     if not name:
         bail("The **App name** answer is empty.")
@@ -164,6 +165,12 @@ def main():
         "afterInstall": [s.strip() for s in setup.splitlines() if s.strip()],
         "source": source or f"https://github.com/{REPO}/issues/{ISSUE}",
     }
+    # a dedication makes the dish a gift: it shows up wrapped, with the
+    # cook's name on it, on the named friends' shelves (first names,
+    # matching friends.json keys)
+    dedicated = [w.strip().lower() for w in re.split(r"[,\s]+", made_for) if w.strip()]
+    if dedicated:
+        entry["for"] = dedicated
     inspection_md = ""
     if is_apk:
         entry["apk"] = prepare_apk(apk_field, app_id)

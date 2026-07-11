@@ -96,6 +96,51 @@ The Companion never installs silently, never uninstalls, never phones
 home. It informs, and the human taps. (One-tap-no-confirmation is
 Sol:OS-card territory — policy, not physics, and not ours to shortcut.)
 
+## The gift path — receiving should feel like AirDrop at a potluck
+
+Settled 2026-07-11. The highest bar for leg 3→4: **a friend should never
+need to remember a link.** A dish made for you simply *appears* on your
+Daylight, wrapped, with the cook's name on it; you open it and it works.
+Three redundant pathways, all kept good (the caretaker checks them weekly):
+
+| Pathway | Needs | Experience |
+|---|---|---|
+| **Magic** (Companion + PWA) | Companion installed once; your seat claimed once (invite link) | Quiet notification "Anjan brought you a gift ☀" → open the club → a wrapped dish with your name → tap Open → one-tap install |
+| **URL** (works for anyone, forever) | Nothing — a browser | `invite.html?f=you&dish=x` or just the club link; wrapped gifts still show once your tablet knows you |
+| **Claude** (cooks' path) | A Claude/Codex session | Paste daylightcomputer.club → llms.txt teaches it to take/bring/remix |
+
+**No accounts, on purpose.** Identity = your invite link claiming your
+seat in the tablet's own storage (`dcc-friend`). Addressing = the
+catalog's `for: ["melissa"]` field (now settable from the share form:
+"Who's it for?"). The gift state (`dcc-opened`) lives on-device. Nothing
+phones home; there is nothing to log into and nothing to breach. If the
+club ever needs stronger identity, that's the Sol:OS conversation, not a
+password database.
+
+**The wrapping.** An unopened gift renders as one of eight hand-drawn
+wrappers (casserole, pie under cloth, jar with a bow, wrapped loaf,
+basket, cloche, cookie tin, parcel with twine) — picked by a stable hash
+of the dish id, so every dish keeps its wrapper. Opening is a state
+change, not an animation (nothing moves on a reflective screen); the
+delight is the art and the words: "From Anjan — Anjan made something for
+you, Melissa." No confetti. A potluck, not a party popper.
+
+**Companion contract (desktop thread):** the Companion reads the same
+catalog. A new entry whose `for` includes this tablet's seat →
+notification "「author」 brought you a gift ☀", deep-link to the club (or
+straight to one-tap install). `recalled.json` entries → recall
+notification. No new endpoints — apps.json and recalled.json are the
+whole protocol.
+
+## The caretaker — pathways rot; someone sweeps weekly
+
+`.github/workflows/caretaker.yml` (Mondays): walks all three pathways —
+every page answers, catalog schema valid, every APK present + signature
+verifies + live link downloads, dedications point at real seats,
+llms.txt and the share form exist, all robot workflows parse — and posts
+a 🟢/🟡/🔴 report on the standing "Caretaker log" issue. Red fails the
+run so breakage is loud.
+
 ## The container rule — one bar, not one format
 
 Settled 2026-07-09 (Anjan + desktop thread): **every dish leaves the

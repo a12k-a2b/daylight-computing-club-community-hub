@@ -15,6 +15,11 @@
       "name": "Jake",
       "from": "Anjan",
       "note": "The potluck's open — come see what we've been making."
+    },
+    "anjan": {
+      "name": "Anjan",
+      "from": "the club",
+      "note": "The host eats here too — this seat makes gifts addressed to Anjan land on his shelf."
     }
   }
 }

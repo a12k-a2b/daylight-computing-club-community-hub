@@ -74,3 +74,11 @@ body:
       label: Where's the source code? (optional but encouraged)
       description: The club staples the recipe to every dish — a repo link lets friends learn from and remix your app.
       placeholder: https://github.com/…
+  - type: input
+    id: made-for
+    attributes:
+      label: Who's it for? (optional)
+      description: >
+        Made it for someone in particular? First name(s), comma-separated.
+        It'll appear on their shelf wrapped as a gift, with your name on it.
+      placeholder: e.g. Melissa

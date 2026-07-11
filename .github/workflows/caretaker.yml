@@ -1,0 +1,29 @@
+name: Caretaker — weekly walk-through
+
+# Once a week, walk every pathway a dish can travel — the live site, the
+# files and signatures on the shelf, the Claude on-ramp — and post a
+# 🟢/🟡/🔴 report on the standing "Caretaker log" issue. Dumb gate style:
+# no LLM, just facts. Fails red so a broken pathway is loud.
+
+on:
+  schedule:
+    - cron: "0 15 * * 1"   # Mondays, 15:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  walk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Tools for signature checks
+        run: sudo apt-get update -q && sudo apt-get install -y -q apksigner python3-yaml
+
+      - name: Walk the clubhouse
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 .github/scripts/caretaker.py
