@@ -120,10 +120,13 @@ password database.
 **The wrapping.** An unopened gift renders as one of eight hand-drawn
 wrappers (casserole, pie under cloth, jar with a bow, wrapped loaf,
 basket, cloche, cookie tin, parcel with twine) — picked by a stable hash
-of the dish id, so every dish keeps its wrapper. Opening is a state
-change, not an animation (nothing moves on a reflective screen); the
-delight is the art and the words: "From Anjan — Anjan made something for
-you, Melissa." No confetti. A potluck, not a party popper.
+of the dish id, so every dish keeps its wrapper. Opening moves like
+**living paper** — the lid lifts, the card settles into place. (The DC-1
+runs 60–120 fps; motion is welcome when it behaves like paper — brief,
+physical, then still. Think Harry Potter's newspapers: the paper moves,
+the ink never glows.) The words carry the warmth: "From Anjan — Anjan
+made something for you, Melissa." No confetti. A potluck, not a party
+popper.
 
 **Companion contract (desktop thread):** the Companion reads the same
 catalog. A new entry whose `for` includes this tablet's seat →
@@ -157,7 +160,7 @@ keeping. Instead, the "daylight-ify skill pack" (ROADMAP's on-ice section
   so it works offline, carries a version, updates through the shelf, and
   the Companion can manage it.
 - **Live server-backed app** → stays a web dish; the kitchen daylight-ifies
-  its screen (grayscale, borders, contrast, no animation), never its
+  its screen (grayscale, borders, contrast, living-paper motion), never its
   packaging.
 
 Honesty rule: the kitchen is a sous-chef, not a ghostwriter — a

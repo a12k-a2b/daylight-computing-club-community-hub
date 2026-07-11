@@ -134,9 +134,9 @@ Promise.all([
 
 /* ---------- the gift path ----------
    A dish dedicated to you that you haven't opened yet arrives WRAPPED —
-   like a covered dish at a potluck. Opening it is a state change, not an
-   animation (nothing moves on a reflective screen); the delight is the
-   wrapper art and the words. Opened-state lives in localStorage only. */
+   like a covered dish at a potluck. Opening moves like LIVING PAPER:
+   the lid lifts, the card settles (60–120fps screen — paper may move,
+   ink never glows). Opened-state lives in localStorage only. */
 
 function isGift(app) {
   return !!FRIEND && (app.for || []).includes(FRIEND) && !TAKEN[app.id] && !OPENED[app.id];
@@ -175,7 +175,7 @@ function buildGiftCard(app) {
   card.style.textAlign = 'center';
   card.innerHTML =
     '<span class="badge">☀ A GIFT, FOR YOU</span>' +
-    '<div style="margin:6px auto 0">' + wrapperFor(app.id) + '</div>' +
+    '<div class="gift-lid" style="margin:6px auto 0">' + wrapperFor(app.id) + '</div>' +
     '<h2 style="margin:2px 0 4px">From ' + esc(app.author) + '</h2>' +
     '<p class="tagline" style="font-style:italic; color:var(--mid)">' +
       esc(app.author) + ' made something for you, ' + esc(cap(FRIEND)) + '.</p>' +
@@ -185,13 +185,24 @@ function buildGiftCard(app) {
       OPENED[app.id] = new Date().toISOString().slice(0, 10);
       localStorage.setItem('dcc-opened', JSON.stringify(OPENED));
     } catch (e) {}
-    const revealed = buildCard(app, true);
-    const note = document.createElement('p');
-    note.className = 'meta';
-    note.style.cssText = 'font-style:italic; margin:0 0 8px';
-    note.textContent = '☀ opened just now — from ' + app.author + ', with care';
-    revealed.insertBefore(note, revealed.querySelector('h2'));
-    card.replaceWith(revealed);
+    // living paper: the lid lifts off, then the dish settles into place
+    const lid = card.querySelector('.gift-lid');
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      const revealed = buildCard(app, true);
+      const note = document.createElement('p');
+      note.className = 'meta';
+      note.style.cssText = 'font-style:italic; margin:0 0 8px';
+      note.textContent = '☀ opened just now — from ' + app.author + ', with care';
+      revealed.insertBefore(note, revealed.querySelector('h2'));
+      revealed.classList.add('paper-settle');
+      card.replaceWith(revealed);
+    };
+    lid.addEventListener('animationend', finish, { once: true });
+    setTimeout(finish, 700); // fallback if animations are unavailable
+    lid.classList.add('lid-lifting');
   });
   return card;
 }

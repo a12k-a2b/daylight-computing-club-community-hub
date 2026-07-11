@@ -270,6 +270,24 @@ header.club {
 .wizard-nav .btn { flex: 1; }
 .wizard-nav .btn.back { flex: 0 0 30%; }
 
+/* ---------- living paper (motion) ----------
+   The DC-1 is paper that runs at 60–120 fps. Motion is welcome when it
+   behaves like paper: brief, physical, then still — a lid lifts, a page
+   settles. Never looping, pulsing, or attention-seeking. */
+
+@keyframes lid-lift {
+  to { transform: translateY(-56px) rotate(-8deg); opacity: 0; }
+}
+@keyframes paper-settle {
+  from { transform: translateY(16px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.lid-lifting  { animation: lid-lift .5s cubic-bezier(.4, 0, .7, .2) forwards; transform-origin: 15% 100%; }
+.paper-settle { animation: paper-settle .45s cubic-bezier(.2, .7, .3, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .lid-lifting, .paper-settle { animation-duration: .01s; }
+}
+
 /* ---------- misc ---------- */
 
 footer.club {
