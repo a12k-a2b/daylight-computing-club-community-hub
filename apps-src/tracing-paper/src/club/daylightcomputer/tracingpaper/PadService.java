@@ -211,6 +211,7 @@ public class PadService extends AccessibilityService {
     private void showPad() {
         if (shown) return;
         if (root == null) buildUi();
+        pad.ensureBitmaps(); // rebuilt after the memory handed back on close
         pad.setPenOnly(prefs.getBoolean(Prefs.K_PEN_ONLY, false));
         pad.setBetaFlick(prefs.getBoolean(Prefs.K_BETA_FLICK, false));
         rootLp.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
@@ -295,6 +296,7 @@ public class PadService extends AccessibilityService {
         maybeAutoBackup();
         try { wm.removeView(root); } catch (Exception ignored) {}
         shown = false;
+        pad.releaseBitmaps(); // the pad away = its memory handed back
     }
 
     /** Once a day, on pad close: the whole library into Download, quietly. */
@@ -307,7 +309,7 @@ public class PadService extends AccessibilityService {
                 Backup.writeBackup(this, snap);
                 prefs.edit().putLong(Prefs.K_LAST_BACKUP, System.currentTimeMillis()).apply();
                 toast("Notebooks backed up to Download/Tracing Paper/Backups");
-            } catch (Exception ignored) {
+            } catch (Throwable ignored) {
                 // never let a failed backup interrupt putting the glass away
             }
         }).start();
@@ -341,6 +343,7 @@ public class PadService extends AccessibilityService {
         if (!shown || peeking || snipMode) return;
         closePanel();
         closeToolPopup();
+        pad.resetZoom();
         peeking = true;
         rootLp.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
         wm.updateViewLayout(root, rootLp);
@@ -380,6 +383,7 @@ public class PadService extends AccessibilityService {
         if (hintCard != null) { root.removeView(hintCard); hintCard = null; }
         if (peeking) exitPeek();
         snipMode = true;
+        pad.resetZoom(); // snips are cut from the page at true size
         pad.setVisibility(View.INVISIBLE);
         barShell.setVisibility(View.INVISIBLE);
         veil = new SnipVeil(this, this::finishSnip, this::cancelSnip);
@@ -971,7 +975,9 @@ public class PadService extends AccessibilityService {
             try {
                 String name = Exporter.exportPdf(this, snap, aspect);
                 handler.post(() -> toast("Saved " + name + " in Download"));
-            } catch (Exception e) {
+            } catch (Throwable e) {
+                // Throwable on purpose: a giant library should fail with a
+                // toast, not take the process (and the pad) down with it
                 handler.post(() -> toast("PDF export failed"));
             }
         }).start();

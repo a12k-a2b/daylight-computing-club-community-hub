@@ -76,11 +76,9 @@ final class Backup {
                         so.put("x", s.x); so.put("y", s.y);
                         so.put("w", s.w); so.put("h", s.h);
                         if (s.r != 0) so.put("r", s.r);
-                        Bitmap bm = NoteStore.snipBitmap(c, s.file);
-                        if (bm != null) {
-                            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                            bm.compress(Bitmap.CompressFormat.PNG, 100, bos);
-                            so.put("data", Base64.encodeToString(bos.toByteArray(), Base64.NO_WRAP));
+                        byte[] raw = NoteStore.snipBytes(c, s.file);
+                        if (raw != null) {
+                            so.put("data", Base64.encodeToString(raw, Base64.NO_WRAP));
                         }
                         si.put(so);
                     }

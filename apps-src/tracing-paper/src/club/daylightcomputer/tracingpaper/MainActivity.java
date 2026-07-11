@@ -193,7 +193,7 @@ public class MainActivity extends Activity {
                 runOnUiThread(() -> Toast.makeText(this,
                         "Saved " + name + " in Download/Tracing Paper/Backups",
                         Toast.LENGTH_LONG).show());
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 runOnUiThread(() -> Toast.makeText(this, "Backup failed",
                         Toast.LENGTH_SHORT).show());
             }
@@ -237,7 +237,7 @@ public class MainActivity extends Activity {
                 final String msg = "Restored " + restored.size() + " notebook(s), "
                         + pages + " page(s) — open the pad and tap the ▾ button";
                 runOnUiThread(() -> Toast.makeText(this, msg, Toast.LENGTH_LONG).show());
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 runOnUiThread(() -> Toast.makeText(this,
                         "Couldn't read that file as a backup", Toast.LENGTH_LONG).show());
             }
@@ -253,7 +253,7 @@ public class MainActivity extends Activity {
                 String name = Exporter.exportPdf(this, new NoteStore(this).load().books, aspect);
                 runOnUiThread(() -> Toast.makeText(this,
                         "Saved " + name + " in Download", Toast.LENGTH_LONG).show());
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 runOnUiThread(() -> Toast.makeText(this,
                         "PDF export failed", Toast.LENGTH_SHORT).show());
             }

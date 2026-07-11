@@ -68,9 +68,25 @@ class NoteStore {
         while (o.outWidth / sample > 2048 || o.outHeight / sample > 2048) sample *= 2;
         o.inJustDecodeBounds = false;
         o.inSampleSize = sample;
+        o.inPreferredConfig = android.graphics.Bitmap.Config.RGB_565; // half the RAM; fine for text
         b = BitmapFactory.decodeFile(f.getPath(), o);
         if (b != null) SNIPS.put(name, b);
         return b;
+    }
+
+    /** Raw stored bytes of a snip file, for embedding in backups without re-encoding. */
+    static byte[] snipBytes(Context c, String name) {
+        try {
+            File f = snipFile(c, name);
+            byte[] buf = new byte[(int) f.length()];
+            try (FileInputStream in = new FileInputStream(f)) {
+                int off = 0, r;
+                while (off < buf.length && (r = in.read(buf, off, buf.length - off)) > 0) off += r;
+            }
+            return buf;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     static File snipDir(Context c) {
@@ -83,12 +99,16 @@ class NoteStore {
         return new File(snipDir(c), name);
     }
 
-    /** Saves a snip bitmap and returns its stored file name. */
+    /**
+     * Saves a snip bitmap and returns its stored file name. Lossy WebP at
+     * q87: several times smaller than PNG on disk, text still crisp enough
+     * to read — the quality floor is legibility, not photography.
+     */
     static String saveSnip(Context c, Bitmap b) throws Exception {
         String name = "snip-" + new SimpleDateFormat("yyyyMMdd-HHmmss-SSS", Locale.US)
-                .format(new Date()) + ".png";
+                .format(new Date()) + ".webp";
         try (FileOutputStream out = new FileOutputStream(snipFile(c, name))) {
-            b.compress(Bitmap.CompressFormat.PNG, 100, out);
+            b.compress(Bitmap.CompressFormat.WEBP_LOSSY, 87, out);
         }
         return name;
     }
