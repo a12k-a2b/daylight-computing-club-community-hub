@@ -88,6 +88,16 @@ jobs:
           # stashed before the PR checkout)
           script: bash "$RUNNER_TEMP/smoke.sh" "${{ steps.find.outputs.apk }}"
 
+      - name: Keep the monkey's notes (stack traces for any red verdict)
+        if: steps.find.outputs.apk != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-logs
+          path: |
+            monkey.log
+            logcat.txt
+          if-no-files-found: ignore
+
       - name: Post the report
         if: steps.find.outputs.apk != ''
         env:
@@ -100,7 +110,7 @@ jobs:
             if [ "$INSTALL" != "ok" ]; then
               body="🔴 **☀ Inspector's smoke test — failed.** The app **would not install** on an emulated Android 11 tablet."
             elif [ "$MONKEY" = "crashed" ] || [ "${FATALS:-0}" -gt 0 ]; then
-              body="🔴 **☀ Inspector's smoke test — failed.** The app **crashed** under 1500 random taps (fatal exceptions: ${FATALS:-?}). Worth a look before shelving."
+              body="🔴 **☀ Inspector's smoke test — failed.** The app **crashed** under 1500 random taps (fatal exceptions in this app: ${FATALS:-?}). The smoke-logs artifact on the workflow run has the stack trace."
             elif [ -n "$MEM_MB" ] && [ "$MEM_MB" -gt 400 ]; then
               body="🟡 **☀ Inspector's smoke test — passed, with a flag.** Installed and survived 1500 random taps, but used ${MEM_MB} MB of memory — that is a lot for a homebrew app."
             else
@@ -108,7 +118,9 @@ jobs:
               # failed && list here killed the step before it could comment
               mem_note=""
               if [ -n "$MEM_MB" ]; then mem_note=" Memory in use while poked: ${MEM_MB} MB."; fi
-              body="🟢 **☀ Inspector's smoke test — passed.** Installed cleanly and survived 1500 random taps on an emulated tablet without crashing.$mem_note"
+              other_note=""
+              if [ "${OTHER_FATALS:-0}" -gt 0 ]; then other_note=" (A different app on the emulator crashed during the poke — not this dish; the smoke-logs artifact has details.)"; fi
+              body="🟢 **☀ Inspector's smoke test — passed.** Installed cleanly and survived 1500 random taps on an emulated tablet without crashing.$mem_note$other_note"
             fi
           fi
           if [ -n "$ISSUE_NUMBER" ]; then

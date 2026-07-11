@@ -21,6 +21,11 @@ else
 fi
 MEM=$(adb shell dumpsys meminfo "$PKG" 2>/dev/null | grep -m1 "TOTAL PSS:" | grep -o '[0-9]*' | head -1)
 if [ -n "$MEM" ]; then echo "MEM_MB=$((MEM / 1024))" >> report.env; else echo "MEM_MB=" >> report.env; fi
-FATALS=$(adb logcat -d | grep -c "FATAL EXCEPTION")
+# bill fatals to the dish only — a crash header names its process on the next
+# line, and other apps falling over on the emulator are not this dish's fault
+adb logcat -d > logcat.txt 2>/dev/null
+FATALS=$(grep -A1 "FATAL EXCEPTION" logcat.txt | grep -c "Process: $PKG")
+ALL_FATALS=$(grep -c "FATAL EXCEPTION" logcat.txt)
 echo "FATALS=$FATALS" >> report.env
+echo "OTHER_FATALS=$((ALL_FATALS - FATALS))" >> report.env
 exit 0
