@@ -101,13 +101,16 @@ public class MainActivity extends Activity {
                 + "Download/Tracing Paper. Notes live only on this tablet.\n\n"
                 + "On the glass: PEN, HILITE and ERASE to switch nibs (the pen's other end "
                 + "erases too). HILITE is a light-gray marker with a thin black ring so it "
-                + "still stands out on this screen. CLEAR wipes a page (hold it to tear the "
-                + "page out). Your notebooks live under the ▾ button — each one gets its own "
-                + "paper: blank, lined, dots, or school. The GLASS slider sets how see-through "
-                + "the pad is, 0 to 100%. SNIP cuts a box out of whatever's on screen and "
-                + "pastes it on the glass. PEEK lets you scroll the page underneath without "
-                + "closing your notes. SNAP saves a picture of notes-over-page, and holding "
-                + "the top button snaps one too.", 15, false);
+                + "still stands out on this screen. Pages scroll past in one motion — drag "
+                + "with a finger (with pen-only on) or use ◀ ▶; CLEAR wipes a page (hold it "
+                + "to tear the page out). Your notebooks live under the ▾ button — each one "
+                + "gets its own paper: blank, lined, dots, or school. SNIP cuts a box out of "
+                + "whatever's on screen and pastes it on the glass, already selected — drag "
+                + "it, resize by a corner, tilt it by the ⟳ handle (it snaps straight when "
+                + "you're close). PICK re-selects a snip later. The GLASS slider sets how "
+                + "see-through the pad is, 0 to 100%. PEEK lets you scroll the page "
+                + "underneath without closing your notes. SNAP saves a picture of "
+                + "notes-over-page, and holding the top button snaps one too.", 15, false);
         fine.setTextColor(0xFF333333);
         col.addView(fine);
 

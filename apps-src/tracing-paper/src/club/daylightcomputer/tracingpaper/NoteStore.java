@@ -82,6 +82,8 @@ class NoteStore {
                         GlassPadView.Book b = new GlassPadView.Book();
                         b.name = bo.optString("n", "Notes");
                         b.template = bo.optInt("t", GlassPadView.TPL_BLANK);
+                        b.createdTime = bo.optLong("c", 0);
+                        b.lastModified = bo.optLong("m", 0);
                         JSONArray ps = bo.getJSONArray("pages");
                         for (int j = 0; j < ps.length(); j++) b.pages.add(readPage(ps.getJSONObject(j)));
                         if (b.pages.isEmpty()) b.pages.add(new GlassPadView.PageData());
@@ -130,6 +132,7 @@ class NoteStore {
                 s.y = (float) so.getDouble("y");
                 s.w = (float) so.getDouble("w");
                 s.h = (float) so.getDouble("h");
+                s.r = (float) so.optDouble("r", 0);
                 pd.snips.add(s);
             }
         }
@@ -160,6 +163,8 @@ class NoteStore {
                     JSONObject bo = new JSONObject();
                     bo.put("n", b.name);
                     bo.put("t", b.template);
+                    bo.put("c", b.createdTime);
+                    bo.put("m", b.lastModified);
                     JSONArray ps = new JSONArray();
                     for (GlassPadView.PageData pd : b.pages) {
                         JSONObject po = new JSONObject();
@@ -183,6 +188,7 @@ class NoteStore {
                                 so.put("y", round(s.y));
                                 so.put("w", round(s.w));
                                 so.put("h", round(s.h));
+                                if (s.r != 0) so.put("r", round(s.r));
                                 si.put(so);
                             }
                             po.put("i", si);

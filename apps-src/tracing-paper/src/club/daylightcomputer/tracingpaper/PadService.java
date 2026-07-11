@@ -76,7 +76,7 @@ public class PadService extends AccessibilityService {
     private int armedBookDelete = -1;
     private long armedBookAt;
 
-    private TextView pageBtn, penBtn, hiBtn, eraseBtn, undoBtn, redoBtn, bookBtn;
+    private TextView pageBtn, penBtn, hiBtn, eraseBtn, pickBtn, undoBtn, redoBtn, bookBtn;
 
     private final Runnable longPress = () -> {
         longFired = true;
@@ -426,9 +426,12 @@ public class PadService extends AccessibilityService {
         for (int i = 0; i < books.size(); i++) {
             final int idx = i;
             GlassPadView.Book b = books.get(i);
+            String when = b.lastModified > 0 ? "  ·  "
+                    + new java.text.SimpleDateFormat("MMM d", java.util.Locale.US)
+                            .format(new java.util.Date(b.lastModified)) : "";
             TextView row = button((idx == pad.curBook() ? "▸ " : "") + b.name
                             + "  ·  " + b.pages.size() + " pg  ·  "
-                            + GlassPadView.TPL_NAMES[b.template],
+                            + GlassPadView.TPL_NAMES[b.template] + when,
                     v -> { pad.switchBook(idx); closePanel(); refreshBar(); });
             row.setGravity(Gravity.START | Gravity.CENTER_VERTICAL);
             row.setOnLongClickListener(v -> {
@@ -555,6 +558,7 @@ public class PadService extends AccessibilityService {
         penBtn = button("PEN", v -> pad.setTool(GlassPadView.TOOL_PEN));
         hiBtn = button("HILITE", v -> pad.setTool(GlassPadView.TOOL_HIGHLIGHT));
         eraseBtn = button("ERASE", v -> pad.setTool(GlassPadView.TOOL_ERASE));
+        pickBtn = button("PICK", v -> pad.setTool(GlassPadView.TOOL_PICK));
         undoBtn = button("UNDO", v -> pad.undo());
         redoBtn = button("REDO", v -> pad.redo());
         TextView clearBtn = button("CLEAR", v -> pad.clearPage());
@@ -571,7 +575,7 @@ public class PadService extends AccessibilityService {
         TextView pdfBtn = button("PDF", v -> exportPdf());
         TextView hideBtn = button("✕ HIDE", v -> hidePad());
 
-        View[] order = {hideBtn, penBtn, hiBtn, eraseBtn, undoBtn, redoBtn, clearBtn,
+        View[] order = {hideBtn, penBtn, hiBtn, eraseBtn, pickBtn, undoBtn, redoBtn, clearBtn,
                 prevBtn, pageBtn, nextBtn, plusBtn, bookBtn, snipBtn, glassBox,
                 peekBtn, shotBtn, pdfBtn};
         for (View b : order) {
@@ -647,6 +651,7 @@ public class PadService extends AccessibilityService {
         style(penBtn, tool == GlassPadView.TOOL_PEN);
         style(hiBtn, tool == GlassPadView.TOOL_HIGHLIGHT);
         style(eraseBtn, tool == GlassPadView.TOOL_ERASE);
+        style(pickBtn, tool == GlassPadView.TOOL_PICK);
         undoBtn.setAlpha(pad.canUndo() ? 1f : 0.35f);
         redoBtn.setAlpha(pad.canRedo() ? 1f : 0.35f);
         String n = pad.bookName();

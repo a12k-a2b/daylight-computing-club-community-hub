@@ -111,9 +111,12 @@ final class Exporter {
                         Bitmap bm = s.bmp != null ? s.bmp : BitmapFactory.decodeFile(
                                 NoteStore.snipFile(c, s.file).getPath());
                         if (bm == null) continue;
-                        cv.drawBitmap(bm, null,
-                                new RectF(s.x * cw, s.y * ch, (s.x + s.w) * cw, (s.y + s.h) * ch),
-                                null);
+                        RectF r = new RectF(s.x * cw, s.y * ch,
+                                (s.x + s.w) * cw, (s.y + s.h) * ch);
+                        cv.save();
+                        if (s.r != 0) cv.rotate(s.r, r.centerX(), r.centerY());
+                        cv.drawBitmap(bm, null, r, null);
+                        cv.restore();
                     }
 
                     // highlights under the ink, ringed like on the glass
