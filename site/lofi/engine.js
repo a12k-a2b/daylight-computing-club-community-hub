@@ -364,6 +364,82 @@ const Engine = (() => {
         break;
       }
 
+      // a single steady tone (the lab's solfeggio tiles) — softened with a
+      // slow amplitude breath so a bare sine doesn't pierce
+      case 'tone': {
+        const g = ctx.createGain();
+        g.gain.setValueAtTime(0.0001, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(spec.gain, ctx.currentTime + (spec.attack || 4));
+        g.connect(bus);
+        const o = ctx.createOscillator();
+        o.frequency.value = spec.freq;
+        connectWobble(o);
+        o.connect(g);
+        o.start();
+        state.nodes.push(o, g);
+        if (spec.am) addLFO(state, g.gain, spec.am.rate, spec.gain * spec.am.depth);
+        break;
+      }
+
+      // isochronic pulse: a carrier tone fully amplitude-modulated at the
+      // target rate — unlike binaural beats this works on speakers
+      case 'iso': {
+        const level = ctx.createGain();
+        level.gain.setValueAtTime(0.0001, ctx.currentTime);
+        level.gain.exponentialRampToValueAtTime(spec.gain, ctx.currentTime + 3);
+        level.connect(bus);
+        const am = ctx.createGain();
+        am.gain.value = 0;                      // driven to 0..1 below
+        am.connect(level);
+        const dc = ctx.createConstantSource();
+        dc.offset.value = 0.5;
+        dc.connect(am.gain);
+        dc.start();
+        const lfo = ctx.createOscillator();
+        lfo.frequency.value = spec.rate;
+        const lg = ctx.createGain();
+        lg.gain.value = 0.5;
+        lfo.connect(lg);
+        lg.connect(am.gain);
+        lfo.start();
+        const o = ctx.createOscillator();
+        o.frequency.value = spec.freq;
+        o.connect(am);
+        o.start();
+        state.nodes.push(o, lfo, lg, dc, am, level);
+        break;
+      }
+
+      // a slow resting heartbeat: lub … dub, all low sine thumps
+      case 'heartbeat': {
+        const period = 60 / (spec.bpm || 60);
+        const thump = (t, f, amp) => {
+          const o = ctx.createOscillator();
+          o.frequency.setValueAtTime(f, t);
+          o.frequency.exponentialRampToValueAtTime(f * 0.6, t + 0.1);
+          const g = ctx.createGain();
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.exponentialRampToValueAtTime(amp, t + 0.02);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+          o.connect(g);
+          g.connect(bus);
+          o.start(t);
+          o.stop(t + 0.3);
+        };
+        every(state, [period, period], () => {
+          const t = ctx.currentTime + 0.05;
+          thump(t, 62, spec.gain);
+          thump(t + 0.22, 50, spec.gain * 0.7);
+        });
+        break;
+      }
+
+      // singing bowls: long inharmonic strikes, like my bells but slower
+      case 'bowls':
+        every(state, spec.interval, () =>
+          bell(bus, pick(spec.notes), spec.gain, spec.decay || 14));
+        break;
+
       case 'waves': {
         // two overlapping swells at incommensurate periods = a real-ish sea
         [[0.055, 0], [0.082, 6]].forEach(([rate, phase]) => {
@@ -496,8 +572,18 @@ const Engine = (() => {
     }
   }
 
+  // one bowl strike on demand (the lab's "strike again" button)
+  function strikeBowl(freq) {
+    ensureCtx();
+    if (ctx.state === 'suspended') ctx.resume();
+    const b = ctx.createGain();
+    b.connect(master);
+    bell(b, freq || 196, 0.09, 14);
+    setTimeout(() => { try { b.disconnect(); } catch (e) {} }, 16000);
+  }
+
   return {
-    play, stop, fadeOut, wakeChime, setVolume, setBinaural, setTexture,
+    play, stop, fadeOut, wakeChime, strikeBowl, setVolume, setBinaural, setTexture,
     set onBreath(fn) { onBreath = fn; },
     get playing() { return live ? live.scene : null; }
   };

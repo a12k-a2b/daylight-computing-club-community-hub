@@ -99,10 +99,10 @@
       "tagline": "A quiet sound machine — generative calm for morning, day, and night.",
       "author": "Anjan",
       "type": "pwa",
-      "version": "1.0",
-      "updated": "2026-07-10",
+      "version": "1.1",
+      "updated": "2026-07-11",
       "url": "./lofi/",
-      "description": "Like Endel, but homebrew: nine soundscapes generated live on the tablet — nothing streams, nothing repeats, works offline. Morning wakes you gently (bright sparse notes, a writing companion for morning pages, birdsong through an open window). Day gives you a pocket of calm (a box-breathing pacer, rain on the roof, a twenty-minute nap that wakes you with a chime). Night winds you down (fireside crackle, slow ocean tide, and a near-silent Sleep scene with a fade-out timer). Each scene carries a quiet binaural undertone — faster in the morning, slower at night — for headphone listeners; there's a sleep timer, and an optional lo-fi vinyl-and-tape texture.",
+      "description": "Like Endel, but homebrew: nine soundscapes generated live on the tablet — nothing streams, nothing repeats, works offline. Morning wakes you gently (bright sparse notes, a writing companion for morning pages, birdsong through an open window). Day gives you a pocket of calm (a box-breathing pacer, rain on the roof, a twenty-minute nap that wakes you with a chime). Night winds you down (fireside crackle, slow ocean tide, and a near-silent Sleep scene with a fade-out timer). Each scene carries a quiet binaural undertone — faster in the morning, slower at night — for headphone listeners; there's a sleep timer, and an optional lo-fi vinyl-and-tape texture. Behind the 'lab' door: experimental sounds — white/pink/brown noise, isochronic entrainment pulses (they work on speakers), the nine solfeggio tones, a resting heartbeat, singing bowls, and an om drone — each labeled honestly as science or folklore.",
       "afterInstall": [
         "Open Lofi and tap any soundscape — sound starts on the first tap.",
         "For the binaural undertone, plug in headphones; speakers can't keep the two ears apart. You can switch it off in the bottom bar.",
