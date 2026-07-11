@@ -586,6 +586,9 @@ public class PadService extends AccessibilityService {
     private LinearLayout card(String title) {
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
+        // Cards float above the pad; claim the whole gesture or a touch on
+        // the card's text falls through and inks the page beneath it.
+        col.setClickable(true);
         int p = dp(16);
         col.setPadding(p, p, p, p);
         GradientDrawable g = new GradientDrawable();
