@@ -3,12 +3,9 @@ package com.daylightcomputer.shade.control;
 import android.app.AlarmManager;
 import android.app.NotificationManager;
 import android.app.UiModeManager;
-import android.bluetooth.BluetoothAdapter;
-import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.net.wifi.WifiManager;
 import android.os.BatteryManager;
 import android.provider.Settings;
 import android.text.format.DateFormat;
@@ -31,43 +28,19 @@ public final class Toggles {
         }
     }
 
-    // ---- wifi ----
-    public static boolean wifiOn(Context c) {
-        WifiManager wm = c.getApplicationContext().getSystemService(WifiManager.class);
-        return wm != null && wm.isWifiEnabled();
-    }
-    @SuppressWarnings("deprecation")
-    public static boolean wifiToggle(Context c) {
-        WifiManager wm = c.getApplicationContext().getSystemService(WifiManager.class);
-        boolean target = !wifiOn(c);
-        if (Caps.networkSettings(c)) {
-            try {
-                if (wm.setWifiEnabled(target)) return true;
-            } catch (Throwable t) { Log.w(TAG, "setWifiEnabled: " + t); }
-        }
-        // the small system sheet (network list + toggle), not full Settings
-        openSettings(c, Settings.Panel.ACTION_WIFI);
-        return false;
-    }
+    // ---- wifi / bluetooth ----
+    // state + direct flips live in WifiNets / BtDevices; these are the
+    // system hand-off surfaces the panel falls back to
+    public static boolean wifiOn(Context c) { return WifiNets.isOn(c); }
+    public static boolean btOn(Context c) { return BtDevices.isOn(c); }
 
-    // ---- bluetooth ----
-    public static boolean btOn(Context c) {
-        BluetoothManager bm = c.getSystemService(BluetoothManager.class);
-        BluetoothAdapter a = bm == null ? null : bm.getAdapter();
-        return a != null && a.isEnabled();
+    /** The compact system network sheet (list + toggle), not full Settings. */
+    public static void openWifiSheet(Context c) {
+        openSettings(c, Settings.Panel.ACTION_WIFI);
     }
-    @SuppressWarnings({"deprecation", "MissingPermission"})
-    public static boolean btToggle(Context c) {
-        BluetoothManager bm = c.getSystemService(BluetoothManager.class);
-        BluetoothAdapter a = bm == null ? null : bm.getAdapter();
-        if (a != null && Caps.btConnect(c)) {
-            try {
-                boolean ok = a.isEnabled() ? a.disable() : a.enable();
-                if (ok) return true;
-            } catch (Throwable t) { Log.w(TAG, "bt toggle: " + t); }
-        }
+    /** No compact sheet exists for Bluetooth — full settings it is. */
+    public static void openBtSettings(Context c) {
         openSettings(c, Settings.ACTION_BLUETOOTH_SETTINGS);
-        return false;
     }
 
     // ---- airplane ----

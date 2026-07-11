@@ -19,12 +19,15 @@ import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import com.daylightcomputer.shade.Prefs;
 import com.daylightcomputer.shade.ShadeNLService;
 import com.daylightcomputer.shade.control.Brightness;
+import com.daylightcomputer.shade.control.BtDevices;
 import com.daylightcomputer.shade.control.Media;
 import com.daylightcomputer.shade.control.Caps;
 import com.daylightcomputer.shade.control.Toggles;
 import com.daylightcomputer.shade.control.Warmth;
+import com.daylightcomputer.shade.control.WifiNets;
 
 import java.util.Date;
 import java.util.List;
@@ -40,7 +43,10 @@ public class PanelView extends FrameLayout {
     }
 
     private final Host host;
-    private final LinearLayout sheet;
+    private FrameLayout pageHost;
+    private LinearLayout sheet;
+    private PickerPage picker;
+    private LinearLayout pickerWrap;
     private TextView clock, dateLine, battery;
     private InkSlider brightness, warmth;
     private TileButton tWifi, tBt, tAir, tDnd, tDark, tRot;
@@ -76,13 +82,16 @@ public class PanelView extends FrameLayout {
                 Gravity.TOP | Gravity.CENTER_HORIZONTAL);
         addView(scroller, slp);
 
+        // the scroller's one child hosts the main sheet and, when open,
+        // a picker page (Wi-Fi networks / Bluetooth devices) in its place
+        pageHost = new FrameLayout(c);
+        scroller.addView(pageHost, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT));
         sheet = new LinearLayout(c);
         sheet.setOrientation(LinearLayout.VERTICAL);
         sheet.setBackgroundColor(Ui.PAPER);
-        scroller.addView(sheet, new FrameLayout.LayoutParams(
+        pageHost.addView(sheet, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT));
-        // moving the scroller moves the whole sheet; keep a handle to animate
-        scroller.setTag("sheet");
 
         buildHeader(c);
         sheet.addView(Ui.hr(c));
@@ -162,10 +171,17 @@ public class PanelView extends FrameLayout {
 
     private void buildTiles(Context c) {
         LinearLayout col = pad(c, LinearLayout.VERTICAL);
-        // long-press: the compact system network sheet, not full Settings —
-        // switching networks shouldn't cost a whole context switch
-        tWifi = tile(c, "Wi-Fi", () -> Toggles.wifiToggle(c), Settings.Panel.ACTION_WIFI);
-        tBt = tile(c, "Bluetooth", () -> Toggles.btToggle(c), Settings.ACTION_BLUETOOTH_SETTINGS);
+        // wifi/bt: tap = direct flip when blessed, else our picker page
+        // (or the system surface when pickers are switched off);
+        // long-press = always go deeper
+        tWifi = new TileButton(c, "Wi-Fi", () -> {
+            if (WifiNets.toggleDirect(c)) postDelayed(this::refreshTiles, 300);
+            else openWifiSurface();
+        }, this::openWifiSurface);
+        tBt = new TileButton(c, "Bluetooth", () -> {
+            if (BtDevices.toggleDirect(c)) postDelayed(this::refreshTiles, 400);
+            else openBtSurface();
+        }, this::openBtSurface);
         tAir = tile(c, "Airplane", () -> Toggles.airplaneToggle(c), Settings.ACTION_AIRPLANE_MODE_SETTINGS);
         tDnd = tile(c, "Quiet", () -> Toggles.dndToggle(c), Settings.ACTION_SOUND_SETTINGS);
         tDark = tile(c, "Dark", () -> Toggles.darkToggle(c), Settings.ACTION_DISPLAY_SETTINGS);
@@ -308,6 +324,78 @@ public class PanelView extends FrameLayout {
         row.addView(settings, l1);
         row.addView(setup, l2);
         sheet.addView(row);
+    }
+
+    // ------------------------------------------------------------ pickers
+
+    private void openWifiSurface() {
+        Context c = getContext();
+        if (Prefs.pickers(c)) {
+            showPicker(new WifiPickerView(c, () -> {
+                Toggles.openWifiSheet(c);
+                host.requestHide();
+            }));
+        } else {
+            Toggles.openWifiSheet(c);
+            host.requestHide();
+        }
+    }
+
+    private void openBtSurface() {
+        Context c = getContext();
+        if (Prefs.pickers(c)) {
+            showPicker(new BtPickerView(c, () -> {
+                Toggles.openBtSettings(c);
+                host.requestHide();
+            }));
+        } else {
+            Toggles.openBtSettings(c);
+            host.requestHide();
+        }
+    }
+
+    private void showPicker(PickerPage p) {
+        Context c = getContext();
+        closePicker();
+        picker = p;
+        pickerWrap = new LinearLayout(c);
+        pickerWrap.setOrientation(LinearLayout.VERTICAL);
+        pickerWrap.setBackgroundColor(Ui.PAPER);
+
+        LinearLayout head = new LinearLayout(c);
+        head.setOrientation(LinearLayout.HORIZONTAL);
+        head.setGravity(Gravity.CENTER_VERTICAL);
+        int hp = Ui.dp(c, 14);
+        head.setPadding(hp, hp, hp, hp);
+        IconButton back = new IconButton(c, IconButton.Glyph.BACK, this::closePicker);
+        head.addView(back, new LinearLayout.LayoutParams(Ui.dp(c, 48), Ui.dp(c, 48)));
+        TextView title = Ui.text(c, 20, Ui.INK, true, true);
+        title.setText(p.title());
+        title.setPadding(Ui.dp(c, 14), 0, 0, 0);
+        head.addView(title);
+        pickerWrap.addView(head);
+        pickerWrap.addView(Ui.hr(c));
+        pickerWrap.addView(p, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        View bottomRule = new View(c);
+        bottomRule.setBackgroundColor(Ui.INK);
+        pickerWrap.addView(bottomRule, new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, Ui.dp(c, 4)));
+
+        sheet.setVisibility(GONE);
+        pageHost.addView(pickerWrap, new FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.WRAP_CONTENT));
+        p.start();
+    }
+
+    private void closePicker() {
+        if (picker == null) return;
+        try { picker.stop(); } catch (Throwable ignored) {}
+        if (pickerWrap != null) pageHost.removeView(pickerWrap);
+        picker = null;
+        pickerWrap = null;
+        sheet.setVisibility(VISIBLE);
+        refreshTiles();
     }
 
     // ------------------------------------------------------------ refresh
@@ -507,11 +595,17 @@ public class PanelView extends FrameLayout {
             try { session.unregisterCallback(mediaCb); } catch (Throwable ignored) {}
             session = null;
         }
+        if (picker != null) {
+            try { picker.stop(); } catch (Throwable ignored) {}
+            picker = null;
+        }
     }
 
     @Override public boolean dispatchKeyEvent(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.KEYCODE_BACK) {
-            if (e.getAction() == KeyEvent.ACTION_UP) host.requestHide();
+            if (e.getAction() == KeyEvent.ACTION_UP) {
+                if (picker != null) closePicker(); else host.requestHide();
+            }
             return true;
         }
         return super.dispatchKeyEvent(e);

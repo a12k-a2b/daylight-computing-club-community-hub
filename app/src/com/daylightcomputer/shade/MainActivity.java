@@ -39,6 +39,8 @@ public class MainActivity extends Activity {
         List<String> ask = new ArrayList<>();
         if (!Caps.postNotifs(this)) ask.add("android.permission.POST_NOTIFICATIONS");
         if (!Caps.btConnect(this)) ask.add("android.permission.BLUETOOTH_CONNECT");
+        if (!Caps.btScan(this)) ask.add("android.permission.BLUETOOTH_SCAN");
+        if (!Caps.nearbyWifi(this)) ask.add("android.permission.NEARBY_WIFI_DEVICES");
         if (!ask.isEmpty()) requestPermissions(ask.toArray(new String[0]), 1);
     }
 
@@ -96,6 +98,16 @@ public class MainActivity extends Activity {
         }
         note("Tip: there is also a “Daylight panel” tile you can add to the stock "
                 + "quick settings — a stepping stone while both shades coexist.");
+
+        // ---- pickers ----
+        section("network & device pickers");
+        row(Prefs.pickers(this),
+                Prefs.pickers(this)
+                        ? "in-shade Wi-Fi + Bluetooth pickers (young — tap to disable)"
+                        : "in-shade Wi-Fi + Bluetooth pickers are off (tap to enable)",
+                () -> { Prefs.setPickers(this, !Prefs.pickers(this)); rebuild(); });
+        note("When off, the pills hand off to the system surfaces instead "
+                + "(the compact Wi-Fi sheet, Bluetooth settings).");
 
         // ---- grants ----
         section("what this device allows so far");

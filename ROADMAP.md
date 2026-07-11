@@ -59,20 +59,21 @@ marked *needs blessing* lights up in the same APK the day it lands.
 
 The three places v1 still shows stock Material, in order of annoyance:
 
-- [ ] **Native Wi-Fi picker inside the shade** — scan results + saved
-      networks drawn in our ink-on-paper style, connect on tap. Fully
-      possible once platform-blessed: it's the same APIs the Settings app
-      uses (`NEARBY_WIFI_DEVICES` + `ACCESS_FINE_LOCATION` runtime grants,
-      privileged connect path). Brand-new secured networks still hop to a
-      password screen at first; a native password sheet can follow.
-      *(project)*
-- [ ] **Native Bluetooth device list** — paired devices with
-      connect/disconnect, plus discovery for pairing. Mostly public APIs
-      (`BLUETOOTH_SCAN`/`CONNECT`, `createBond()`); system-app powers make
-      profile connects reliable. The pairing-code confirmation stays a
-      system dialog (security). Note: Android has no compact pop-up sheet
-      for Bluetooth like the Wi-Fi one, so this is the *only* route to a
-      no-context-switch Bluetooth experience. *(project)*
+- [x] **Native Wi-Fi picker inside the shade** — *built (young):*
+      long-press (or unblessed tap on) the Wi-Fi pill → networks
+      strongest-first, current on top, tap a saved network to hop
+      (`enableNetwork`, lights up with blessing; unknown/password networks
+      hand off to the system sheet). Declared `neverForLocation` — the
+      shade sees radios, never places. Toggle off in shade setup if flaky.
+      A native password sheet can follow someday. *(shipped as labs;
+      needs on-glass shakedown)*
+- [x] **Native Bluetooth device list** — *built (young):* paired devices
+      with connected/paired state and tap to connect/disconnect (profile
+      reflection — needs blessing + `BLUETOOTH_PRIVILEGED`; hands off to
+      settings until then), plus find-new-devices discovery and pairing,
+      which work on any install. The pairing-code confirmation stays a
+      system dialog (security). *(shipped as labs; needs on-glass
+      shakedown)*
 - [ ] **Grayscale re-theme (RRO) of the Settings app** — an OS-side theme
       overlay so every surface we still hand off to (full Settings, the
       Wi-Fi sheet, pairing dialogs) turns calm grayscale. Cheap bridge
