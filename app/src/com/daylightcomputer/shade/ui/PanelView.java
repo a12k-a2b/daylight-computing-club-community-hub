@@ -162,7 +162,9 @@ public class PanelView extends FrameLayout {
 
     private void buildTiles(Context c) {
         LinearLayout col = pad(c, LinearLayout.VERTICAL);
-        tWifi = tile(c, "Wi-Fi", () -> Toggles.wifiToggle(c), Settings.ACTION_WIFI_SETTINGS);
+        // long-press: the compact system network sheet, not full Settings —
+        // switching networks shouldn't cost a whole context switch
+        tWifi = tile(c, "Wi-Fi", () -> Toggles.wifiToggle(c), Settings.Panel.ACTION_WIFI);
         tBt = tile(c, "Bluetooth", () -> Toggles.btToggle(c), Settings.ACTION_BLUETOOTH_SETTINGS);
         tAir = tile(c, "Airplane", () -> Toggles.airplaneToggle(c), Settings.ACTION_AIRPLANE_MODE_SETTINGS);
         tDnd = tile(c, "Quiet", () -> Toggles.dndToggle(c), Settings.ACTION_SOUND_SETTINGS);
