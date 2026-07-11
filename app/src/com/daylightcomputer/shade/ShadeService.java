@@ -233,12 +233,18 @@ public class ShadeService extends Service {
             f.addAction(Intent.ACTION_SCREEN_OFF);
             f.addAction(Intent.ACTION_TIME_TICK);
             f.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
+            f.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
             f.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);
+            f.addAction(android.bluetooth.BluetoothA2dp.ACTION_CONNECTION_STATE_CHANGED);
+            f.addAction(android.bluetooth.BluetoothHeadset.ACTION_CONNECTION_STATE_CHANGED);
             f.addAction(Intent.ACTION_AIRPLANE_MODE_CHANGED);
             f.addAction(NotificationManager.ACTION_INTERRUPTION_FILTER_CHANGED);
             f.addAction(Intent.ACTION_CONFIGURATION_CHANGED);
             registerReceiver(panelReceiver, f);
         }
+        // connected-device names on the Bluetooth pill (proxies are async)
+        com.daylightcomputer.shade.control.BtDevices.openProxies(this,
+                () -> main.post(() -> { if (panel != null) panel.refreshTiles(); }));
         ShadeNLService.setWatcher(() -> main.post(() -> {
             if (panel != null) { panel.refreshNotifications(); panel.refreshMedia(); }
         }));
@@ -258,6 +264,7 @@ public class ShadeService extends Service {
             try { unregisterReceiver(panelReceiver); } catch (Throwable ignored) {}
             panelReceiver = null;
         }
+        com.daylightcomputer.shade.control.BtDevices.closeProxies(this);
         ShadeNLService.setWatcher(null);
         if (sessionsListener != null) {
             try {

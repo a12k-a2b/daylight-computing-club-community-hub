@@ -433,7 +433,7 @@ public class PanelView extends FrameLayout {
                 "brightness needs the \"modify settings\" grant — see shade setup");
         if (Brightness.available(c)) brightness.setValue(Brightness.get(c));
         warmth.setSliderEnabled(Warmth.available(c),
-                "warmth needs its Sol:OS hookup — see shade setup");
+                "the amber backlight unlocks with the Sol:OS blessing");
         if (Warmth.available(c)) warmth.setValue(1f - Warmth.get(c));
 
         refreshTiles();
@@ -443,8 +443,21 @@ public class PanelView extends FrameLayout {
 
     public void refreshTiles() {
         Context c = getContext();
-        tWifi.setState(Toggles.wifiOn(c), Toggles.wifiOn(c) ? "on" : "off", true);
-        tBt.setState(Toggles.btOn(c), Toggles.btOn(c) ? "on" : "off", true);
+        // stock-QS parity: SSID under Wi-Fi (arrives with the blessing —
+        // Android redacts it for sideloads), and the connected Bluetooth
+        // device's name as the pill title (one device) or a count (more)
+        boolean wifi = Toggles.wifiOn(c);
+        String ssid = WifiNets.currentSsid(c);
+        tWifi.setState(wifi, !wifi ? "off" : ssid.isEmpty() ? "on" : ssid, true);
+
+        boolean bt = Toggles.btOn(c);
+        List<android.bluetooth.BluetoothDevice> btDevs =
+                bt ? BtDevices.connected(c) : java.util.Collections.emptyList();
+        tBt.setTitle(btDevs.size() == 1 ? BtDevices.name(btDevs.get(0)) : "Bluetooth");
+        tBt.setState(bt, !bt ? "off"
+                : btDevs.isEmpty() ? "on"
+                : btDevs.size() == 1 ? "connected"
+                : btDevs.size() + " devices", true);
         tAir.setState(Toggles.airplaneOn(c), Toggles.airplaneOn(c) ? "on" : "off", true);
         tDnd.setState(Toggles.dndOn(c), Toggles.dndOn(c) ? "on" : "off", Caps.dnd(c));
         tDark.setState(Toggles.darkOn(c), Toggles.darkOn(c) ? "on" : "off", true);

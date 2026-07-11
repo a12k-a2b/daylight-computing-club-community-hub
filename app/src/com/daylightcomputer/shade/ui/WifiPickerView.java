@@ -80,7 +80,7 @@ public class WifiPickerView extends PickerPage {
             status.setText("");
             status.setVisibility(GONE);
             list.addView(row("the network list arrives with the Sol:OS blessing",
-                    "until then, tap here to pick from the system list",
+                    "until then, tap here for Wi-Fi settings",
                     handOffToSystemSheet), rowLp());
             return;
         }
