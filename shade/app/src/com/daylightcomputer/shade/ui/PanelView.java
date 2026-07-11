@@ -50,7 +50,7 @@ public class PanelView extends FrameLayout {
     private TextView clock, dateLine, battery;
     private InkSlider brightness, warmth;
     private TileButton tWifi, tBt, tAir, tDnd, tDark, tRot;
-    private LinearLayout mediaCard, notifList;
+    private LinearLayout mediaCard, extraControls, notifList;
     private TextView notifCount, clearAll;
     private TextView mediaTitle, mediaArtist, mediaApp;
     private IconButton bPlay, bHeart;
@@ -263,8 +263,25 @@ public class PanelView extends FrameLayout {
         addControl(controls, new IconButton(c, IconButton.Glyph.FWD15,
                 () -> Media.seekBy(session, 15)), sz, gap);
         bHeart = addControl(controls, new IconButton(c, IconButton.Glyph.HEART_OUTLINE,
-                () -> { Media.toggleHeart(session); postDelayed(this::refreshMedia, 250); }), sz, gap);
+                () -> {
+                    // standard rating API when the app implements it;
+                    // otherwise its like/favorite custom action (Spotify)
+                    if (Media.supportsHeart(session)) {
+                        Media.toggleHeart(session);
+                    } else {
+                        Media.sendCustom(session, Media.likeAction(session));
+                    }
+                    postDelayed(this::refreshMedia, 300);
+                }), sz, gap);
         mediaCard.addView(controls);
+
+        // the app's own extras (shuffle, repeat, sleep timer…), re-inked
+        extraControls = new LinearLayout(c);
+        extraControls.setOrientation(LinearLayout.HORIZONTAL);
+        extraControls.setGravity(Gravity.CENTER_HORIZONTAL);
+        extraControls.setPadding(0, Ui.dp(c, 10), 0, 0);
+        extraControls.setVisibility(GONE);
+        mediaCard.addView(extraControls);
 
         wrap.addView(mediaCard, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
@@ -454,9 +471,37 @@ public class PanelView extends FrameLayout {
         mediaApp.setText(Media.appLabel(c, session));
         bPlay.setGlyph(Media.isPlaying(session)
                 ? IconButton.Glyph.PAUSE : IconButton.Glyph.PLAY);
-        bHeart.setVisibility(Media.supportsHeart(session) ? VISIBLE : GONE);
-        bHeart.setGlyph(Media.hearted(session)
-                ? IconButton.Glyph.HEART : IconButton.Glyph.HEART_OUTLINE);
+
+        // heart: rating API where implemented, like custom action elsewhere
+        android.media.session.PlaybackState.CustomAction like = Media.likeAction(session);
+        boolean ratingHeart = Media.supportsHeart(session);
+        bHeart.setVisibility(ratingHeart || like != null ? VISIBLE : GONE);
+        boolean filled = ratingHeart ? Media.hearted(session) : Media.likeShowsLiked(like);
+        bHeart.setGlyph(filled ? IconButton.Glyph.HEART : IconButton.Glyph.HEART_OUTLINE);
+
+        // second row: the app's remaining custom actions, tinted our ink
+        extraControls.removeAllViews();
+        for (android.media.session.PlaybackState.CustomAction a : Media.extraActions(session)) {
+            android.graphics.drawable.Drawable icon = Media.customIcon(c, session, a, Ui.INK);
+            if (icon == null) continue; // no icon, no button — calm over complete
+            android.widget.ImageView btn = new android.widget.ImageView(c);
+            btn.setImageDrawable(icon);
+            int pad = Ui.dp(c, 10);
+            btn.setPadding(pad, pad, pad, pad);
+            btn.setBackground(Ui.box(c, 2, Ui.PAPER, Ui.INK));
+            btn.setContentDescription(a.getName());
+            btn.setTooltipText(a.getName());
+            btn.setClickable(true);
+            btn.setOnClickListener(v -> {
+                Media.sendCustom(session, a);
+                postDelayed(this::refreshMedia, 300);
+            });
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                    Ui.dp(c, 44), Ui.dp(c, 44));
+            if (extraControls.getChildCount() > 0) lp.leftMargin = Ui.dp(c, 8);
+            extraControls.addView(btn, lp);
+        }
+        extraControls.setVisibility(extraControls.getChildCount() > 0 ? VISIBLE : GONE);
     }
 
     public void refreshNotifications() {

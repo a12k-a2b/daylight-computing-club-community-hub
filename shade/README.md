@@ -53,8 +53,12 @@ never brick the pull-down.
   isn't allowed to do directly hands off to the matching system surface —
   the panel never silently fails.
 - **Media card** — whatever is playing (Spotify, Audible…): ⏮ ⏯ ⏭, ±15 s,
-  and a heart when the app supports favorites. Appears only while something
-  has an active session.
+  and a heart that speaks both dialects — the standard rating API where
+  implemented, the app's like/favorite custom action elsewhere (that's how
+  Spotify does it). Seek prefers a true seek, then the app's own jump
+  action, then fast-forward. Any remaining custom actions (shuffle, repeat,
+  sleep timer…) show as a second row, the app's own icons re-inked to match
+  the shade. Appears only while something has an active session.
 - **Notifications** — our own list drawn our way (tap to open, ✕ to dismiss,
   clear all). No passthrough to the stock shade needed: the same
   notification-listener grant that powers the media card powers this.
