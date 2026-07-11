@@ -58,6 +58,7 @@
 // (written by invite.html and the install wizard). Nothing leaves the device.
 const FRIEND = (() => { try { return localStorage.getItem('dcc-friend') || ''; } catch (e) { return ''; } })();
 const TAKEN  = (() => { try { return JSON.parse(localStorage.getItem('dcc-taken') || '{}'); } catch (e) { return {}; } })();
+const OPENED = (() => { try { return JSON.parse(localStorage.getItem('dcc-opened') || '{}'); } catch (e) { return {}; } })();
 const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -91,10 +92,12 @@ Promise.all([
       catalog.appendChild(b);
     });
 
-    // dishes with your name on them come first
+    // unopened gifts first, then dishes with your name, then the rest
     if (FRIEND) {
-      data.apps = [...data.apps.filter(a => (a.for || []).includes(FRIEND)),
-                   ...data.apps.filter(a => !(a.for || []).includes(FRIEND))];
+      const forMe = a => (a.for || []).includes(FRIEND);
+      data.apps = [...data.apps.filter(a => isGift(a)),
+                   ...data.apps.filter(a => forMe(a) && !isGift(a)),
+                   ...data.apps.filter(a => !forMe(a))];
     }
 
     // Kids'-table grouping: once the club robot has assigned categories
@@ -129,7 +132,72 @@ Promise.all([
       '<p>Couldn’t load the app list. Are you offline? Try again when connected.</p>';
   });
 
-function buildCard(app) {
+/* ---------- the gift path ----------
+   A dish dedicated to you that you haven't opened yet arrives WRAPPED —
+   like a covered dish at a potluck. Opening it is a state change, not an
+   animation (nothing moves on a reflective screen); the delight is the
+   wrapper art and the words. Opened-state lives in localStorage only. */
+
+function isGift(app) {
+  return !!FRIEND && (app.for || []).includes(FRIEND) && !TAKEN[app.id] && !OPENED[app.id];
+}
+
+// Eight hand-drawn wrappers, house style. A dish keeps its wrapper forever
+// (picked by a stable hash of its id), so gifts have variety but identity.
+const WRAPPERS = [
+  // 0 — casserole with lid
+  '<svg viewBox="0 0 220 150" width="220" height="150"><path d="M45 88 Q110 68 175 88 L172 116 Q110 132 48 116 Z" fill="#fffdf8" stroke="#211d18" stroke-width="4"/><path d="M52 86 Q110 58 168 86" fill="none" stroke="#211d18" stroke-width="4"/><ellipse cx="110" cy="56" rx="12" ry="7" fill="none" stroke="#211d18" stroke-width="4"/><path d="M150 70 l18 -16 l12 8 -6 16 z" fill="#faf6ee" stroke="#a06a00" stroke-width="3"/><path d="M164 62 q3 -4 6 0 q3 -4 6 0 q0 5 -6 9 q-6 -4 -6 -9" fill="#a06a00" stroke="none" transform="translate(-4,-1) scale(0.8)"/></svg>',
+  // 1 — pie under checkered cloth
+  '<svg viewBox="0 0 220 150" width="220" height="150"><path d="M50 100 Q110 70 170 100 L166 118 Q110 134 54 118 Z" fill="#fffdf8" stroke="#211d18" stroke-width="4"/><path d="M58 96 Q80 78 110 78 Q140 78 162 96" fill="none" stroke="#a06a00" stroke-width="3" stroke-dasharray="8 6"/><path d="M70 88 L86 72 M96 82 L112 66 M122 80 L138 66 M146 86 L158 74" stroke="#6b655c" stroke-width="2.5"/><circle cx="110" cy="60" r="9" fill="none" stroke="#211d18" stroke-width="3.5"/></svg>',
+  // 2 — jar with a bow
+  '<svg viewBox="0 0 220 150" width="220" height="150"><rect x="82" y="52" width="56" height="72" rx="10" fill="#fffdf8" stroke="#211d18" stroke-width="4"/><path d="M78 52 Q110 38 142 52 L138 62 Q110 50 82 62 Z" fill="#fffdf8" stroke="#211d18" stroke-width="4"/><path d="M96 44 q6 -10 14 -2 q8 -8 14 2 q-6 8 -14 6 q-8 2 -14 -6" fill="none" stroke="#a06a00" stroke-width="3.5"/><rect x="92" y="80" width="36" height="26" fill="none" stroke="#6b655c" stroke-width="2.5"/></svg>',
+  // 3 — loaf wrapped in paper and string
+  '<svg viewBox="0 0 220 150" width="220" height="150"><path d="M52 78 Q60 56 110 56 Q160 56 168 78 L164 112 L56 112 Z" fill="#fffdf8" stroke="#211d18" stroke-width="4"/><path d="M52 84 L168 84 M110 56 L110 112" stroke="#a06a00" stroke-width="3"/><circle cx="110" cy="84" r="6" fill="none" stroke="#a06a00" stroke-width="3"/><path d="M70 68 q6 -6 12 0 M130 66 q6 -6 12 0" stroke="#6b655c" stroke-width="2.5" fill="none"/></svg>',
+  // 4 — basket with cloth
+  '<svg viewBox="0 0 220 150" width="220" height="150"><path d="M56 84 L164 84 L152 120 L68 120 Z" fill="#fffdf8" stroke="#211d18" stroke-width="4"/><path d="M68 96 L152 96 M64 108 L156 108 M84 84 L88 120 M110 84 L110 120 M136 84 L132 120" stroke="#6b655c" stroke-width="2.5"/><path d="M64 84 Q80 58 110 62 Q142 58 156 84" fill="#faf6ee" stroke="#211d18" stroke-width="4"/><path d="M96 70 l8 -8 l8 8 M120 68 l6 -6" stroke="#a06a00" stroke-width="3" fill="none"/></svg>',
+  // 5 — cloche (domed platter)
+  '<svg viewBox="0 0 220 150" width="220" height="150"><path d="M58 104 Q58 62 110 62 Q162 62 162 104 Z" fill="#fffdf8" stroke="#211d18" stroke-width="4"/><circle cx="110" cy="54" r="8" fill="none" stroke="#211d18" stroke-width="4"/><line x1="44" y1="112" x2="176" y2="112" stroke="#211d18" stroke-width="4"/><path d="M84 84 q4 -8 10 -4 M126 80 q6 -4 10 2" stroke="#a06a00" stroke-width="3" fill="none"/></svg>',
+  // 6 — cookie tin with tag
+  '<svg viewBox="0 0 220 150" width="220" height="150"><rect x="62" y="70" width="96" height="48" rx="8" fill="#fffdf8" stroke="#211d18" stroke-width="4"/><rect x="58" y="58" width="104" height="18" rx="8" fill="#fffdf8" stroke="#211d18" stroke-width="4"/><circle cx="88" cy="94" r="5" fill="none" stroke="#6b655c" stroke-width="2.5"/><circle cx="112" cy="98" r="5" fill="none" stroke="#6b655c" stroke-width="2.5"/><circle cx="134" cy="92" r="5" fill="none" stroke="#6b655c" stroke-width="2.5"/><path d="M150 66 l16 -14 l10 8 -6 14 z" fill="#faf6ee" stroke="#a06a00" stroke-width="3"/></svg>',
+  // 7 — parcel with twine and a sun stamp
+  '<svg viewBox="0 0 220 150" width="220" height="150"><rect x="64" y="58" width="92" height="62" fill="#fffdf8" stroke="#211d18" stroke-width="4"/><path d="M64 89 L156 89 M110 58 L110 120" stroke="#a06a00" stroke-width="3"/><path d="M102 82 q8 -10 16 0 q-8 10 -16 0" fill="none" stroke="#a06a00" stroke-width="3"/><circle cx="140" cy="70" r="7" fill="none" stroke="#211d18" stroke-width="3"/><path d="M140 59 v4 M140 77 v4 M129 70 h4 M147 70 h4" stroke="#211d18" stroke-width="2.5"/></svg>'
+];
+
+function wrapperFor(id) {
+  let h = 0;
+  for (const c of String(id)) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return WRAPPERS[h % WRAPPERS.length];
+}
+
+function buildGiftCard(app) {
+  const card = document.createElement('section');
+  card.className = 'card';
+  card.style.textAlign = 'center';
+  card.innerHTML =
+    '<span class="badge">☀ A GIFT, FOR YOU</span>' +
+    '<div style="margin:6px auto 0">' + wrapperFor(app.id) + '</div>' +
+    '<h2 style="margin:2px 0 4px">From ' + esc(app.author) + '</h2>' +
+    '<p class="tagline" style="font-style:italic; color:var(--mid)">' +
+      esc(app.author) + ' made something for you, ' + esc(cap(FRIEND)) + '.</p>' +
+    '<button class="btn" type="button">Open it ☀</button>';
+  card.querySelector('button').addEventListener('click', () => {
+    try {
+      OPENED[app.id] = new Date().toISOString().slice(0, 10);
+      localStorage.setItem('dcc-opened', JSON.stringify(OPENED));
+    } catch (e) {}
+    const revealed = buildCard(app, true);
+    const note = document.createElement('p');
+    note.className = 'meta';
+    note.style.cssText = 'font-style:italic; margin:0 0 8px';
+    note.textContent = '☀ opened just now — from ' + app.author + ', with care';
+    revealed.insertBefore(note, revealed.querySelector('h2'));
+    card.replaceWith(revealed);
+  });
+  return card;
+}
+
+function buildCard(app, revealed) {
+  if (!revealed && isGift(app)) return buildGiftCard(app);
       const card = document.createElement('section');
       card.className = 'card';
       const isApk = app.type === 'apk';
