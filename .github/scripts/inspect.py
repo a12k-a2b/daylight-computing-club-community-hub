@@ -35,6 +35,18 @@ SENSITIVE = {
     "android.permission.INTERNET": "talk to the internet",
 }
 
+# Contended capabilities — the things two dishes can FIGHT over on one
+# tablet (MECHANICS.md Move 1). Detected from permissions where possible;
+# undetectable ones (volume-keys, accessibility) are hand-set in the
+# catalog entry and preserved by shelve.py.
+USES = {
+    "android.permission.SYSTEM_ALERT_WINDOW": "overlay",
+    "android.permission.WRITE_SETTINGS": "modify-system-settings",
+    "android.permission.BIND_DEVICE_ADMIN": "device-admin",
+    "android.permission.BIND_NOTIFICATION_LISTENER_SERVICE": "notification-listener",
+    "android.permission.REQUEST_INSTALL_PACKAGES": "installs-apps",
+}
+
 
 def sha256(path):
     h = hashlib.sha256()
@@ -103,6 +115,7 @@ def inspect(path):
         "package": (re.search(r"package: name='([^']+)'", out) or [None, ""])[1],
         "permissions": sorted(perms),
         "can": [SENSITIVE[p] for p in perms if p in SENSITIVE],
+        "uses": sorted({USES[p] for p in perms if p in USES}),
         "targetSdk": int(target.group(1)) if target else None,
         "debuggable": "application-debuggable" in out,
         "warnings": [],

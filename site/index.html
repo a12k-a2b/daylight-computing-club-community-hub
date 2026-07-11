@@ -54,12 +54,48 @@
 </div>
 
 <script>
-fetch('apps.json')
-  .then(r => r.json())
-  .then(data => {
+// The shelf's memory of you — lives only in this tablet's localStorage
+// (written by invite.html and the install wizard). Nothing leaves the device.
+const FRIEND = (() => { try { return localStorage.getItem('dcc-friend') || ''; } catch (e) { return ''; } })();
+const TAKEN  = (() => { try { return JSON.parse(localStorage.getItem('dcc-taken') || '{}'); } catch (e) { return {}; } })();
+const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+Promise.all([
+  fetch('apps.json').then(r => r.json()),
+  fetch('recalled.json').then(r => r.ok ? r.json() : {recalled: []}).catch(() => ({recalled: []}))
+])
+  .then(([data, rec]) => {
     document.getElementById('tagline').textContent = data.club.tagline;
+    if (FRIEND) {
+      const hi = document.createElement('p');
+      hi.className = 'club-tagline';
+      hi.style.marginTop = '2px';
+      hi.textContent = 'Welcome back, ' + cap(FRIEND) + ' ☀';
+      document.getElementById('tagline').after(hi);
+    }
     const catalog = document.getElementById('catalog');
     catalog.innerHTML = '';
+
+    // Recall banner: only for dishes THIS tablet took (see RECALL.md)
+    const pulled = (rec.recalled || []).filter(r => TAKEN[r.id]);
+    pulled.forEach(r => {
+      const b = document.createElement('section');
+      b.className = 'card';
+      b.style.borderWidth = '4px';
+      b.innerHTML =
+        '<p style="margin:0 0 8px"><strong>⚠ A dish you took was pulled from the shelf.</strong></p>' +
+        '<p style="margin:0 0 8px"><strong>' + esc(r.name) + '</strong> — ' + esc(r.reason || 'see the club for details') + '</p>' +
+        '<p class="meta" style="margin:0">To remove it: <strong>Settings → Apps → ' + esc(r.name) + ' → Uninstall</strong>.' +
+        (r.link ? ' <a href="' + esc(r.link) + '">More here.</a>' : '') + '</p>';
+      catalog.appendChild(b);
+    });
+
+    // dishes with your name on them come first
+    if (FRIEND) {
+      data.apps = [...data.apps.filter(a => (a.for || []).includes(FRIEND)),
+                   ...data.apps.filter(a => !(a.for || []).includes(FRIEND))];
+    }
 
     // Kids'-table grouping: once the club robot has assigned categories
     // (data.categories = ordered list of names), group the shelf by them.
@@ -98,6 +134,14 @@ function buildCard(app) {
       card.className = 'card';
       const isApk = app.type === 'apk';
       const badge = isApk ? 'ANDROID APP' : 'WEB APP';
+      const mine = TAKEN[app.id];
+      const updatedBadge = mine && mine.version !== app.version
+        ? ' <span class="badge">↻ UPDATED SINCE YOU TOOK IT</span>' : '';
+      const forNames = app.for || [];
+      const dedication = forNames.length
+        ? '<p class="meta" style="font-style:italic; margin:0 0 8px">☀ made for ' +
+            (forNames.includes(FRIEND) ? 'you' : esc(forNames.map(cap).join(' & '))) + '</p>'
+        : '';
       const metaBits = [
         'by ' + app.author,
         app.version,
@@ -110,8 +154,9 @@ function buildCard(app) {
           '</ul></details>'
         : '';
       card.innerHTML =
-        '<span class="badge">' + badge + '</span>' +
+        '<span class="badge">' + badge + '</span>' + updatedBadge +
         '<h2></h2>' +
+        dedication +
         '<p class="tagline"></p>' +
         '<p class="meta">' + metaBits + '</p>' +
         inspected +

@@ -68,6 +68,57 @@ pantry. That one's a calendar invite, not a commit.
 
 ---
 
+## The three circles — how sharing grows without becoming a store
+
+Settled thinking (2026-07-10), so the v1/v2 stages below inherit a shape.
+The question was: one-to-one works — what's the paradigm for one-to-many?
+A feed? Inboxes? Permissions? The answers, from the club's own instincts:
+
+**Circle 1 — named friends (built).** Person-to-person, by invitation:
+a texted invite link with your name on it, a shelf that greets you,
+dishes dedicated *to* you ("made for Melissa ☀"). The unit of sharing is
+a gift, not a post. Everything below must never break this.
+
+**No feeds — the newsletter is the slow feed.** A feed is the dopamine
+machine the club exists to refuse; USB Club's charm was smallness, and a
+feed is how smallness dies. The club's ambient awareness comes from calm
+channels instead: the Companion's quiet notification, the "updated since
+you took it" badge, the monthly robot newsletter, demo night. Nothing
+begs to be checked.
+
+**No inboxes — dedications are the inbox.** An inbox implies accounts,
+unread counts, and obligation. Instead: a dish can carry your name
+(`for: ["melissa"]`), the shelf floats it to the top when you visit, and
+the invite link can walk you straight into one dish
+(`invite.html?f=matt&dish=reading-timer`). "Sent to you" collapses into
+"waiting for you, with your name on it" — pull, not push.
+
+**Circle 2 — more clubs, not bigger clubs.** When the company crowd,
+the family crowd, and the friend crowd all arrive, the answer is NOT a
+visibility matrix (audiences, ACLs, "who can see this dish?" — that's a
+store's permission system, and where warmth goes to die). It's the
+potluck rule: **a potluck for forty is a potluck; for forty thousand
+it's a food court — so grow by starting another potluck down the
+street.** The repo becomes a template ("deploy your own club" — one
+fork, one domain, one friends.json). One person belongs to several
+clubs the way they belong to several group chats; the club PWA is cheap
+to pin twice. Overlap is handled by *borrowing, not permissions*: club A
+can follow club B's apps.json and re-shelve chosen dishes ("borrowed
+recipes" — original cook credited), but the borrowing club's keeper
+vouches and its inspectors re-run. Trust doesn't federate automatically;
+it's re-given, club by club, the way a recipe re-earns its place at each
+table.
+
+**Circle 3 — public is a state, not a goal.** The repo is already
+public; strangers finding the shelf is tolerated gracefully (gates +
+newcomer approval), not optimized for. The club's public ambition is the
+*template*, not the audience: a thousand small clubs beat one big one.
+That's also the honest Homebrew lesson — it mattered because it was a
+room, and the way it changed the world was people leaving to start
+their own rooms.
+
+---
+
 ## v0 — Me → Melissa *(built now)*
 
 One static site on GitHub Pages. No backend, no accounts, no build step.

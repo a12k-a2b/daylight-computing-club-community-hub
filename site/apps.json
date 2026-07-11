@@ -17,6 +17,8 @@
         "size": "775 KB",
         "package": "com.anjan.dc1keys"
       },
+      "for": ["melissa"],
+      "uses": ["volume-keys", "accessibility", "modify-system-settings"],
       "description": "Press Vol Up + Vol Down together to toggle the volume keys between controlling volume and screen brightness — with fine single-unit steps at the dim end for nighttime reading, and a tap-the-sun backlight-off. Long-press the quick action button for a drag-a-rectangle screenshot snip. A folded dog-ear corner in the top-left reveals the time, your pomodoro, and your next event as you pull it.",
       "permissions": [
         "change system settings (like brightness)",
@@ -65,6 +67,7 @@
         "size": "25 KB",
         "package": "club.daylightcomputer.companion"
       },
+      "uses": ["installs-apps"],
       "description": "The club's own dish. A few times a day it looks at the shelf: a friend brought a dish → a quiet note; a dish got better → an update note; a dish was pulled → a recall note with what to do. Installing becomes one tap — the Companion fetches the dish and hands it to Android's installer (Android still asks you to confirm; nothing ever installs silently). Its inspector-at-home explains in plain words when two apps might fight over your keys or draw over each other, with a button to the exact Settings page. And if a dish misbehaves, one tap builds a report you can text to whoever made it — written so their Claude can read it and fix the dish. Everything it sees stays on your tablet.",
       "permissions": [
         "talk to the internet",
