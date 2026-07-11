@@ -15,13 +15,20 @@ marked *needs blessing* lights up in the same APK the day it lands.
 
 ## v0.2 — prove it on glass *(now; needs a DC-1, not code)*
 
-- [ ] First sideload on a real DC-1: walk `shade setup`, grant the four
-      accesses, live with it for a day.
+- [x] First sideload on a real DC-1 — *done 2026-07-11:* full adb-driven
+      protocol passed (gestures, sliders, pills, pickers, notifications,
+      dark mode, failure drills, reboot). Findings + fixes:
+      `shade-test-report.md`. "Live with it for a day" still open.
 - [ ] Tune the gesture: drag threshold, settle velocity, open/close timing.
       Feel is unfalsifiable from an emulator — this is why the APK exists
       before the polish does. *(afternoon after feedback)*
-- [ ] Fix list from first touch (there will be one — overlay windows always
-      have a surprise or two on real hardware).
+- [x] Fix list from first touch — *there was one, and it's fixed:* media
+      card package-name label + dead-session ghost card (Android 11+
+      package visibility, STATE_NONE filter), panel now closes on screen
+      off, strip re-arms after app updates (MY_PACKAGE_REPLACED), warmth
+      slider direction matched to stock, honest Wi-Fi-list hand-off,
+      nameless BLE finds filtered, own plumbing out of the notification
+      list.
 - [ ] Then put it on the club shelf so installs go through the friendly
       wizard instead of raw sideloading. One normal club commit.
 
@@ -32,8 +39,11 @@ marked *needs blessing* lights up in the same APK the day it lands.
 - [ ] Zero-tap setup: pre-granted accesses in the build
       (`config_defaultListenerAccessPackages`, `config_defaultDndAccessPackages`,
       preset app-ops). New tablets come with the shade already alive.
-- [ ] Warmth slider drives the real amber backlight (needs the setting key —
-      README step 4; one line of code once known).
+- [ ] Warmth slider drives the real amber backlight — the key is known and
+      wired (`screen_brightness_amber_rate` = 256+amber, discovered
+      on-glass); Android only accepts the write from a system install, so
+      this lights up automatically with the blessing. Night-light stand-in
+      covers preview until then.
 
 ## v1 — polish that needs nothing
 
@@ -41,8 +51,10 @@ marked *needs blessing* lights up in the same APK the day it lands.
       follows the system theme — day is ink on paper, night the same page
       inverted — and an open panel rebuilds itself the moment the theme
       flips (Dark pill or schedule). The mock mirrors it via the viewer's
-      color scheme. (Open question 4 below still stands: confirm on real
-      glass that inverted is what night wants.)
+      color scheme. The live rebuild is verified on real glass
+      (2026-07-11, `cmd uimode night` with the panel open — rebuilds in
+      place, correctly inverted). Open question 4 below still stands:
+      whether inverted is what night *wants* is an eyes question.
 - [ ] **Landscape pass** — the DC-1 lives in both orientations; check the
       660dp sheet, maybe 6 pills in one row when wide. *(afternoon)*
 - [ ] **Richer notification rows** — tap-to-expand long text, inline action
@@ -74,21 +86,25 @@ marked *needs blessing* lights up in the same APK the day it lands.
 
 The three places v1 still shows stock Material, in order of annoyance:
 
-- [x] **Native Wi-Fi picker inside the shade** — *built (young):*
-      long-press (or unblessed tap on) the Wi-Fi pill → networks
-      strongest-first, current on top, tap a saved network to hop
-      (`enableNetwork`, lights up with blessing; unknown/password networks
-      hand off to the system sheet). Declared `neverForLocation` — the
-      shade sees radios, never places. Toggle off in shade setup if flaky.
-      A native password sheet can follow someday. *(shipped as labs;
-      needs on-glass shakedown)*
-- [x] **Native Bluetooth device list** — *built (young):* paired devices
-      with connected/paired state and tap to connect/disconnect (profile
-      reflection — needs blessing + `BLUETOOTH_PRIVILEGED`; hands off to
-      settings until then), plus find-new-devices discovery and pairing,
-      which work on any install. The pairing-code confirmation stays a
-      system dialog (security). *(shipped as labs; needs on-glass
-      shakedown)*
+- [x] **Native Wi-Fi picker inside the shade** — *built (young), shaken
+      down on glass:* the list itself turns out to be blessing-gated —
+      Android keeps scan results location-locked (neverForLocation is
+      explicitly excluded, and the DC-1 runs location-off), handing
+      sideloads an empty list. So in preview the picker shows the radio
+      toggle plus an honest "list arrives with the blessing" hand-off row;
+      the full list (strongest-first, current on top, tap-to-hop via
+      `enableNetwork`) lights up with NETWORK_SETTINGS — the same
+      carve-out the stock picker uses. Declared `neverForLocation` — the
+      shade sees radios, never places. A native password sheet can follow
+      someday.
+- [x] **Native Bluetooth device list** — *built (young), shaken down on
+      glass:* discovery genuinely finds nearby devices on a plain sideload
+      (nameless BLE randoms filtered out — anything in pairing mode
+      broadcasts a name), and tap-to-flip the radio works today with
+      BLUETOOTH_CONNECT. Paired devices list with connect/disconnect needs
+      blessing + `BLUETOOTH_PRIVILEGED`; hands off to settings until then.
+      The pairing-code confirmation stays a system dialog (security).
+      End-to-end pairing with real earbuds still wants a human test.
 - [ ] **Grayscale re-theme (RRO) of the Settings app** — an OS-side theme
       overlay so every surface we still hand off to (full Settings, the
       Wi-Fi sheet, pairing dialogs) turns calm grayscale. Cheap bridge
@@ -135,8 +151,11 @@ port the winner into `PanelView.java`. Variants worth mocking:
 
 ## Open questions (answers change the queue)
 
-1. Which setting does the stock warmth slider write? *(platform team —
-   unblocks v0.5 warmth + v3 scheduling)*
+1. ~~Which setting does the stock warmth slider write?~~ **Answered
+   on-glass 2026-07-11:** `Settings.System screen_brightness_amber_rate`
+   = 256 + amber (0..255), left-is-amber on the stock slider. Writable
+   only by system installs → v0.5 warmth rides the blessing; v3
+   scheduling unblocked the same day that lands.
 2. What should a locked shade show? *(design decision — unblocks v1
    lock-screen)*
 3. Does the DC-1 have a vibration motor? (If yes: subtle haptic tick on
