@@ -142,3 +142,41 @@ screen timeout 10 min, night-display keys deleted (stand-in test crumbs
 removed), airplane off, radios on. The APK on the device is this branch's
 `shade/dist/daylight-shade.apk` (all fixes above), swipe zone enabled,
 pickers enabled.
+
+## Round 2 — founder feedback, verified on glass (same night, ~05:00)
+
+Anjan's first hands-on pass surfaced four issues; all fixed and
+re-verified on the device:
+
+1. **Warmth slider "did some buggy other thing"** — that was the
+   night-light stand-in: a software tint over a hardware-amber backlight
+   reads as broken, not warm. On the DC-1 the slider is now disabled with
+   the hint "the amber backlight unlocks with the Sol:OS blessing"
+   (verified: full-track drag changes nothing — amber stays 511). The
+   stand-in survives only on hardware with no amber key (emulators).
+2. **Brightness curve** now matches dc1-keys' perceptual dial
+   (position = ln(raw)/ln 255). Verified: mid-track → raw 16, 75% → 65,
+   full right → 255; far left = raw 1 (backlight off), dead rung 2
+   skipped.
+3. **Stock-parity pill labels** (cloned from AOSP 13 BluetoothTile
+   source): Wi-Fi shows the SSID when Android lets it (blessing — SSIDs
+   are redacted for sideloads, so preview says "on"); Bluetooth's title
+   becomes the connected device's name (one device) or "N devices"
+   (more), repainted live via profile-proxy callbacks + connection-state
+   broadcasts. Rendering verified; a name-on-pill check awaits a paired
+   device.
+4. **The "shady bottom thing" on Wi-Fi** was Android's deprecated
+   Settings.Panel sheet (renders as a bare "Wi-Fi" stub on Sol:OS).
+   Hand-offs now go straight to the Wi-Fi settings screen. The in-shade
+   picker page stays — it IS the blessing stub and lights up with
+   NETWORK_SETTINGS.
+5. **Dark pill now flips for real in preview** (Anjan: "it just takes you
+   to settings — bug or permissions?" — it was permissions:
+   MODIFY_DAY_NIGHT_MODE is tier-3). New chain: blessed setNightMode →
+   secure-settings path (`ui_night_mode` + a momentary car-mode nudge so
+   it applies instantly; needs only the adb grant) → settings hand-off.
+   Verified live: tap → system dark + panel rebuilds inverted; tap →
+   back to light.
+
+Note: this round ran under the new glass rule — claimed from (and handed
+back to) the note-overlay session with Anjan's say-so.
