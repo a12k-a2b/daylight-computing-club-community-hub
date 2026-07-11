@@ -49,7 +49,7 @@ public class WifiPickerView extends PickerPage {
         f.addAction(WifiManager.NETWORK_STATE_CHANGED_ACTION);
         f.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
         getContext().registerReceiver(receiver, f);
-        WifiNets.scan(getContext());
+        if (WifiNets.canListNetworks(getContext())) WifiNets.scan(getContext());
         populate();
     }
 
@@ -72,6 +72,18 @@ public class WifiPickerView extends PickerPage {
                 }), rowLp());
 
         if (!on) { status.setText("turn Wi-Fi on to look around"); return; }
+
+        if (!WifiNets.canListNetworks(c)) {
+            // Android shows scan results only to system installs (or with
+            // device location on + fine location, which this app refuses
+            // to ask for) — say so instead of listening forever
+            status.setText("");
+            status.setVisibility(GONE);
+            list.addView(row("the network list arrives with the Sol:OS blessing",
+                    "until then, tap here to pick from the system list",
+                    handOffToSystemSheet), rowLp());
+            return;
+        }
 
         String current = WifiNets.currentSsid(c);
         if (!current.isEmpty()) {

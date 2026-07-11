@@ -28,12 +28,19 @@ public final class Media {
             MediaSessionManager msm = c.getSystemService(MediaSessionManager.class);
             List<MediaController> all = msm.getActiveSessions(
                     new ComponentName(c, ShadeNLService.class));
-            if (all.isEmpty()) return null;
+            // playing first; else the first live (paused/buffering) session.
+            // Dormant controllers (STATE_NONE/stopped/error — e.g. Audible
+            // hours after listening) are not "something playing": skip them.
+            MediaController alive = null;
             for (MediaController mc : all) {
                 PlaybackState s = mc.getPlaybackState();
-                if (s != null && s.getState() == PlaybackState.STATE_PLAYING) return mc;
+                int st = s == null ? PlaybackState.STATE_NONE : s.getState();
+                if (st == PlaybackState.STATE_PLAYING) return mc;
+                if (alive == null && st != PlaybackState.STATE_NONE
+                        && st != PlaybackState.STATE_STOPPED
+                        && st != PlaybackState.STATE_ERROR) alive = mc;
             }
-            return all.get(0);
+            return alive;
         } catch (Throwable t) {
             Log.w(TAG, "getActiveSessions: " + t);
             return null;
@@ -48,14 +55,16 @@ public final class Media {
     public static String title(MediaController mc) {
         MediaMetadata m = mc == null ? null : mc.getMetadata();
         CharSequence t = m == null ? null : m.getText(MediaMetadata.METADATA_KEY_TITLE);
-        return t == null ? "" : t.toString();
+        if ((t == null || t.toString().trim().isEmpty()) && m != null)
+            t = m.getText(MediaMetadata.METADATA_KEY_DISPLAY_TITLE);
+        return t == null ? "" : t.toString().trim();
     }
 
     public static String artist(MediaController mc) {
         MediaMetadata m = mc == null ? null : mc.getMetadata();
         CharSequence t = m == null ? null : m.getText(MediaMetadata.METADATA_KEY_ARTIST);
         if (t == null && m != null) t = m.getText(MediaMetadata.METADATA_KEY_ALBUM_ARTIST);
-        return t == null ? "" : t.toString();
+        return t == null ? "" : t.toString().trim();
     }
 
     public static String appLabel(Context c, MediaController mc) {

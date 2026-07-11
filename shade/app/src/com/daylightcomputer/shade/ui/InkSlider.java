@@ -96,20 +96,23 @@ public class InkSlider extends View {
         cv.drawRect(x - half, cy - half, x + half, cy + half, paint);
     }
 
-    /** Left/right end glyphs: dim sun → bright sun, or open sun → warm sun. */
+    /** Left/right end glyphs: dim sun → bright sun, or warm sun → open sun
+     *  (warmth runs amber→white rightward, matching the stock shade). */
     private void drawEndGlyph(Canvas cv, float cx, float cy, boolean rightEnd, int ink) {
         Context c = getContext();
-        float r = Ui.dp(c, rightEnd ? 7 : 5);
+        boolean warmEnd = glyphs == EndGlyphs.WARMTH && !rightEnd;
+        float r = Ui.dp(c, rightEnd || warmEnd ? 7 : 5);
         paint.setColor(ink);
-        boolean filled = glyphs == EndGlyphs.WARMTH ? rightEnd : true;
+        boolean filled = glyphs == EndGlyphs.WARMTH ? warmEnd : true;
         paint.setStyle(filled ? Paint.Style.FILL : Paint.Style.STROKE);
         paint.setStrokeWidth(Ui.dp(c, 2));
         cv.drawCircle(cx, cy, r, paint);
-        if (glyphs == EndGlyphs.BRIGHTNESS || rightEnd) {
+        if (glyphs == EndGlyphs.BRIGHTNESS || warmEnd) {
             paint.setStyle(Paint.Style.STROKE);
             paint.setStrokeWidth(Ui.dp(c, 2));
             int rays = 8;
-            float inner = r + Ui.dp(c, 2.5f), outer = r + Ui.dp(c, rightEnd ? 6 : 4.5f);
+            float inner = r + Ui.dp(c, 2.5f),
+                    outer = r + Ui.dp(c, rightEnd || warmEnd ? 6 : 4.5f);
             for (int i = 0; i < rays; i++) {
                 double a = Math.PI * 2 * i / rays;
                 cv.drawLine((float) (cx + inner * Math.cos(a)), (float) (cy + inner * Math.sin(a)),

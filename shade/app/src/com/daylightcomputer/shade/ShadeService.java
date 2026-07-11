@@ -211,6 +211,13 @@ public class ShadeService extends Service {
             panelReceiver = new BroadcastReceiver() {
                 @Override public void onReceive(Context c, Intent i) {
                     if (panel == null) return;
+                    if (Intent.ACTION_SCREEN_OFF.equals(i.getAction())) {
+                        // the stock shade collapses when the screen sleeps;
+                        // so do we (nothing stale — or, someday, lockable —
+                        // waiting on the next wake)
+                        removePanel();
+                        return;
+                    }
                     if (Intent.ACTION_CONFIGURATION_CHANGED.equals(i.getAction())
                             && Ui.isNight(ShadeService.this) != panelBuiltForNight) {
                         // theme flipped (Dark pill or schedule) — rebuild in place
@@ -223,6 +230,7 @@ public class ShadeService extends Service {
                 }
             };
             IntentFilter f = new IntentFilter();
+            f.addAction(Intent.ACTION_SCREEN_OFF);
             f.addAction(Intent.ACTION_TIME_TICK);
             f.addAction(WifiManager.WIFI_STATE_CHANGED_ACTION);
             f.addAction(BluetoothAdapter.ACTION_STATE_CHANGED);

@@ -56,7 +56,8 @@ public class BtPickerView extends PickerPage {
                 String a = i.getAction();
                 if (BluetoothDevice.ACTION_FOUND.equals(a)) {
                     BluetoothDevice d = i.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                    if (d != null && d.getBondState() != BluetoothDevice.BOND_BONDED) {
+                    if (d != null && d.getBondState() != BluetoothDevice.BOND_BONDED
+                            && BtDevices.hasName(d)) {
                         found.put(d.getAddress(), d);
                     }
                 } else if (BluetoothAdapter.ACTION_DISCOVERY_STARTED.equals(a)) {
