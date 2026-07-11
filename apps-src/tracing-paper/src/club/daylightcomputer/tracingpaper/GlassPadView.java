@@ -471,6 +471,13 @@ public class GlassPadView extends View {
 
     /** The pad is away: hand every pixel back. ~70MB idle becomes ~0. */
     void releaseBitmaps() {
+        // A stroke can be mid-air when the pad is toggled away. Commit it now,
+        // while the canvases are still alive — the pen-up that trails in after
+        // the window is gone finds ink == null and is ignored.
+        if (mode == M_DRAW) finishDraw();
+        else if (mode == M_MOVE || mode == M_RESIZE || mode == M_ROTATE) finishSnipEdit();
+        if (velocity != null) { velocity.recycle(); velocity = null; }
+        mode = M_NONE;
         resetZoom();
         base = hi = ink = sBase = sHi = sInk = null;
         baseC = hiC = inkC = sBaseC = sHiC = sInkC = null;
@@ -549,6 +556,7 @@ public class GlassPadView extends View {
     }
 
     private void renderStroke(Stroke s, Canvas hC, Canvas iC) {
+        if (hC == null || iC == null) return; // layers released; vectors keep the truth
         int w = getWidth(), h = pageH();
         boolean gz = grazed.contains(s); // half-faded: the eraser has it, lift to finish
         switch (s.kind) {
@@ -605,6 +613,7 @@ public class GlassPadView extends View {
 
     /** Live segment for the fallback (non-wet) path — page-space coordinates in. */
     private void renderSegment(float x, float y, float pr) {
+        if (inkC == null || hiC == null) return;
         int w = getWidth();
         float lx = lastX, ly = lastY;
         switch (cur.kind) {
@@ -831,6 +840,7 @@ public class GlassPadView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent e) {
+        if (ink == null) return false; // pad put away (or not yet sized): no pixels to touch
         int toolType = e.getToolType(0);
         boolean stylus = toolType == MotionEvent.TOOL_TYPE_STYLUS
                 || toolType == MotionEvent.TOOL_TYPE_ERASER;
