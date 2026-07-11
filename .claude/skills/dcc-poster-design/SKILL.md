@@ -93,6 +93,33 @@ the ink never glows.* For anything on-screen (the site, wizards, apps):
 Static art (posters, images, PNGs) is unaffected — paper at rest is still
 the default state of paper.
 
+## Taste notes — the club's design koans
+
+Small rules that settle arguments, screen and print alike:
+
+- **Motion marks moments, not ambience.** A gift opening, a wish granted
+  — the right photo moving at the right moment is magic; every photo
+  wiggling is a carnival.
+- **Words carry warmth; chrome carries nothing.** Where a store adds UI,
+  the club adds a sentence ("made for you, Melissa"). Copy IS the
+  interface — write it like a note left on a dish.
+- **One big button per screen.** Size = consequence: the thing you came
+  to do is black and full-width; everything else whispers at half-size.
+- **Italic is a human's voice; roman is the club's.** Dedications, notes,
+  captions, invitations get italics — the difference between the
+  building speaking and a friend speaking.
+- **Names over numbers.** "From Anjan" beats "4.8 ★". No counters, no
+  metrics, no badges of scale anywhere — the shelf measures nothing.
+- **Every warning states the exact next tap.** "Settings → Apps →
+  Uninstall," never bare alarm. Fear without agency is a store's trick.
+- **Empty space is shelf space.** Don't fill the table; room left on it
+  says "bring something."
+- **The paper never asks twice.** Remember one-time steps, greet returning
+  friends, keep wizard progress — asking again is how software says it
+  wasn't listening.
+- **The sun is a signature, not a logo.** One, small, somewhere — never
+  big, never repeated, never branded.
+
 ## Text-heavy diagrams and posters: don't image-gen, hand-build
 
 Instructional posters (step-by-steps, the six instincts) need crisp

@@ -53,7 +53,7 @@ function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','
 
 // Live "since forever" snapshot straight from the catalog.
 fetch('apps.json').then(r => r.json()).then(data => {
-  const apps = (data.apps || []).filter(a => a.id !== 'dcc');
+  const apps = (data.apps || []).filter(a => a.id !== 'dcc' && !a.fixture);
   if (!apps.length) { $('shelf').innerHTML = '<p class="hint">The shelf is empty — for now.</p>'; return; }
   $('shelf').innerHTML = '<p>' + apps.length + ' app' + (apps.length === 1 ? '' : 's') +
     ' on the shelf:</p><ul>' + apps.map(a =>

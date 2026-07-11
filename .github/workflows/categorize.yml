@@ -29,7 +29,7 @@ jobs:
       - name: Count apps and check for the API key
         id: gate
         run: |
-          count=$(python3 -c "import json; d=json.load(open('site/apps.json')); print(len([a for a in d['apps'] if a.get('id') != 'dcc']))")
+          count=$(python3 -c "import json; d=json.load(open('site/apps.json')); print(len([a for a in d['apps'] if a.get('id') != 'dcc' and not a.get('fixture')]))")
           echo "count=$count" >> "$GITHUB_OUTPUT"
           if [ -n "${{ secrets.ANTHROPIC_API_KEY }}" ] && [ "$count" -ge 10 ]; then
             echo "go=true" >> "$GITHUB_OUTPUT"
@@ -50,7 +50,7 @@ jobs:
             for Daylight tablets. The shelf has grown past 10 apps and needs
             browsable sections (a "kids' table" grouping).
 
-            Read site/apps.json. For the apps (ignore the entry with id "dcc"):
+            Read site/apps.json. For the apps (ignore entries with "fixture": true or id "dcc"):
             1. Invent 3–6 short, warm, human category names that genuinely fit
                THIS set of apps — e.g. "Learning applets", "Reading & focus",
                "For parents", "Tablet tweaks". Don't force a taxonomy; let the
