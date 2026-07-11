@@ -52,16 +52,19 @@ final class Exporter {
     }
 
     /**
-     * Every page of every notebook as one PDF: template, snips, highlights,
-     * then ink, so the layering matches the glass.
+     * Every notebook as its own PDF: template, snips, highlights, then ink,
+     * so the layering matches the glass. One document per book on purpose —
+     * PdfDocument holds every page in memory until it's written, and a whole
+     * big library in one document is how you meet the heap limit. Memory now
+     * scales with the largest notebook, not the shelf.
      * @param aspect canvas width / height, so pages keep their shape.
+     * @return a toast-ready summary ("<file>" or "<n> notebook PDFs").
      */
     static String exportPdf(Context c, List<GlassPadView.Book> books, float aspect)
             throws IOException {
         int pw = 612, ph = 792; // US Letter, points
         float margin = 28f;
 
-        PdfDocument doc = new PdfDocument();
         Paint ink = new Paint(Paint.ANTI_ALIAS_FLAG);
         ink.setStyle(Paint.Style.STROKE);
         ink.setStrokeCap(Paint.Cap.ROUND);
@@ -83,15 +86,17 @@ final class Exporter {
         footer.setTextSize(9f);
         footer.setTextAlign(Paint.Align.CENTER);
 
-        try {
-            int pageNo = 0, total = 0;
-            for (GlassPadView.Book b : books) total += b.pages.size();
-            for (GlassPadView.Book book : books) {
-                for (int i = 0; i < book.pages.size(); i++) {
+        String stamp = stamp();
+        String firstName = null;
+        int written = 0;
+        for (GlassPadView.Book book : books) {
+            PdfDocument doc = new PdfDocument();
+            try {
+                int total = book.pages.size();
+                for (int i = 0; i < total; i++) {
                     GlassPadView.PageData pd = book.pages.get(i);
-                    pageNo++;
                     PdfDocument.PageInfo info =
-                            new PdfDocument.PageInfo.Builder(pw, ph, pageNo).create();
+                            new PdfDocument.PageInfo.Builder(pw, ph, i + 1).create();
                     PdfDocument.Page page = doc.startPage(info);
                     Canvas cv = page.getCanvas();
 
@@ -146,32 +151,42 @@ final class Exporter {
                         }
                     }
                     cv.restore();
-                    cv.drawText(book.name + " · " + pageNo + " / " + total,
+                    cv.drawText(book.name + " · " + (i + 1) + " / " + total,
                             pw / 2f, ph - 14f, footer);
                     doc.finishPage(page);
                 }
-            }
 
-            String name = "tracing-paper-" + stamp() + ".pdf";
-            ContentValues cv2 = new ContentValues();
-            cv2.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
-            cv2.put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf");
-            cv2.put(MediaStore.MediaColumns.RELATIVE_PATH,
-                    Environment.DIRECTORY_DOWNLOADS + "/" + FOLDER);
-            cv2.put(MediaStore.MediaColumns.IS_PENDING, 1);
-            Uri uri = c.getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, cv2);
-            if (uri == null) throw new IOException("MediaStore refused the PDF");
-            try (OutputStream os = c.getContentResolver().openOutputStream(uri)) {
-                if (os == null) throw new IOException("no stream");
-                doc.writeTo(os);
+                String name = "tracing-paper-" + safeName(book.name) + "-" + stamp + ".pdf";
+                ContentValues cv2 = new ContentValues();
+                cv2.put(MediaStore.MediaColumns.DISPLAY_NAME, name);
+                cv2.put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf");
+                cv2.put(MediaStore.MediaColumns.RELATIVE_PATH,
+                        Environment.DIRECTORY_DOWNLOADS + "/" + FOLDER);
+                cv2.put(MediaStore.MediaColumns.IS_PENDING, 1);
+                Uri uri = c.getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, cv2);
+                if (uri == null) throw new IOException("MediaStore refused the PDF");
+                try (OutputStream os = c.getContentResolver().openOutputStream(uri)) {
+                    if (os == null) throw new IOException("no stream");
+                    doc.writeTo(os);
+                }
+                cv2.clear();
+                cv2.put(MediaStore.MediaColumns.IS_PENDING, 0);
+                c.getContentResolver().update(uri, cv2, null, null);
+                if (firstName == null) firstName = name;
+                written++;
+            } finally {
+                doc.close();
             }
-            cv2.clear();
-            cv2.put(MediaStore.MediaColumns.IS_PENDING, 0);
-            c.getContentResolver().update(uri, cv2, null, null);
-            return name;
-        } finally {
-            doc.close();
         }
+        return written == 1 ? firstName : written + " notebook PDFs";
+    }
+
+    /** A notebook name as a filename: letters and digits stay, the rest folds to dashes. */
+    private static String safeName(String s) {
+        String out = s == null ? "" : s.toLowerCase(java.util.Locale.US)
+                .replaceAll("[^a-z0-9]+", "-").replaceAll("^-+|-+$", "");
+        if (out.length() > 40) out = out.substring(0, 40);
+        return out.isEmpty() ? "notebook" : out;
     }
 
     private static Path path(GlassPadView.Stroke s, float w, float h) {

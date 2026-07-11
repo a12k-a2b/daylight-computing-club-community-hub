@@ -219,6 +219,15 @@ public class PadService extends AccessibilityService {
                 | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
         try {
             wm.addView(root, rootLp);
+        } catch (IllegalStateException alreadyAdded) {
+            // a too-quick toggle raced the old window's teardown — reset and retry
+            try {
+                wm.removeViewImmediate(root);
+                wm.addView(root, rootLp);
+            } catch (Exception e) {
+                toast("Couldn't open the pad");
+                return;
+            }
         } catch (Exception e) {
             toast("Couldn't open the pad");
             return;
@@ -294,7 +303,11 @@ public class PadService extends AccessibilityService {
         if (peeking) exitPeek();
         pad.flushSave();
         maybeAutoBackup();
-        try { wm.removeView(root); } catch (Exception ignored) {}
+        // Immediate, not lazy: the pad reuses this same view for its next
+        // show, and an async teardown can null the view's parent AFTER a
+        // quick re-show has attached it — the wet-ink SurfaceView then
+        // crashes the attach traversal (requestTransparentRegion on null).
+        try { wm.removeViewImmediate(root); } catch (Exception ignored) {}
         shown = false;
         pad.releaseBitmaps(); // the pad away = its memory handed back
     }
@@ -331,7 +344,7 @@ public class PadService extends AccessibilityService {
         if (chip != null) { try { wm.removeView(chip); } catch (Exception ignored) {} chip = null; }
         if (shown && root != null) {
             if (pad != null) pad.flushSave();
-            try { wm.removeView(root); } catch (Exception ignored) {}
+            try { wm.removeViewImmediate(root); } catch (Exception ignored) {}
         }
         shown = false;
         peeking = false;
