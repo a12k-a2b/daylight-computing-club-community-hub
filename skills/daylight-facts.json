@@ -31,7 +31,7 @@
   "curve": {
     "_": "LivePaper simulation: luminance -> shadow-crushing gamma -> compressed range -> paper tint. Tuned by eye, not measured.",
     "day":   { "gamma": 1.35, "floor": 48, "ceil": 228, "tint": [1.0, 0.975, 0.90], "measured": false },
-    "night": { "gamma": 1.45, "floor": 40, "ceil": 200, "tint": [1.0, 0.72, 0.38], "measured": false }
+    "night": { "gamma": 1.45, "floor": 40, "ceil": 200, "tint": [1.0, 0.72, 0.38], "measured": false, "note": "review photos suggest the real amber is considerably MORE saturated than this tint, and backlight warmth is user-adjustable — recalibrate from photos of calibrate.html at min/max warmth" }
   },
   "ramp": {
     "_": "the default five-tone UI ramp (club-site flavor; see solos_scale for the design system's)",
