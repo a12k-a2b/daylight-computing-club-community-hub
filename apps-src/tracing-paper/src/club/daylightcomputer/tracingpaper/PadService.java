@@ -451,25 +451,43 @@ public class PadService extends AccessibilityService {
     private void replayFlick(float[] xs, float[] ys, long[] ts, int n) {
         if (!shown || peeking || snipMode || n < 2) return;
         android.graphics.Path p = new android.graphics.Path();
-        p.moveTo(xs[0], ys[0]);
+        p.moveTo(clampX(xs[0]), clampY(ys[0]));
         int step = Math.max(1, n / 20);
-        for (int i = step; i < n; i += step) p.lineTo(xs[i], ys[i]);
-        p.lineTo(xs[n - 1], ys[n - 1]);
+        for (int i = step; i < n; i += step) p.lineTo(clampX(xs[i]), clampY(ys[i]));
+        p.lineTo(clampX(xs[n - 1]), clampY(ys[n - 1]));
         long dur = Math.max(80, Math.min(ts[n - 1] - ts[0], 400));
-        inject(new android.accessibilityservice.GestureDescription.Builder()
-                .addStroke(new android.accessibilityservice.GestureDescription
-                        .StrokeDescription(p, 0, dur))
-                .build(), dur + 300);
+        try {
+            inject(new android.accessibilityservice.GestureDescription.Builder()
+                    .addStroke(new android.accessibilityservice.GestureDescription
+                            .StrokeDescription(p, 0, dur))
+                    .build(), dur + 300);
+        } catch (IllegalArgumentException ignored) {
+            // an unreplayable gesture is a skipped page-turn, not a crash
+        }
     }
 
     private void replayTap(float x, float y) {
         if (!shown || peeking || snipMode) return;
         android.graphics.Path p = new android.graphics.Path();
-        p.moveTo(x, y);
-        inject(new android.accessibilityservice.GestureDescription.Builder()
-                .addStroke(new android.accessibilityservice.GestureDescription
-                        .StrokeDescription(p, 0, 60))
-                .build(), 360);
+        p.moveTo(clampX(x), clampY(y));
+        try {
+            inject(new android.accessibilityservice.GestureDescription.Builder()
+                    .addStroke(new android.accessibilityservice.GestureDescription
+                            .StrokeDescription(p, 0, 60))
+                    .build(), 360);
+        } catch (IllegalArgumentException ignored) {
+        }
+    }
+
+    // A finger can roll past the screen's edge mid-flick (the digitizer reports
+    // slightly negative coordinates); GestureDescription refuses paths outside
+    // the display, so replayed points are pinned to it.
+    private float clampX(float x) {
+        return Math.max(0, Math.min(x, getResources().getDisplayMetrics().widthPixels - 1));
+    }
+
+    private float clampY(float y) {
+        return Math.max(0, Math.min(y, getResources().getDisplayMetrics().heightPixels - 1));
     }
 
     private void inject(android.accessibilityservice.GestureDescription g, long safetyMs) {
