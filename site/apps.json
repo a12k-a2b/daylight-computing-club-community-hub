@@ -49,22 +49,22 @@
     },
     {
       "id": "dcc",
-      "name": "The Club itself",
-      "tagline": "Put this app-sharing hub on your home screen so it's always one tap away.",
+      "name": "The Website",
+      "tagline": "The same club through any window — pin it on any device, or just keep the link.",
       "author": "Anjan",
       "type": "pwa",
       "version": "v0",
       "updated": "2026-07-09",
       "url": "./",
-      "description": "The Daylight Computer Club is itself a web app. Add it to your home screen and it opens full-screen like a native app — new apps from friends show up here as they're shared.",
+      "description": "The club as a web page — daylightcomputer.club. It works in any browser on any device (iPhone, Mac, a friend's laptop), and on Android you can pin it to your home screen where it opens full-screen like an app. On a Daylight, the Clubhouse app is the cozier door — this is the door that's always open everywhere else.",
       "afterInstall": [],
       "source": "https://github.com/a12k-a2b/daylight-computing-club-community-hub",
       "fixture": true
     },
     {
       "id": "dcc-companion",
-      "name": "Club Companion",
-      "tagline": "Watches the shelf for you: new dishes, updates, recalls, one-tap installs — and it spots when apps fight.",
+      "name": "The Clubhouse",
+      "tagline": "The club, at home on your Daylight — the shelf inside, gifts at the door, one-tap installs.",
       "author": "Anjan",
       "type": "apk",
       "version": "0.1 (build a2d565e)",
@@ -77,7 +77,7 @@
       "uses": [
         "installs-apps"
       ],
-      "description": "The club's own dish. A few times a day it looks at the shelf: a friend brought a dish → a quiet note; a dish got better → an update note; a dish was pulled → a recall note with what to do. Installing becomes one tap — the Companion fetches the dish and hands it to Android's installer (Android still asks you to confirm; nothing ever installs silently). Its inspector-at-home explains in plain words when two apps might fight over your keys or draw over each other, with a button to the exact Settings page. And if a dish misbehaves, one tap builds a report you can text to whoever made it — written so their Claude can read it and fix the dish. Everything it sees stays on your tablet.",
+      "description": "The club's home on your tablet. The shelf lives inside it, and it does what only a real app can: a few times a day it glances at the club — a friend brought a dish → a quiet knock; a dish got better → an update note; a dish was pulled → a recall note with exactly what to do. Installing becomes one tap — it fetches the dish and hands it to Android's installer (Android still asks you to confirm; nothing ever installs silently). Its house inspector explains in plain words when two apps might fight over your keys or draw over each other, with a button to the exact Settings page. And if a dish misbehaves, one tap builds a report you can text to whoever made it — written so their Claude can read it and fix the dish. Everything it sees stays on your tablet.",
       "permissions": [
         "talk to the internet",
         "send notifications",
@@ -91,9 +91,9 @@
         "built from open source you can read"
       ],
       "afterInstall": [
-        "Open Club Companion from your home screen.",
+        "Open The Clubhouse from your home screen.",
         "Allow notifications when it asks — that's how it tells you a friend brought a dish.",
-        "The first time you use a one-tap install, Android asks once to let Club Companion install apps: flip the switch and come back. Every install after that is one tap plus Android's confirm."
+        "The first time you use a one-tap install, Android asks once to let The Clubhouse install apps: flip the switch and come back. Every install after that is one tap plus Android's confirm."
       ],
       "source": "https://github.com/a12k-a2b/dcc-companion",
       "fixture": true

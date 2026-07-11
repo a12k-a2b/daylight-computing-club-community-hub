@@ -61,7 +61,7 @@ your hands.** That one act of remembering unlocks:
   one texted link that seats Matt *and* walks him straight into that
   dish's wizard.
 
-## Move 3 — The Club Companion *(the club's own dish; the collision checker lives here)*
+## Move 3 — The Clubhouse *(né Club Companion — the club's home on the Daylight)*
 
 A web page can never see what's actually installed — Android guards that,
 rightly. So the club brings a dish of its own: a small native app, signed
@@ -70,7 +70,7 @@ Then it carries everything after:
 
 - **The butler** — checks the shelf in the background; a quiet
   notification when a friend brings a dish, an update lands, or a recall
-  happens. One tap installs: the Companion downloads from the shelf and
+  happens. One tap installs: the Clubhouse downloads from the shelf and
   hands the file to Android's installer directly — no Chrome, no
   download-bar hunt, one confirmation screen instead of seven steps.
   Updates install cleanly over the top (same club key).
@@ -86,15 +86,26 @@ Then it carries everything after:
   the tablet only when the friend chooses to send it — via the share
   sheet, as text or email. **The report is written to be pasted into the
   cook's Claude session.** That's the loop: friend hits trouble → one tap
-  → cook pastes it into their kitchen → fix → reshelve → the Companion
+  → cook pastes it into their kitchen → fix → reshelve → the Clubhouse
   offers everyone the update. Every dish effectively comes with its
   cook's kitchen on call. This is the club's answer to "how does this
   scale without becoming a store": problems route to the person who
   cooked, with everything their tools need to fix it.
 
-The Companion never installs silently, never uninstalls, never phones
+The Clubhouse never installs silently, never uninstalls, never phones
 home. It informs, and the human taps. (One-tap-no-confirmation is
 Sol:OS-card territory — policy, not physics, and not ours to shortcut.)
+
+**Naming, settled 2026-07-11:** the app is **the Clubhouse** — on a
+Daylight it isn't a companion to the club, it IS where the club lives;
+the website is the same club seen through any window (iPhone, Mac, a
+friend's laptop). One club, two doors: *the website is the source of
+truth; the Clubhouse is the source of presence.* The butler, the
+inspector-at-home, and the reporter remain as the Clubhouse's staff —
+roles inside the building, not the building. Desktop thread: update the
+Android app label to "The Clubhouse" (the package name
+club.daylightcomputer.companion stays, so existing installs update in
+place).
 
 ## The gift path — receiving should feel like AirDrop at a potluck
 
@@ -105,7 +116,7 @@ Three redundant pathways, all kept good (the caretaker checks them weekly):
 
 | Pathway | Needs | Experience |
 |---|---|---|
-| **Magic** (Companion + PWA) | Companion installed once; your seat claimed once (invite link) | Quiet notification "Anjan brought you a gift ☀" → open the club → a wrapped dish with your name → tap Open → one-tap install |
+| **Magic** (Clubhouse + PWA) | Clubhouse installed once; your seat claimed once (invite link) | Quiet notification "Anjan brought you a gift ☀" → open the club → a wrapped dish with your name → tap Open → one-tap install |
 | **URL** (works for anyone, forever) | Nothing — a browser | `invite.html?f=you&dish=x` or just the club link; wrapped gifts still show once your tablet knows you |
 | **Claude** (cooks' path) | A Claude/Codex session | Paste daylightcomputer.club → llms.txt teaches it to take/bring/remix |
 
@@ -128,12 +139,12 @@ the ink never glows.) The words carry the warmth: "From Anjan — Anjan
 made something for you, Melissa." No confetti. A potluck, not a party
 popper.
 
-**Companion contract (desktop thread):** the Companion reads the same
+**Clubhouse contract (desktop thread):** the Clubhouse reads the same
 catalog. A new entry whose `for` includes this tablet's seat →
 notification "「author」 brought you a gift ☀", deep-link to the club (or
 straight to one-tap install). `recalled.json` entries → recall
 notification. No new endpoints — apps.json and recalled.json are the
-whole protocol. **And the Companion is the one-stop club app** (Anjan,
+whole protocol. **And the Clubhouse is the one-stop club app** (Anjan,
 2026-07-11): its home tab IS the shelf — a WebView of
 daylightcomputer.club carrying the tablet's seat — with the
 butler/inspector screens alongside. One icon on the Daylight, the whole
@@ -162,7 +173,7 @@ keeping. Instead, the "daylight-ify skill pack" (ROADMAP's on-ice section
 - **Self-contained applet** (games, learning tools, most vibecoded
   things) → offer APK-ification: a thin shell with assets bundled inside,
   so it works offline, carries a version, updates through the shelf, and
-  the Companion can manage it.
+  the Clubhouse can manage it.
 - **Live server-backed app** → stays a web dish; the kitchen daylight-ifies
   its screen (grayscale, borders, contrast, living-paper motion), never its
   packaging.
@@ -185,7 +196,7 @@ Android today and gets strictly better if that conversation lands.
   catalog `uses`, wizard memory + warnings, recall banner, badges,
   dedications, `&dish=` links, plus an `llms.txt` so a friend can paste
   `daylightcomputer.club` into *their* Claude and it learns how to shelve.
-- **The desktop thread** (Anjan's Mac): Move 3 — the Companion APK (built
+- **The desktop thread** (Anjan's Mac): Move 3 — the Clubhouse APK (built
   like dc1-keys: plain `aapt2`+`javac`+`d8`, no Gradle), tested on the
   real DC-1 over USB; plus the human-delivery mechanics: sending dishes
   and invites by text/email from Anjan's own accounts, shelving dishes
@@ -198,7 +209,7 @@ Android today and gets strictly better if that conversation lands.
   collision warning + recall banner (website thread) · send/receive-by-
   text procedures in CLAUDE.md (desktop thread — done) · arm VirusTotal
   (Anjan, 2 minutes) · dedications + combined invite-dish links.
-- **B. The Companion:** v0 butler (notify + one-tap install + updates),
+- **B. The Clubhouse:** v0 butler (notify + one-tap install + updates),
   then v1 inspector + reporter. Shelved as a dish; the wizard installs it
   once, it installs everything after.
 - **C. Sol:OS:** a conversation inside Daylight, not code.
