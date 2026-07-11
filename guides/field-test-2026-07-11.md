@@ -118,12 +118,16 @@ motion, color-to-gray, this one). Mid-walk, other sessions foregrounded
 their apps, pulled the notification shade, and once put the screen to
 sleep — and this session's taps landed in *their* windows (one stray tap
 hit "Manage" in the shade; no harm done, verified). Blind coordinate taps
-can't be made safe while another session drives. Suggested convention
-until something better exists: **a session that needs the glass checks
-`~/code/.dc1-glass` first** — if it exists, wait or coordinate; if not,
-write your session name + timestamp there, work, delete it when done.
-(This session finished its device work before writing this note and is
-off the glass.)
+can't be made safe while another session drives.
+
+**Update, same night — the rule is now law (Anjan-approved):** sessions
+never interrupt each other on the device; they work sequentially, only
+when the previous one is done. The mechanism is the `~/code/dc1-glass`
+helper (claim / status / touch / release, atomic lockfile, stale claims
+recoverable after 30 quiet minutes), and the full rule lives in
+`~/code/CLAUDE.md`, which every desktop session loads at start. Sessions
+already running tonight predate the rule and won't see it until they
+restart.
 
 ---
 
