@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lofi — a quiet sound machine</title>
+<meta name="description" content="Generative calm for morning, day, and night. Made for the Daylight DC-1.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="theme-color" content="#ffffff">
+<link rel="stylesheet" href="lofi.css">
+</head>
+<body>
+
+<header class="top">
+  <div class="mark">
+    <svg viewBox="0 0 48 48" width="44" height="44" aria-hidden="true">
+      <path d="M10 26 a14 14 0 0 1 28 0" fill="none" stroke="#000" stroke-width="3"/>
+      <line x1="24" y1="4"  x2="24" y2="10" stroke="#000" stroke-width="3"/>
+      <line x1="8"  y1="12" x2="12" y2="16" stroke="#000" stroke-width="3"/>
+      <line x1="40" y1="12" x2="36" y2="16" stroke="#000" stroke-width="3"/>
+      <path d="M6 33 q6 -5 12 0 t12 0 t12 0" fill="none" stroke="#000" stroke-width="3"/>
+      <path d="M6 41 q6 -5 12 0 t12 0 t12 0" fill="none" stroke="#000" stroke-width="3"/>
+    </svg>
+    <div>
+      <h1>Lofi</h1>
+      <p class="tagline">a quiet sound machine — nothing streams, the tablet is the instrument</p>
+    </div>
+  </div>
+  <details class="about">
+    <summary>what is this?</summary>
+    <div class="about-body">
+      <p>Every soundscape here is <strong>generated live</strong> on your
+      tablet — layers of shaped noise, slow drones, and little scheduled
+      events (a bell, a bird, a rain plink). No recordings, no streaming,
+      no repeats. It works fully offline once pinned to your home screen.</p>
+      <p>Under each scene hums a quiet <strong>binaural undertone</strong> —
+      two tones a few hertz apart, one per ear, tuned faster in the morning
+      and slower at night. <strong>It only works with headphones</strong>;
+      on speakers it politely does nothing. Turn it off below if it's not
+      for you.</p>
+      <p><em>Texture</em> adds a faint vinyl crackle and tape wobble, for
+      warmth. Also optional.</p>
+      <p><a href="../">← back to the Daylight Computer Club shelf</a></p>
+    </div>
+  </details>
+</header>
+
+<main id="board" class="board"></main>
+
+<section id="breath" class="breath" hidden>
+  <p class="breath-cue" id="breath-cue">Breathe in</p>
+  <p class="breath-count" id="breath-count"></p>
+</section>
+
+<footer class="player">
+  <button id="playpause" class="pp" aria-label="Play or pause" disabled>&#9654;</button>
+  <div class="now">
+    <p class="now-name" id="now-name">Pick a soundscape</p>
+    <p class="now-desc" id="now-desc">Morning wakes you, day settles you, night puts you down.</p>
+  </div>
+  <div class="knobs">
+    <label class="vol">
+      <span>volume</span>
+      <input type="range" id="vol" min="0" max="100" value="70">
+    </label>
+    <button id="timer" class="knob" aria-label="Sleep timer">timer&nbsp;off</button>
+    <button id="binaural" class="knob on" aria-label="Binaural undertone">undertone&nbsp;on</button>
+    <button id="texture" class="knob on" aria-label="Lo-fi texture">texture&nbsp;on</button>
+  </div>
+</footer>
+
+<script src="scenes.js"></script>
+<script src="engine.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
