@@ -2,11 +2,13 @@
 // daylight-map — map a color palette to grays that stay distinguishable on
 // the Daylight DC-1's LivePaper panel.
 //
-// Not naive desaturation: colors are compared in OKLab, saturated colors get
-// a Helmholtz–Kohlrausch lightness lift (vivid red *looks* brighter than its
-// luminance), and gray assignments are optimized in PANEL-EFFECTIVE space —
-// the DC-1 crushes the dark quarter of the ramp, so separations are measured
-// after the panel's response curve, not in sRGB numbers.
+// Not naive desaturation: colors are compared in OKLab, apparent lightness
+// uses Nayatani's hue-dependent Helmholtz–Kohlrausch formula (the one behind
+// the accuracy-winning method in the literature — vivid blue *looks* brighter
+// than its luminance; yellow doesn't), and gray assignments are optimized in
+// PANEL-EFFECTIVE space — the DC-1 crushes the dark quarter of the ramp, so
+// separations are measured after the panel's response curve, not in sRGB.
+// Provenance for all of it: ../references/decolorization-research.md
 //
 // Usage:
 //   node daylight-map.mjs "#6366f1=primary" "#ef4444=danger" "#ffffff=bg" ...
@@ -73,16 +75,37 @@ function rgbToOklab([r8, g8, b8]) {
   };
 }
 
-// ---------- Helmholtz–Kohlrausch lift ----------
-// Saturated colors look brighter than their luminance; when color collapses
-// to gray, honor the APPARENT lightness so a vivid mid-red doesn't land in
-// the same gray as a drab mid-gray-blue. K_HK is a pragmatic default —
-// tune against the research notes in ../references/.
-const K_HK = FACTS?.hk_lift?.value ?? 0.18;
-function apparentL(lab) {
-  const chroma = Math.hypot(lab.a, lab.b);
-  return Math.min(1, lab.L + K_HK * chroma);
-}
+// ---------- Helmholtz–Kohlrausch apparent lightness ----------
+// Saturated colors look brighter than their luminance says — strongly for
+// blues/magentas, barely for yellows, so a constant lift won't do. This is
+// Nayatani's 1997 VAC chromatic lightness in CIELUV — the formula behind
+// Smith et al.'s "Apparent Greyscale" (best accuracy in Cadík's 2008
+// perceptual study). Provenance: ../references/decolorization-research.md
+const LA = FACTS?.hk?.adapting_luminance_cdm2 ?? 20;
+const KBR = 0.2717 * (6.469 + 6.362 * Math.pow(LA, 0.4495)) / (6.469 + Math.pow(LA, 0.4495));
+
+const HK_JS = `function hkLightness(r8, g8, b8) {
+  const lin = c => { c /= 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
+  const r = lin(r8), g = lin(g8), b = lin(b8);
+  const X = 0.4124564 * r + 0.3575761 * g + 0.1804375 * b;
+  const Y = 0.2126729 * r + 0.7151522 * g + 0.0721750 * b;
+  const Z = 0.0193339 * r + 0.1191920 * g + 0.9503041 * b;
+  const d = X + 15 * Y + 3 * Z;
+  if (d < 1e-9) return 0;
+  const L = Y > 0.008856 ? 116 * Math.cbrt(Y) - 16 : 903.3 * Y;
+  const u = 4 * X / d - 0.1978, v = 9 * Y / d - 0.4683;
+  const suv = 13 * Math.hypot(u, v);
+  const th = Math.atan2(v, u);
+  const q = -0.01585 - 0.03017 * Math.cos(th) - 0.04556 * Math.cos(2 * th)
+          - 0.02667 * Math.cos(3 * th) - 0.00295 * Math.cos(4 * th)
+          + 0.14592 * Math.sin(th) + 0.05084 * Math.sin(2 * th)
+          - 0.01900 * Math.sin(3 * th) - 0.00764 * Math.sin(4 * th);
+  return Math.max(0, Math.min(1, (L * (1 + (-0.1340 * q + 0.0872 * ${KBR}) * suv)) / 100));
+}`;
+// same function, usable in Node (the string form is injected into the
+// browser page for image mode)
+const hkLightness = new Function(`${HK_JS}; return hkLightness;`)();
+const apparentRgb = rgb => hkLightness(rgb[0], rgb[1], rgb[2]);
 
 // ---------- the panel's response (same model as dc1-preview) ----------
 const PANEL = FACTS?.curve?.day ?? { gamma: 1.35, floor: 48, ceil: 228 };
@@ -129,7 +152,7 @@ if (argv[0] === 'image') {
   const kind = /\.jpe?g$/i.test(inPath) ? 'jpeg' : 'png';
 
   // shared in-page helpers, injected as a string so both passes can use them
-  const HELPERS = `
+  const HELPERS = HK_JS + `
     const toLin = c => { c /= 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; };
     const oklab = (r8, g8, b8) => {
       const r = toLin(r8), g = toLin(g8), b = toLin(b8);
@@ -185,7 +208,7 @@ if (argv[0] === 'image') {
   if (usePalette) {
     // spread clusters over the gray range by cumulative perceptual distance,
     // in apparent-lightness order (chain 1-D MDS — deterministic, no seams)
-    clusters.sort((a, b) => apparentL(a.lab) - apparentL(b.lab));
+    clusters.sort((a, b) => apparentRgb(a.rgb) - apparentRgb(b.rgb));
     const pos = [0];
     for (let i = 1; i < clusters.length; i++) {
       const p = clusters[i - 1], q = clusters[i];
@@ -199,8 +222,8 @@ if (argv[0] === 'image') {
     const span = pos[pos.length - 1] || 1;
     // anchor the ends where the content actually lives: pure-white palettes
     // stay white; if nothing is near-black, don't force anything to ink
-    const lo = Math.min(0.98, Math.max(0, apparentL(clusters[0].lab) - 0.05));
-    const hi = clusters[clusters.length - 1].lab.L > 0.93 ? 1 : Math.min(1, apparentL(clusters[clusters.length - 1].lab) + 0.05);
+    const lo = Math.min(0.98, Math.max(0, apparentRgb(clusters[0].rgb) - 0.05));
+    const hi = clusters[clusters.length - 1].lab.L > 0.93 ? 1 : Math.min(1, apparentRgb(clusters[clusters.length - 1].rgb) + 0.05);
     clusters.forEach((c, i) => { c.gray = lo + (hi - lo) * pos[i] / span; });
 
     console.log(`palette regime (coverage ${(coverage * 100).toFixed(1)}%, ${clusters.length} clusters):`);
@@ -232,7 +255,7 @@ if (argv[0] === 'image') {
     const useLum = method === 'luminance';
     console.log(useLum ? 'luminance regime (forced)' : `continuous regime (palette coverage only ${(coverage * 100).toFixed(1)}%)`);
     out = await page.evaluate(new Function('args', HELPERS + `
-      return (async ({ b64, kind, useLum, K_HK }) => {
+      return (async ({ b64, kind, useLum }) => {
         const { cv, cx, d } = await loadInto(b64, kind);
         const px = d.data, nPix = px.length / 4;
         const labs = new Float32Array(nPix * 3);
@@ -244,16 +267,16 @@ if (argv[0] === 'image') {
         }
         const theta = 0.5 * Math.atan2(2 * sab, saa - sbb);   // dominant chroma axis
         const ax = Math.cos(theta), ay = Math.sin(theta);
-        const LAMBDA = 0.35;
+        const LAMBDA = 0.3; // Grundland & Dodgson's published practical default
         for (let i = 0, j = 0; i < px.length; i += 4, j += 3) {
           const L = labs[j], a = labs[j + 1], b = labs[j + 2];
           let v = useLum ? L
-            : Math.min(1, L + K_HK * Math.hypot(a, b)) + LAMBDA * (a * ax + b * ay);
+            : hkLightness(px[i], px[i + 1], px[i + 2]) + LAMBDA * (a * ax + b * ay);
           px[i] = px[i + 1] = px[i + 2] = Math.round(255 * Math.max(0, Math.min(1, v)));
         }
         cx.putImageData(d, 0, 0);
         return cv.toDataURL('image/png').split(',')[1];
-      })(args)`), { b64, kind, useLum, K_HK });
+      })(args)`), { b64, kind, useLum });
   }
 
   const { writeFileSync } = await import('node:fs');
@@ -297,7 +320,7 @@ for (const [a, b] of [...mustPairs, ...textPairs]) {
 // ---------- set up targets ----------
 
 const labs = colors.map(c => rgbToOklab(hexToRgb(c.hex)));
-const appL = labs.map(apparentL);
+const appL = colors.map(c => apparentRgb(hexToRgb(c.hex)));
 
 // pairwise perceptual distance (OKLab ΔE), normalized to the palette's max
 const n = colors.length;

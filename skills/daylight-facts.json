@@ -41,6 +41,6 @@
     "disabled": "#CCCCCC", "recessed": "#F5F5F5", "surface": "#F7F7F7", "paper": "#FFFFFF",
     "brand_to_gray": { "yellow #FFC70D": "#CECECE", "amber #FF9D00": "#9D9D9E", "orange #FC6900": "#6C6C6D" }
   },
-  "hk_lift": { "value": 0.18, "measured": false, "note": "Helmholtz-Kohlrausch chroma-to-lightness factor used by daylight-map" },
+  "hk": { "model": "Nayatani 1997 VAC chromatic lightness (CIELUV, hue-dependent)", "adapting_luminance_cdm2": 20, "measured": false, "note": "used by daylight-map; L_a default from Smith et al. 2008 — the right value for a reflective panel in ambient light, and the object-vs-luminous variant choice, await hardware validation" },
   "input": { "min_touch_target_css_px": 48, "min_body_font_css_px": 16 }
 }
