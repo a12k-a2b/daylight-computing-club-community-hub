@@ -1,0 +1,232 @@
+# Daylight Shade
+
+Our own pull-down quick settings for the DC-1 — grayscale, bordered, serif,
+calm — built as a tiny standalone system app instead of a SystemUI fork, so
+we can iterate on it in an afternoon and carry it across the AOSP 13 → 16/17
+jump.
+
+![the panel](design/mock.png)
+
+**Play with the design:** open [`design/mock.html`](design/mock.html) in any
+browser — the pills toggle, the sliders drag. It is 1:1 with what the app
+draws.
+
+## The idea (why this isn't "deep Android code")
+
+Android's stock shade lives inside SystemUI, the OS process that owns the
+status bar. Modifying it means forking AOSP, and every OS upgrade means
+re-doing the fork. That's the pain we're escaping.
+
+Daylight Shade never touches SystemUI. It is an ordinary app (48 KB, zero
+dependencies, one Java package) that:
+
+1. draws an **invisible catch strip** along the top edge of the screen;
+2. when a finger drags down from it, slides **our panel** (an overlay
+   window) down with the finger — brightness, warmth, six pills, media
+   controls, a notification list;
+3. optionally tells the OS to **ignore swipes on the stock shade**
+   (`StatusBarManager.disable(DISABLE_EXPAND)`) so ours is *the* shade.
+
+Everything the panel does goes through stable public contracts — the
+window manager, the settings providers, media sessions, the notification
+listener API — not SystemUI internals. That's the whole portability story:
+those contracts have barely moved since Android 5, and they are still there
+in AOSP 16/17 previews.
+
+A safety property worth knowing: the "ignore the stock shade" flag is tied
+to our process. If Daylight Shade ever crashes or is uninstalled, the OS
+drops the flag automatically and the stock shade comes right back. We can
+never brick the pull-down.
+
+## What's in the panel (v0.1)
+
+- **Header** — clock, date, next alarm, battery.
+- **Light slider** — backlight, via `Settings.System.SCREEN_BRIGHTNESS`.
+- **Warmth slider** — amber ↔ paper-white (see "the warmth hookup" below).
+- **Six pills** — Wi-Fi, Bluetooth, Airplane, Quiet (do-not-disturb), Dark,
+  Rotation lock. Tap toggles; long-press opens the full settings page. Any
+  toggle that this install isn't allowed to flip directly opens the matching
+  settings screen instead — the panel never silently fails.
+- **Media card** — whatever is playing (Spotify, Audible…): ⏮ ⏯ ⏭, ±15 s,
+  and a heart when the app supports favorites. Appears only while something
+  has an active session.
+- **Notifications** — our own list drawn our way (tap to open, ✕ to dismiss,
+  clear all). No passthrough to the stock shade needed: the same
+  notification-listener grant that powers the media card powers this.
+- **Footer** — all settings · shade setup.
+
+`shade setup` (the app's launcher icon opens it too) is the control room: it
+shows every capability as a plain sentence with a tap-to-grant button, and
+lets you pick how the panel opens.
+
+## Two modes, one APK
+
+### Preview mode — works on any DC-1 today
+
+Install the APK, grant four things in `shade setup` (draw over apps, modify
+settings, notification access, do-not-disturb). You get: the full panel via
+a **"Daylight panel" tile** in the stock quick settings, a **swipe zone just
+below the status bar**, or the launcher button. Brightness, rotation, quiet,
+media and notifications all work for real. Wi-Fi / Bluetooth / Airplane /
+Dark pills open their settings panels (Android reserves direct flipping for
+system apps). The stock shade still owns the very top edge.
+
+Optional, for development, from a computer:
+
+```sh
+adb shell pm grant com.daylightcomputer.shade android.permission.WRITE_SECURE_SETTINGS
+```
+
+which turns on the night-light stand-in for the warmth slider.
+
+### Full mode — arrives with one Sol:OS build change
+
+When the OS ships this app as a **platform-signed priv-app**, the same APK
+notices its new powers and unlocks: the swipe on the status bar itself opens
+*our* panel, the stock shade goes silent, and every pill flips directly.
+Nothing to rebuild; `shade setup` grows the extra switches.
+
+## The exact ask for the platform team
+
+> Ship `shade/dist/daylight-shade.apk` (package
+> `com.daylightcomputer.shade`) in the Sol:OS image:
+>
+> 1. **Re-sign it with the platform certificate** and install it as a
+>    priv-app (e.g. `system_ext/priv-app/DaylightShade/`). In a Soong tree:
+>
+>    ```
+>    android_app_import {
+>        name: "DaylightShade",
+>        apk: "daylight-shade.apk",
+>        certificate: "platform",
+>        privileged: true,
+>        system_ext_specific: true,
+>    }
+>    ```
+>    (plus `PRODUCT_PACKAGES += DaylightShade`)
+>
+> 2. **Allowlist its privileged permissions** —
+>    `system_ext/etc/permissions/privapp-permissions-daylightshade.xml`:
+>
+>    ```xml
+>    <permissions>
+>      <privapp-permissions package="com.daylightcomputer.shade">
+>        <permission name="android.permission.STATUS_BAR"/>
+>        <permission name="android.permission.WRITE_SECURE_SETTINGS"/>
+>        <permission name="android.permission.MODIFY_DAY_NIGHT_MODE"/>
+>        <permission name="android.permission.NETWORK_AIRPLANE_MODE"/>
+>      </privapp-permissions>
+>    </permissions>
+>    ```
+>
+>    (`INTERNAL_SYSTEM_WINDOW` and `NETWORK_SETTINGS` are signature-level;
+>    the platform signature from step 1 covers them.)
+>
+> 3. **If any call still logs a hidden-API block** (`Accessing hidden
+>    method`), add the package to the hidden-API exemption list
+>    (`hiddenapi-package-whitelist.xml` / the product's
+>    `PRODUCT_HIDDENAPI_EXEMPT` mechanism). The app touches exactly three
+>    hidden members, all listed in `SysApi.java`.
+>
+> 4. **Tell us the warmth setting** — which `Settings` key (and value range)
+>    the stock quick-settings amber slider writes. Find it with:
+>    `adb shell settings list system > before` → move the stock slider →
+>    `settings list system > after` → `diff`. (Check `secure` and `global`
+>    tables too if `system` shows nothing.)
+
+That's the whole OS-side footprint. No SystemUI patches, no framework
+changes.
+
+## The warmth hookup
+
+The DC-1's amber backlight is Daylight hardware, so the app can't guess its
+setting name. `Warmth.java` probes a list of likely `Settings.System` keys
+and uses the first one that exists on the device; once the platform team
+names the real key (step 4 above) we either add it to the probe list (one
+line) or configure it at runtime. Until then, with `WRITE_SECURE_SETTINGS`
+granted, the slider drives AOSP night light as a stand-in so the interaction
+can be felt today. If the backlight turns out to live behind a sysfs node or
+a vendor service instead of a settings key, `Warmth.java` is the one file
+that grows a new backend.
+
+## Building
+
+```sh
+export ANDROID_BUILD_TOOLS=…/build-tools/33.x   # aapt2, zipalign, apksigner
+export ANDROID_PLATFORM=…/platforms/android-33  # android.jar
+export ANDROID_D8=…/build-tools/35.x/d8         # only if your JDK is 17+
+./build.sh
+```
+
+No Gradle, no Android Studio, no dependencies — `aapt2 → javac → d8 →
+apksigner`, ~3 seconds, out comes `dist/daylight-shade.apk` signed with the
+club key (`../signing/dcc.keystore`). The two SDK folders come from plain
+zips on `dl.google.com` (URLs in `build.sh`).
+
+## Source map
+
+```
+app/AndroidManifest.xml            components + the three permission tiers
+app/src/…/shade/
+  ShadeService.java                the two overlay windows + gesture strip
+  ShadeNLService.java              notification listener (media + notif list)
+  MainActivity.java                "shade setup" control room
+  ShadeTileService.java            the stepping-stone tile in the stock QS
+  BootReceiver, PanelTrampoline…   plumbing
+  Prefs.java                       strip placement, takeover switch
+  ui/PanelView.java                the panel itself (header→footer)
+  ui/InkSlider, TileButton,
+     IconButton, Ui.java           the grayscale widget kit (canvas-drawn)
+  control/Caps.java                live permission matrix
+  control/Toggles.java             wifi/bt/airplane/dnd/dark/rotation
+  control/Brightness, Warmth,
+          Media.java               sliders + media session
+  control/SysApi.java              ⚠ the ONLY file touching hidden APIs
+design/mock.html                   interactive design mock (open in browser)
+dist/daylight-shade.apk            built + club-signed, ready to sideload
+```
+
+## Performance budget
+
+- APK: **48 KB**. Process: one, plus nothing.
+- Idle: a dormant foreground service — no timers, no polling, no wakeups.
+  Broadcast receivers exist only while the panel is on screen.
+- The panel builds its views when it opens and lets them go when it closes;
+  no bitmaps, no images, everything is drawn with six Paint calls.
+
+## Honesty box (current status)
+
+- ✅ Compiles clean against the real Android 13 SDK; APK builds, aligns,
+  signs, verifies.
+- ✅ Design verified in Chromium (mock renders, interactions work, zero
+  console errors).
+- ⚠️ **Not yet run on a DC-1 or emulator** — overlay windows and gesture
+  feel always need a shake-down on real glass. Expect a round of small
+  fixes after the first sideload; that's the fast loop this project exists
+  to enable.
+- Deliberately **not on the club shelf yet** — it should pass a real-device
+  smoke test first, then shelving it is the normal one-commit club step.
+
+## Porting to AOSP 16/17 (the plan we're buying into)
+
+The app deliberately depends on boring, stable contracts. When Sol:OS jumps:
+
+1. Recompile against the new platform (`--target-sdk-version` bump).
+2. Audit `SysApi.java` (3 reflective calls) and the two window-type ints in
+   `ShadeService` — that's the entire hidden-API surface, kept in one place
+   on purpose.
+3. Known 14+ deltas, all small: foreground services want a
+   `foregroundServiceType`; `TileService.startActivityAndCollapse` takes a
+   `PendingIntent`; `BluetoothAdapter.enable()` goes away for non-system
+   callers (we're system by then). Each is a guarded one-liner.
+
+SystemUI's own quick-settings rewrite in newer AOSP never touches us —
+which is exactly the point.
+
+## Where this can go next (iteration list)
+
+Own status bar (clock/battery drawn our way), richer notification rows
+(expand, actions, grouping), lock-screen variant, per-app volume, a
+"reading light" preset row, Wi-Fi network picker inline, warmth scheduling
+("candlelight after sunset"), club-shelf "new dish" notices… every one of
+these is an afternoon in `PanelView.java`, not an AOSP rebuild.
