@@ -55,6 +55,12 @@ sleep 4
 adb logcat -d > logcat.txt
 FATALS=$(grep -A1 "FATAL EXCEPTION" logcat.txt | grep -c "Process: $PKG")
 report "FATALS=$FATALS"
+if [ "$FATALS" -gt 0 ]; then
+  echo "=== crash stack (logcat) ==="
+  grep -B2 -A40 "FATAL EXCEPTION" logcat.txt | head -90
+  echo "=== crash block (monkey) ==="
+  grep -B2 -A40 "// CRASH" monkey.log | head -60
+fi
 MEM=$(adb shell dumpsys meminfo "$PKG" 2>/dev/null | grep -m1 "TOTAL PSS:" | grep -o '[0-9]*' | head -1)
 [ -n "$MEM" ] && report "MEM_MB=$((MEM / 1024))" || report "MEM_MB="
 
