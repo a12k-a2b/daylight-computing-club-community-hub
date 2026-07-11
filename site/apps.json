@@ -45,18 +45,17 @@
       "tagline": "Press the top button — a sheet of glass slides over whatever you're reading. Jot the thought, press again, never lose your place.",
       "author": "Anjan",
       "type": "apk",
-      "version": "1.1 (build 9c4b129)",
+      "version": "1.2 (build 8d1a5d0)",
       "updated": "2026-07-11",
       "apk": {
         "file": "apps/tracing-paper/tracing-paper.apk",
-        "size": "37 KB",
+        "size": "49 KB",
         "package": "club.daylightcomputer.tracingpaper"
       },
-      "description": "The club's own take on the transparent notepad — a from-scratch, readable-source homage to Matt Thompson's Glassnote (if you can, go support the real one). The DC-1's orange top button lays glass over any app; write on it with the pen (pressure and the eraser end both work — and the ink is low-latency: unbuffered stylus input drawn straight to a hardware surface with a velocity-predicted tail, so it keeps up with your hand), flip through pages, and it all autosaves. Hold the top button to snap a picture of your notes over the page. FROST cycles clear glass → frosted → paper; PEEK lets you scroll the page underneath while your ink stays put; PDF exports every page as crisp vector ink to Download. Optional: volume-down flips the backlight while the pad is open (off by default so it won't fight Daylight Keys). If a SolOS update ever remaps the buttons, the app can re-learn them with one press. Notes never leave the tablet.",
+      "description": "The club's own take on the transparent notepad — a from-scratch, readable-source homage to Matt Thompson's Glassnote (if you can, go support the real one). The DC-1's orange top button lays glass over any app; write on it with the pen (pressure and the eraser end both work — and the ink is low-latency: unbuffered stylus input drawn straight to a hardware surface with a velocity-predicted tail, so it keeps up with your hand). Keep as many notebooks as you like, each named, each on its own paper: blank, lined, dots, or school-ruled with a margin. HILITE is a light-gray marker ringed in thin black so highlights stand out when you scan a page. SNIP cuts a box out of whatever's on screen and pastes it on the glass right where it was. The GLASS slider takes the pad from clear to opaque paper, 0–100%. PEEK lets you scroll the page underneath while your ink stays put; SNAP (or holding the top button) saves a picture of notes-over-page; PDF exports every notebook as crisp vector ink to Download. The volume keys are deliberately untouched — Daylight Keys owns those. If a SolOS update ever remaps the top button, the app re-learns it with one press. Notes never leave the tablet.",
       "permissions": [
         "watch the hardware buttons and draw the pad over other apps (its accessibility service)",
-        "take a screen picture — only when you press SNAP or hold the top button",
-        "change system settings (like brightness) — only if you turn on the backlight flip"
+        "take a screen picture — only when you press SNAP or SNIP, or hold the top button"
       ],
       "inspected": [
         "signed with the club key",
@@ -68,7 +67,7 @@
         "Turn on its pad service: open Settings, then Accessibility, find “Tracing Paper — glass pad”, and switch it on. (This is what lets the top button open the pad.)",
         "Press the orange top button — glass slides over your page. Write with the pen; press the button again to put the glass away.",
         "Hold the top button to save a picture of your notes over the page (it lands in Pictures).",
-        "If you want volume-down to flip the backlight while the pad is open, switch it on in the app and allow “Modify system settings” when asked."
+        "On the glass, tap the ▾ button to make notebooks — pick blank, lined, dots, or school paper and give each a name. The GLASS slider makes the pad more or less see-through, and SNIP pastes a clipping of the page onto your glass."
       ],
       "source": "https://github.com/a12k-a2b/daylight-computing-club-community-hub/tree/master/apps-src/tracing-paper"
     },
