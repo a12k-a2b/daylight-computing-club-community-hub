@@ -52,7 +52,7 @@ stays Gradle-free:
 - **Wet layer** — the in-progress stroke is drawn to a hardware
   `SurfaceView` canvas (`lockHardwareCanvas`) the moment each event arrives,
   skipping the UI-thread frame wait.
-- **Prediction** — a ~12 ms tail extrapolated from pen velocity (capped so
+- **Prediction** — a ~20 ms tail extrapolated from pen velocity (capped so
   flicks don't overshoot), redrawn every event, replaced by truth as it
   arrives.
 - **Dry on pen-up** — the finished stroke is committed to the ordinary
@@ -77,6 +77,6 @@ path or the on-glass SNAP button. The service never reads screen content.
 ## Building
 
 Plain tools, no Gradle: `./build.sh` (wants `ANDROID_SDK` with
-build-tools 34 + platform android-33, and the club keystore — see the
+build-tools 35 + platform android-33, and the club keystore — see the
 club repo's `signing/`). Output: `build/tracing-paper.apk`, signed with
 the club key.
