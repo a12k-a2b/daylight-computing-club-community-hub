@@ -73,6 +73,8 @@ public class PadService extends AccessibilityService {
 
     private SnipVeil veil;
     private View panel;                 // notebooks / new-notebook card
+    private View toolPopup;             // pen/hilite/eraser size card
+    private View hintCard;              // one-time mental-model hint
     private int armedBookDelete = -1;
     private long armedBookAt;
 
@@ -208,13 +210,50 @@ public class PadService extends AccessibilityService {
         }
         shown = true;
         peeking = false;
+        // the notebook slides down over the page — a layer, not a place-change.
+        // 160ms on open only; closing stays instant so going back costs nothing.
+        root.animate().cancel();
+        root.setTranslationY(-getResources().getDisplayMetrics().heightPixels);
+        root.animate().translationY(0).setDuration(160)
+                .setInterpolator(new android.view.animation.DecelerateInterpolator(1.5f))
+                .start();
+        maybeShowHint();
         refreshBar();
+    }
+
+    /** Once, the first time the glass appears: teach the mental model. */
+    private void maybeShowHint() {
+        if (prefs.getInt(Prefs.K_HINTS, 0) != 0 || hintCard != null) return;
+        LinearLayout card = card("THIS IS TRACING PAPER");
+        TextView t = new TextView(this);
+        t.setText("It lays over your page — you never left. The GLASS slider sets how much "
+                + "of the world shows through (you're at "
+                + pad.getOpacity() + "%). Write with the pen; press the top button and "
+                + "you're right back where you were. PEEK lets you scroll the page "
+                + "underneath; SNIP clips a piece of it onto the glass.");
+        t.setTextColor(Color.BLACK);
+        t.setTextSize(16);
+        card.addView(t, rowLp());
+        card.addView(button("GOT IT", v -> {
+            prefs.edit().putInt(Prefs.K_HINTS, 1).apply();
+            if (hintCard != null) { root.removeView(hintCard); hintCard = null; }
+        }), rowLp());
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                dp(380), FrameLayout.LayoutParams.WRAP_CONTENT);
+        lp.gravity = Gravity.CENTER_HORIZONTAL | Gravity.TOP;
+        lp.topMargin = dp(48);
+        hintCard = card;
+        root.addView(card, lp);
     }
 
     private void hidePad() {
         if (!shown) return;
+        root.animate().cancel();
+        root.setTranslationY(0);
         cancelSnip();
         closePanel();
+        closeToolPopup();
+        if (hintCard != null) { root.removeView(hintCard); hintCard = null; }
         if (peeking) exitPeek();
         pad.flushSave();
         try { wm.removeView(root); } catch (Exception ignored) {}
@@ -236,6 +275,7 @@ public class PadService extends AccessibilityService {
     private void peek() {
         if (!shown || peeking || snipMode) return;
         closePanel();
+        closeToolPopup();
         peeking = true;
         rootLp.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
         wm.updateViewLayout(root, rootLp);
@@ -271,6 +311,8 @@ public class PadService extends AccessibilityService {
     private void startSnip() {
         if (!shown || snipMode) return;
         closePanel();
+        closeToolPopup();
+        if (hintCard != null) { root.removeView(hintCard); hintCard = null; }
         if (peeking) exitPeek();
         snipMode = true;
         pad.setVisibility(View.INVISIBLE);
@@ -421,6 +463,7 @@ public class PadService extends AccessibilityService {
     private void showBooks() {
         if (!shown || snipMode) return;
         closePanel();
+        closeToolPopup();
         LinearLayout col = card("NOTEBOOKS");
         List<GlassPadView.Book> books = pad.getBooks();
         for (int i = 0; i < books.size(); i++) {
@@ -555,10 +598,11 @@ public class PadService extends AccessibilityService {
         barShell.addView(scroll, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
 
-        penBtn = button("PEN", v -> pad.setTool(GlassPadView.TOOL_PEN));
-        hiBtn = button("HILITE", v -> pad.setTool(GlassPadView.TOOL_HIGHLIGHT));
-        eraseBtn = button("ERASE", v -> pad.setTool(GlassPadView.TOOL_ERASE));
-        pickBtn = button("PICK", v -> pad.setTool(GlassPadView.TOOL_PICK));
+        // tapping the tool you're already holding opens its size card
+        penBtn = button("PEN", v -> toolTap(GlassPadView.TOOL_PEN));
+        hiBtn = button("HILITE", v -> toolTap(GlassPadView.TOOL_HIGHLIGHT));
+        eraseBtn = button("ERASE", v -> toolTap(GlassPadView.TOOL_ERASE));
+        pickBtn = button("PICK", v -> { pad.setTool(GlassPadView.TOOL_PICK); closeToolPopup(); });
         undoBtn = button("UNDO", v -> pad.undo());
         redoBtn = button("REDO", v -> pad.redo());
         TextView clearBtn = button("CLEAR", v -> pad.clearPage());
@@ -642,6 +686,77 @@ public class PadService extends AccessibilityService {
         slp.setMarginStart(p8);
         box.addView(sb, slp);
         return box;
+    }
+
+    private void toolTap(int tool) {
+        if (pad.getTool() == tool && toolPopup == null) showToolPopup(tool);
+        else { pad.setTool(tool); closeToolPopup(); }
+    }
+
+    private void closeToolPopup() {
+        if (toolPopup != null) { root.removeView(toolPopup); toolPopup = null; }
+    }
+
+    /** A small card above the bar: five sizes, and for the eraser its two natures. */
+    private void showToolPopup(int tool) {
+        closeToolPopup();
+        String sizeKey = tool == GlassPadView.TOOL_HIGHLIGHT ? Prefs.K_HI_SIZE
+                : tool == GlassPadView.TOOL_ERASE ? Prefs.K_ERASE_SIZE : Prefs.K_PEN_SIZE;
+        String title = tool == GlassPadView.TOOL_HIGHLIGHT ? "HILITE SIZE"
+                : tool == GlassPadView.TOOL_ERASE ? "ERASER" : "PEN SIZE";
+
+        LinearLayout col = card(title);
+        LinearLayout sizes = new LinearLayout(this);
+        sizes.setOrientation(LinearLayout.HORIZONTAL);
+        final TextView[] tiles = new TextView[5];
+        int cur = prefs.getInt(sizeKey, 2);
+        for (int i = 1; i <= 5; i++) {
+            final int size = i;
+            tiles[i - 1] = button(String.valueOf(i), v -> {
+                prefs.edit().putInt(sizeKey, size).apply();
+                for (int k = 0; k < 5; k++) style(tiles[k], k == size - 1);
+            });
+            style(tiles[i - 1], i == cur);
+            LinearLayout.LayoutParams tlp = new LinearLayout.LayoutParams(0, dp(48), 1f);
+            if (i > 1) tlp.setMarginStart(dp(8));
+            sizes.addView(tiles[i - 1], tlp);
+        }
+        col.addView(sizes, rowLp());
+
+        if (tool == GlassPadView.TOOL_ERASE) {
+            LinearLayout modes = new LinearLayout(this);
+            modes.setOrientation(LinearLayout.HORIZONTAL);
+            final TextView[] mts = new TextView[2];
+            boolean pixel = prefs.getBoolean(Prefs.K_ERASE_PIXEL, false);
+            String[] labels = {"STROKE", "PIXEL"};
+            for (int i = 0; i < 2; i++) {
+                final boolean px = i == 1;
+                mts[i] = button(labels[i], v -> {
+                    prefs.edit().putBoolean(Prefs.K_ERASE_PIXEL, px).apply();
+                    style(mts[0], !px);
+                    style(mts[1], px);
+                });
+                style(mts[i], px == pixel);
+                LinearLayout.LayoutParams mlp = new LinearLayout.LayoutParams(0, dp(48), 1f);
+                if (i > 0) mlp.setMarginStart(dp(8));
+                modes.addView(mts[i], mlp);
+            }
+            col.addView(modes, rowLp());
+            TextView note = new TextView(this);
+            note.setText("STROKE grazes whole lines and erases them when you lift the pen. "
+                    + "PIXEL rubs ink out exactly where you touch.");
+            note.setTextColor(0xFF333333);
+            note.setTextSize(13);
+            col.addView(note, rowLp());
+        }
+
+        col.addView(button("DONE", v -> closeToolPopup()), rowLp());
+        FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
+                dp(340), FrameLayout.LayoutParams.WRAP_CONTENT);
+        lp.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+        lp.bottomMargin = barShell.getHeight() + dp(8);
+        toolPopup = col;
+        root.addView(col, lp);
     }
 
     private void refreshBar() {

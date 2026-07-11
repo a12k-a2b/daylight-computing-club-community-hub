@@ -51,11 +51,19 @@ public class GlassPadView extends View {
 
     private static final float SNAP_DEG = 4f;
 
+    /** Tool size steps, 1..5, as multiples of the base width. */
+    static final float[] SIZE_MULS = {0.6f, 1f, 1.5f, 2.2f, 3.2f};
+
+    static float sizeMul(int idx) {
+        return SIZE_MULS[Math.max(0, Math.min(idx - 1, SIZE_MULS.length - 1))];
+    }
+
     static class Stroke {
         int kind;
         float base;              // stroke width as a fraction of page width
         float[] pts = new float[64 * 3]; // x, y, pressure triplets
         int n;
+        private float bMinX = Float.NaN, bMinY, bMaxX, bMaxY; // lazy bounds
 
         void add(float x, float y, float p) {
             if (n * 3 == pts.length) {
@@ -65,6 +73,26 @@ public class GlassPadView extends View {
             }
             pts[n * 3] = x; pts[n * 3 + 1] = y; pts[n * 3 + 2] = p;
             n++;
+            bMinX = Float.NaN;
+        }
+
+        boolean nearAny(float x, float y, float radius) {
+            if (n == 0) return false;
+            if (Float.isNaN(bMinX)) {
+                bMinX = bMaxX = pts[0];
+                bMinY = bMaxY = pts[1];
+                for (int i = 1; i < n; i++) {
+                    bMinX = Math.min(bMinX, pts[i * 3]); bMaxX = Math.max(bMaxX, pts[i * 3]);
+                    bMinY = Math.min(bMinY, pts[i * 3 + 1]); bMaxY = Math.max(bMaxY, pts[i * 3 + 1]);
+                }
+            }
+            if (x < bMinX - radius || x > bMaxX + radius
+                    || y < bMinY - radius || y > bMaxY + radius) return false;
+            for (int i = 0; i < n; i++) {
+                float dx = pts[i * 3] - x, dy = pts[i * 3 + 1] - y;
+                if (dx * dx + dy * dy < radius * radius) return true;
+            }
+            return false;
         }
     }
 
@@ -91,12 +119,15 @@ public class GlassPadView extends View {
 
     /** One undoable thing. */
     private static class Op {
-        static final int STROKE = 0, SNIP_ADD = 1, SNIP_EDIT = 2, SNIP_DELETE = 3, CLEAR = 4;
+        static final int STROKE = 0, SNIP_ADD = 1, SNIP_EDIT = 2, SNIP_DELETE = 3, CLEAR = 4,
+                STROKE_ERASE = 5;
         int type, page;
         Stroke stroke;
         Snip snip;
         PageData cleared;
         float ox, oy, ow, oh, orr, nx, ny, nw, nh, nr;
+        int[] erasedIdx;
+        Stroke[] erased;
     }
 
     interface StateListener { void onPadStateChanged(); }
@@ -141,6 +172,11 @@ public class GlassPadView extends View {
     private boolean wetActive;
     private WetInk wet;
 
+    // stroke eraser: graze on pass, erase on lift
+    private boolean strokeErasing;
+    private float eraseRadiusPx;
+    private final java.util.HashSet<Stroke> grazed = new java.util.HashSet<>();
+
     // selection
     private Snip sel;
     private int selPage = -1;
@@ -168,7 +204,7 @@ public class GlassPadView extends View {
         book = Math.max(0, Math.min(loaded.cur, books.size() - 1));
         SharedPreferences p = Prefs.get(c);
         penOnly = p.getBoolean(Prefs.K_PEN_ONLY, false);
-        opacity = Math.max(0, Math.min(p.getInt(Prefs.K_OPACITY, 30), 100));
+        opacity = Math.max(0, Math.min(p.getInt(Prefs.K_OPACITY, Prefs.DEFAULT_OPACITY), 100));
         activePage = Math.max(0, Math.min(p.getInt(Prefs.K_LAST_PAGE, 0), cb().pages.size() - 1));
 
         density = getResources().getDisplayMetrics().density;
@@ -348,8 +384,10 @@ public class GlassPadView extends View {
 
     private void renderStroke(Stroke s, Canvas hC, Canvas iC) {
         int w = getWidth(), h = pageH();
+        boolean gz = grazed.contains(s); // half-faded: the eraser has it, lift to finish
         switch (s.kind) {
             case KIND_INK: {
+                pen.setAlpha(gz ? 70 : 255);
                 float bw = s.base * w;
                 if (s.n == 1) {
                     pen.setStrokeWidth(bw * (0.5f + s.pts[2]));
@@ -376,6 +414,8 @@ public class GlassPadView extends View {
                 return;
             }
             case KIND_HIGHLIGHT: {
+                hiEdge.setAlpha(gz ? 60 : 255);
+                hiFill.setAlpha(gz ? 30 : Color.alpha(HI_FILL));
                 Path path = strokePath(s, w, h);
                 float bw = s.base * w;
                 hiEdge.setStrokeWidth(bw + hiEdgePx * 2);
@@ -404,6 +444,7 @@ public class GlassPadView extends View {
         float lx = lastX, ly = lastY - top;
         switch (cur.kind) {
             case KIND_INK:
+                pen.setAlpha(255);
                 pen.setStrokeWidth(cur.base * w * (0.5f + pr));
                 if (cur.n == 0) inkC.drawPoint(x, y, pen);
                 else inkC.drawLine(lx, ly, x, y, pen);
@@ -658,9 +699,22 @@ public class GlassPadView extends View {
         int kind = eraserEnd || tool == TOOL_ERASE ? KIND_ERASE
                 : tool == TOOL_HIGHLIGHT ? KIND_HIGHLIGHT : KIND_INK;
         requestUnbufferedDispatch(e);
+        SharedPreferences p = Prefs.get(getContext());
+        if (kind == KIND_ERASE && !p.getBoolean(Prefs.K_ERASE_PIXEL, false)) {
+            // stroke eraser: graze whole strokes on the way, erase them on lift
+            strokeErasing = true;
+            grazed.clear();
+            eraseRadiusPx = baseWidthPx * 2.5f * sizeMul(p.getInt(Prefs.K_ERASE_SIZE, 2));
+            grazeAt(e.getX(), e.getY());
+            mode = M_DRAW;
+            return;
+        }
         cur = new Stroke();
         cur.kind = kind;
-        float widthPx = kind == KIND_HIGHLIGHT ? hiWidthPx : baseWidthPx;
+        float mul = kind == KIND_HIGHLIGHT ? sizeMul(p.getInt(Prefs.K_HI_SIZE, 2))
+                : kind == KIND_ERASE ? sizeMul(p.getInt(Prefs.K_ERASE_SIZE, 2))
+                : sizeMul(p.getInt(Prefs.K_PEN_SIZE, 2));
+        float widthPx = (kind == KIND_HIGHLIGHT ? hiWidthPx : baseWidthPx) * mul;
         cur.base = widthPx / Math.max(1, getWidth());
         wetActive = kind != KIND_ERASE && wet != null && wet.isReady();
         if (wetActive) wet.begin(widthPx, kind);
@@ -670,12 +724,35 @@ public class GlassPadView extends View {
     }
 
     private void moveDraw(MotionEvent e) {
+        if (strokeErasing) {
+            for (int i = 0; i < e.getHistorySize(); i++)
+                grazeAt(e.getHistoricalX(i), e.getHistoricalY(i));
+            grazeAt(e.getX(), e.getY());
+            return;
+        }
         if (cur == null) return;
         for (int i = 0; i < e.getHistorySize(); i++)
             addPoint(e.getHistoricalX(i), e.getHistoricalY(i),
                     e.getHistoricalPressure(i), e.getHistoricalEventTime(i));
         addPoint(e.getX(), e.getY(), e.getPressure(), e.getEventTime());
         if (wetActive) wet.present();
+    }
+
+    private void grazeAt(float sx, float sy) {
+        float top = pageTop(curPage) - scrollY;
+        int w = Math.max(1, getWidth()), h = pageH();
+        float nx = sx / w;
+        float ny = Math.max(0, Math.min(sy - top, h - 1)) / h;
+        float nr = eraseRadiusPx / w; // radius in normalized-x units; pages are wider than tall-ish
+        boolean newGraze = false;
+        for (Stroke s : pg(curPage).strokes) {
+            if (s.kind == KIND_ERASE || grazed.contains(s)) continue;
+            if (s.nearAny(nx, ny, nr)) {
+                grazed.add(s);
+                newGraze = true;
+            }
+        }
+        if (newGraze) rebuildActive();
     }
 
     private void addPoint(float x, float y, float rawPressure, long tMs) {
@@ -696,6 +773,28 @@ public class GlassPadView extends View {
     }
 
     private void finishDraw() {
+        if (strokeErasing) {
+            strokeErasing = false;
+            if (!grazed.isEmpty()) {
+                List<Stroke> list = pg(curPage).strokes;
+                int m = grazed.size();
+                int[] idxs = new int[m];
+                Stroke[] removed = new Stroke[m];
+                int k = 0;
+                for (int i = 0; i < list.size(); i++)
+                    if (grazed.contains(list.get(i))) { idxs[k] = i; removed[k] = list.get(i); k++; }
+                list.removeAll(grazed);
+                grazed.clear();
+                Op o = new Op();
+                o.type = Op.STROKE_ERASE;
+                o.page = curPage;
+                o.erasedIdx = idxs;
+                o.erased = removed;
+                pushOp(o);
+                pageChanged(curPage);
+            }
+            return;
+        }
         if (cur == null) return;
         if (wetActive) {
             renderStroke(cur, hiC, inkC);
@@ -720,6 +819,8 @@ public class GlassPadView extends View {
     private void abortStroke() {
         if (wetActive) { wet.end(); wetActive = false; }
         cur = null;
+        strokeErasing = false;
+        grazed.clear();
         if (curPage >= 0 && curPage == activePage) rebuildActive();
     }
 
@@ -902,6 +1003,15 @@ public class GlassPadView extends View {
             case Op.CLEAR:
                 if (isUndo) cb().pages.set(o.page, copyOf(o.cleared));
                 else { pg(o.page).strokes.clear(); pg(o.page).snips.clear(); }
+                break;
+            case Op.STROKE_ERASE:
+                if (isUndo) {
+                    List<Stroke> list = pg(o.page).strokes;
+                    for (int i = 0; i < o.erased.length; i++)
+                        list.add(Math.min(o.erasedIdx[i], list.size()), o.erased[i]);
+                } else {
+                    for (Stroke s : o.erased) pg(o.page).strokes.remove(s);
+                }
                 break;
         }
         to.push(o);
