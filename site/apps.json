@@ -40,6 +40,39 @@
       "source": "https://github.com/a12k-a2b/dc1-keys"
     },
     {
+      "id": "tracing-paper",
+      "name": "Tracing Paper",
+      "tagline": "Press the top button — a sheet of glass slides over whatever you're reading. Jot the thought, press again, never lose your place.",
+      "author": "Anjan",
+      "type": "apk",
+      "version": "1.0 (build 397c311)",
+      "updated": "2026-07-11",
+      "apk": {
+        "file": "apps/tracing-paper/tracing-paper.apk",
+        "size": "37 KB",
+        "package": "club.daylightcomputer.tracingpaper"
+      },
+      "description": "The club's own take on the transparent notepad — a from-scratch, readable-source homage to Matt Thompson's Glassnote (if you can, go support the real one). The DC-1's orange top button lays glass over any app; write on it with the pen (pressure and the eraser end both work), flip through pages, and it all autosaves. Hold the top button to snap a picture of your notes over the page. FROST cycles clear glass → frosted → paper; PEEK lets you scroll the page underneath while your ink stays put; PDF exports every page as crisp vector ink to Download. Optional: volume-down flips the backlight while the pad is open (off by default so it won't fight Daylight Keys). If a SolOS update ever remaps the buttons, the app can re-learn them with one press. Notes never leave the tablet.",
+      "permissions": [
+        "watch the hardware buttons and draw the pad over other apps (its accessibility service)",
+        "take a screen picture — only when you press SNAP or hold the top button",
+        "change system settings (like brightness) — only if you turn on the backlight flip"
+      ],
+      "inspected": [
+        "signed with the club key",
+        "permissions read straight from the app file",
+        "built from open source you can read"
+      ],
+      "afterInstall": [
+        "Open Tracing Paper from your home screen.",
+        "Turn on its pad service: open Settings, then Accessibility, find “Tracing Paper — glass pad”, and switch it on. (This is what lets the top button open the pad.)",
+        "Press the orange top button — glass slides over your page. Write with the pen; press the button again to put the glass away.",
+        "Hold the top button to save a picture of your notes over the page (it lands in Pictures).",
+        "If you want volume-down to flip the backlight while the pad is open, switch it on in the app and allow “Modify system settings” when asked."
+      ],
+      "source": "https://github.com/a12k-a2b/daylight-computing-club-community-hub/tree/master/apps-src/tracing-paper"
+    },
+    {
       "id": "dcc",
       "name": "The Club itself",
       "tagline": "Put this app-sharing hub on your home screen so it's always one tap away.",
