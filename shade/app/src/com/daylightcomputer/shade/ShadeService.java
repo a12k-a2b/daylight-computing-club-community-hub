@@ -55,6 +55,12 @@ public class ShadeService extends Service {
 
     @Override public void onCreate() {
         super.onCreate();
+        // crash-loop breaker: repeated deaths in a short window mean we're
+        // the problem — step aside before re-arming anything
+        if (Prefs.shouldTripSafeMode(this)) {
+            Prefs.tripSafeMode(this);
+            Log.w(TAG, "crash loop detected — safe mode: strip off, stock shade back");
+        }
         wm = getSystemService(WindowManager.class);
         NotificationChannel ch = new NotificationChannel("shade",
                 getString(R.string.fgs_channel_name), NotificationManager.IMPORTANCE_MIN);
@@ -153,6 +159,8 @@ public class ShadeService extends Service {
         }
     };
 
+    private boolean panelBuiltForNight;
+
     private void showPanel(boolean fromDrag) {
         if (panel != null) { if (!fromDrag) panel.open(true); return; }
         if (!Caps.overlay(this)) {
@@ -160,6 +168,8 @@ public class ShadeService extends Service {
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             return;
         }
+        Ui.applyTheme(this);
+        panelBuiltForNight = Ui.isNight(this);
         panel = new PanelView(this, host);
         WindowManager.LayoutParams lp = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.MATCH_PARENT,
@@ -201,6 +211,13 @@ public class ShadeService extends Service {
             panelReceiver = new BroadcastReceiver() {
                 @Override public void onReceive(Context c, Intent i) {
                     if (panel == null) return;
+                    if (Intent.ACTION_CONFIGURATION_CHANGED.equals(i.getAction())
+                            && Ui.isNight(ShadeService.this) != panelBuiltForNight) {
+                        // theme flipped (Dark pill or schedule) — rebuild in place
+                        removePanel();
+                        showPanel(false);
+                        return;
+                    }
                     if (Intent.ACTION_TIME_TICK.equals(i.getAction())) panel.refreshAll();
                     else panel.refreshTiles();
                 }

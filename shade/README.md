@@ -59,6 +59,10 @@ never brick the pull-down.
   clear all). No passthrough to the stock shade needed: the same
   notification-listener grant that powers the media card powers this.
 - **Footer** — all settings · shade setup.
+- **Two faces, one page** — the whole panel follows the system theme: day
+  is ink on paper, night is the same page inverted (paper type on ink).
+  Flip the Dark pill (or let a schedule flip it) and the open panel
+  rebuilds itself to match on the spot.
 
 `shade setup` (the app's launcher icon opens it too) is the control room: it
 shows every capability as a plain sentence with a tap-to-grant button, and
@@ -204,6 +208,32 @@ dist/daylight-shade.apk            built + club-signed, ready to sideload
   Broadcast receivers exist only while the panel is on screen.
 - The panel builds its views when it opens and lets them go when it closes;
   no bitmaps, no images, everything is drawn with six Paint calls.
+
+## When things go wrong (the failure story)
+
+Designed so the worst case is always "the stock shade comes back," never a
+broken tablet:
+
+- **If the app crashes**, three independent layers restore normality:
+  the OS removes a dead process's windows and drops its "silence the stock
+  shade" flag automatically; our own crash handler *also* hands the shade
+  back explicitly before dying; and the service auto-restarts a moment
+  later. The user sees, at worst, the stock shade for a few seconds.
+- **If it crashes repeatedly** (3 times in 15 minutes), a crash-loop
+  breaker trips: the catch strip and takeover switch themselves off, the
+  stock shade stays in charge, and `shade setup` shows a plain-language
+  note about what happened. No crash loop can hold the pull-down hostage.
+- **If the panel ever freezes**, the launcher icon (`shade setup`) is an
+  ordinary activity that does not depend on the service — it always opens,
+  and every switch to stand down is in there.
+- **Offline / airplane mode is a non-event**: the APK does not even declare
+  the INTERNET permission, so it provably makes zero network calls.
+  Everything — sliders, pills, media, notifications, pickers — is local.
+- **Uninstalling reverts everything.** We never modify system files; every
+  change we make is an ordinary setting the OS owns.
+- **Boot is safe**: the boot receiver starts one dormant service and only
+  when a gesture surface is actually enabled; there is nothing that can
+  loop or block startup.
 
 ## Honesty box (current status)
 

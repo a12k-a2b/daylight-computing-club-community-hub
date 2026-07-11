@@ -28,4 +28,37 @@ public final class Prefs {
      *  hand-off to the system surfaces. */
     public static boolean pickers(Context c) { return p(c).getBoolean("pickers", true); }
     public static void setPickers(Context c, boolean b) { p(c).edit().putBoolean("pickers", b).apply(); }
+
+    // ---- crash bookkeeping (the crash-loop breaker) ----
+    private static final long CRASH_WINDOW_MS = 15 * 60_000L;
+    private static final int CRASH_LIMIT = 3;
+
+    /** Called from the uncaught-exception handler — commit(), not apply():
+     *  the process is about to die and this write must land. */
+    public static void noteCrash(Context c) {
+        SharedPreferences sp = p(c);
+        long now = System.currentTimeMillis();
+        long first = sp.getLong("crash_first", 0);
+        int n = sp.getInt("crash_count", 0);
+        if (now - first > CRASH_WINDOW_MS) { first = now; n = 0; }
+        sp.edit().putLong("crash_first", first).putInt("crash_count", n + 1).commit();
+    }
+
+    public static boolean shouldTripSafeMode(Context c) {
+        SharedPreferences sp = p(c);
+        return sp.getInt("crash_count", 0) >= CRASH_LIMIT
+                && System.currentTimeMillis() - sp.getLong("crash_first", 0) <= CRASH_WINDOW_MS;
+    }
+
+    /** Step aside: gesture surfaces off, stock shade back, tell the user. */
+    public static void tripSafeMode(Context c) {
+        p(c).edit().putString("strip_mode", STRIP_OFF)
+                .putBoolean("take_over", false)
+                .putBoolean("safe_tripped", true)
+                .putInt("crash_count", 0)
+                .apply();
+    }
+
+    public static boolean safeTripped(Context c) { return p(c).getBoolean("safe_tripped", false); }
+    public static void clearSafeTripped(Context c) { p(c).edit().putBoolean("safe_tripped", false).apply(); }
 }
