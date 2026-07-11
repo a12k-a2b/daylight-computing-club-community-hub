@@ -57,3 +57,7 @@
 Contrast rules of thumb on this panel: body text = ink on paper only;
 `#555` on `#fff` is fine for secondary; `#999` is decoration, not reading;
 anything on `#ccc` fills must be `#000`.
+
+For Sol:OS-native dishes, the design system's calibrated scale supersedes
+this ramp (primary ink `#1A1A1A`, secondary `#535353`, tertiary `#858585`,
+disabled `#CCCCCC`, surfaces `#F7F7F7`/`#F5F5F5`) — see design-system.md.

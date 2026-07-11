@@ -71,6 +71,21 @@ grays that pass on a monitor legitimately fail there. Then squint at
 `dc1-day.png` and `dc1-night.png`: can you spot the selected item, the
 primary action, the error, without reading?
 
+## The house precedent — and a physics limit
+
+The design system itself hand-calibrated its brand hues for the panel
+(see design-system.md): Morning Yellow → `#CECECE`, Hardware Amber →
+`#9D9D9E`, Sunset Orange → `#6C6C6D` — three warm hues of similar
+luminance, deliberately spread ~50 gray levels apart. That's the quality
+bar for any mapping this skill produces; where a hand-calibrated value
+exists, it wins over the tool.
+
+Know the wall you can hit: **several same-lightness saturated hues that
+all carry white text cannot be spread far in gray** — readable white text
+pins them all to the mid range (we measured this porting a five-hue kids'
+palette). No algorithm beats that physics; the answer is a second channel
+(patterns, icons, inversion), exactly like black-and-white film solved it.
+
 ## Worked example — a typical vibe-coded palette
 
 | Original | Role | DC-1 translation |

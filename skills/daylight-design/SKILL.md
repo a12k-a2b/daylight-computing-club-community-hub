@@ -17,9 +17,13 @@ medium, not applying club branding. Keep the app's typographic personality,
 its layout rhythm, its voice, its playfulness or austerity. If it was warm,
 it stays warm in grayscale. Every choice below bends to this.
 
-**Rule one — check `references/design-system.md` first.** If it contains a
-real design system (not the placeholder), its tokens and rules override the
-defaults below.
+**Rule one — read `references/design-system.md` first.** It distills
+Anjan's real Daylight/Sol:OS design system (gray scale, four theme modes,
+type, voice — the full system lives in his claude.ai/design project) and
+**overrides the generic defaults below** wherever they differ. Headlines:
+primary ink is `#1A1A1A`, secondary `#535353`; night is a dark *theme*
+(black ground, amber accents), not a filter; calibrated soft shadows are
+allowed in Day mode; sentence case, no emoji in UI.
 
 Screen facts that justify everything here: [references/screen.md](references/screen.md).
 
@@ -108,9 +112,11 @@ a crammed desktop layout is untappable. The DC-1's CSS viewport is roughly
   surfaces renders beautifully at 190 PPI on paper (if the app's personality
   allows); body ≥18px; weights ≥400 (hairline fonts vanish); use size/weight
   contrast where the app used color contrast.
-- Night is amber: after dark the backlight tints everything warm and drops
-  contrast further. Check `dc1-night.png`; anything that survives on subtle
-  grays by day dies at night.
+- Night is a *theme*, not a filter: Sol:OS flips to black ground, white
+  text, amber accents after dark (see design-system.md). Support
+  `prefers-color-scheme: dark` mapped to those tokens when you can; and
+  check `dc1-night.png` for how the light theme survives for users who
+  stay in Day mode after sunset.
 - Respect attention: this device is bought by people escaping noise.
   Batch/digest any notifications, no badges shouting counts, no upsell
   toasts. Quiet by default.
