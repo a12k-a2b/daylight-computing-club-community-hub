@@ -92,6 +92,11 @@ Promise.all([
       catalog.appendChild(b);
     });
 
+    // the club's own two apps are furniture, not dishes — they get their
+    // own side-by-side section at the bottom (see buildFixtureCard)
+    const fixtures = data.apps.filter(a => a.fixture);
+    data.apps = data.apps.filter(a => !a.fixture);
+
     // unopened gifts first, then dishes with your name, then the rest
     if (FRIEND) {
       const forMe = a => (a.for || []).includes(FRIEND);
@@ -125,6 +130,25 @@ Promise.all([
       }
     } else {
       data.apps.forEach(app => catalog.appendChild(buildCard(app)));
+    }
+
+    // ---- the clubhouse, to go: the club's own two apps, side by side ----
+    if (fixtures.length) {
+      const h = document.createElement('h2');
+      h.className = 'shelf-heading';
+      h.textContent = 'The clubhouse, to go';
+      catalog.appendChild(h);
+      const why = document.createElement('p');
+      why.className = 'meta';
+      why.style.margin = '0 0 14px';
+      why.textContent = 'Not dishes — the club itself, in two halves. The website is the shelf; ' +
+        'the Companion is the butler who watches it for you. Pin the shelf first; ' +
+        'add the butler when you want the club to come to you.';
+      catalog.appendChild(why);
+      const row = document.createElement('div');
+      row.style.cssText = 'display:flex; gap:16px; flex-wrap:wrap; align-items:stretch';
+      fixtures.forEach(f => row.appendChild(buildFixtureCard(f)));
+      catalog.appendChild(row);
     }
   })
   .catch(() => {
@@ -204,6 +228,26 @@ function buildGiftCard(app) {
     setTimeout(finish, 700); // fallback if animations are unavailable
     lid.classList.add('lid-lifting');
   });
+  return card;
+}
+
+// The club's own apps, shown as furniture: compact, side by side, each
+// explaining its role — so nobody mistakes the clubhouse for a casserole.
+function buildFixtureCard(f) {
+  const role = f.id === 'dcc-companion'
+    ? { tag: '② THE BUTLER', line: 'A small Android app that watches the shelf: a quiet note when a friend brings a dish, one-tap installs, and it spots when apps fight.' }
+    : { tag: '① THE SHELF', line: 'This website, pinned to your home screen — the dishes, the guided installs, the guestbook, the wishes.' };
+  const card = document.createElement('section');
+  card.className = 'card';
+  card.style.cssText = 'flex:1; min-width:260px; margin-bottom:0; display:flex; flex-direction:column';
+  card.innerHTML =
+    '<span class="badge">' + role.tag + '</span>' +
+    '<h2 style="font-size:22px"></h2>' +
+    '<p class="tagline" style="font-size:17px; flex:1">' + esc(role.line) + '</p>' +
+    '<a class="btn secondary" style="min-height:48px; font-size:18px; padding:10px 12px" ' +
+      'href="install.html?app=' + encodeURIComponent(f.id) + '">' +
+      (f.type === 'apk' ? 'Install the butler →' : 'Pin the shelf →') + '</a>';
+  card.querySelector('h2').textContent = f.name;
   return card;
 }
 

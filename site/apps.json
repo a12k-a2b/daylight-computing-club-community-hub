@@ -17,8 +17,14 @@
         "size": "775 KB",
         "package": "com.anjan.dc1keys"
       },
-      "for": ["melissa"],
-      "uses": ["volume-keys", "accessibility", "modify-system-settings"],
+      "for": [
+        "melissa"
+      ],
+      "uses": [
+        "volume-keys",
+        "accessibility",
+        "modify-system-settings"
+      ],
       "description": "Press Vol Up + Vol Down together to toggle the volume keys between controlling volume and screen brightness — with fine single-unit steps at the dim end for nighttime reading, and a tap-the-sun backlight-off. Long-press the quick action button for a drag-a-rectangle screenshot snip. A folded dog-ear corner in the top-left reveals the time, your pomodoro, and your next event as you pull it.",
       "permissions": [
         "change system settings (like brightness)",
@@ -52,7 +58,8 @@
       "url": "./",
       "description": "The Daylight Computer Club is itself a web app. Add it to your home screen and it opens full-screen like a native app — new apps from friends show up here as they're shared.",
       "afterInstall": [],
-      "source": "https://github.com/a12k-a2b/daylight-computing-club-community-hub"
+      "source": "https://github.com/a12k-a2b/daylight-computing-club-community-hub",
+      "fixture": true
     },
     {
       "id": "dcc-companion",
@@ -67,7 +74,9 @@
         "size": "25 KB",
         "package": "club.daylightcomputer.companion"
       },
-      "uses": ["installs-apps"],
+      "uses": [
+        "installs-apps"
+      ],
       "description": "The club's own dish. A few times a day it looks at the shelf: a friend brought a dish → a quiet note; a dish got better → an update note; a dish was pulled → a recall note with what to do. Installing becomes one tap — the Companion fetches the dish and hands it to Android's installer (Android still asks you to confirm; nothing ever installs silently). Its inspector-at-home explains in plain words when two apps might fight over your keys or draw over each other, with a button to the exact Settings page. And if a dish misbehaves, one tap builds a report you can text to whoever made it — written so their Claude can read it and fix the dish. Everything it sees stays on your tablet.",
       "permissions": [
         "talk to the internet",
@@ -86,7 +95,8 @@
         "Allow notifications when it asks — that's how it tells you a friend brought a dish.",
         "The first time you use a one-tap install, Android asks once to let Club Companion install apps: flip the switch and come back. Every install after that is one tap plus Android's confirm."
       ],
-      "source": "https://github.com/a12k-a2b/dcc-companion"
+      "source": "https://github.com/a12k-a2b/dcc-companion",
+      "fixture": true
     }
   ]
 }

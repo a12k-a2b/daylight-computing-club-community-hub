@@ -133,7 +133,11 @@ catalog. A new entry whose `for` includes this tablet's seat →
 notification "「author」 brought you a gift ☀", deep-link to the club (or
 straight to one-tap install). `recalled.json` entries → recall
 notification. No new endpoints — apps.json and recalled.json are the
-whole protocol.
+whole protocol. **And the Companion is the one-stop club app** (Anjan,
+2026-07-11): its home tab IS the shelf — a WebView of
+daylightcomputer.club carrying the tablet's seat — with the
+butler/inspector screens alongside. One icon on the Daylight, the whole
+club inside.
 
 ## The caretaker — pathways rot; someone sweeps weekly
 
