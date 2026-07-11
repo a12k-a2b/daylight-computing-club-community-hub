@@ -60,6 +60,28 @@ stays Gradle-free:
   path since erasing has to reveal what's underneath. If the surface isn't
   available the pad silently falls back to the plain path.
 
+## Not losing your notes
+
+Saves are debounced but never more than 5 seconds behind your pen, written
+with fsync then an atomic swap, and the previous generation is kept as
+`.bak`. A corrupt file is quarantined (never silently replaced by a fresh
+pad) and the backup generation loads instead. Once a day, when the pad is
+put away, the whole library — snips embedded — is backed up to
+`Download/Tracing Paper/Backups` (last seven kept), with BACK UP NOW and
+RESTORE in the app. Restore appends, never overwrites, and also reads
+Glassnote `.gn_2.json` backups (its tall scroll is sliced into pages).
+`.github/workflows/chaos.yml` is the standing stress test: a seeded giant
+library plus tens of thousands of random events on an emulator, then an
+integrity check on the notes file.
+
+## Annotate the World (beta)
+
+Two switches in the app, both off by default: **Flick-through** replays
+finger flicks and taps beneath the glass (the service performs the gesture
+while the pad goes untouchable for that instant), so you can page a book
+and keep the pen inked; **Follow the world** scrolls the roll in step with
+scroll amounts the app beneath reports. Neither reads screen content.
+
 ## How the buttons are heard
 
 An `AccessibilityService` with `flagRequestFilterKeyEvents` sees hardware

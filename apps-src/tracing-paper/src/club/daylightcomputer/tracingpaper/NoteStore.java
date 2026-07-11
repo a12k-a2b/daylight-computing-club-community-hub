@@ -2,6 +2,7 @@ package club.daylightcomputer.tracingpaper;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -36,12 +37,40 @@ class NoteStore {
     private static final ExecutorService IO = Executors.newSingleThreadExecutor();
     private final File file;
     private final File tmp;
+    private final File bak;
     private final Context ctx;
+
+    /** Decoded snips, size-capped so a page of clippings can't bloat memory. */
+    private static final android.util.LruCache<String, android.graphics.Bitmap> SNIPS =
+            new android.util.LruCache<String, android.graphics.Bitmap>(48 * 1024 * 1024) {
+                @Override protected int sizeOf(String k, android.graphics.Bitmap b) {
+                    return b.getByteCount();
+                }
+            };
 
     NoteStore(Context c) {
         ctx = c.getApplicationContext();
         file = new File(c.getFilesDir(), "notes.json");
         tmp = new File(c.getFilesDir(), "notes.json.tmp");
+        bak = new File(c.getFilesDir(), "notes.json.bak");
+    }
+
+    /** Bounds-checked, downsampled, cached snip decode. */
+    static android.graphics.Bitmap snipBitmap(Context c, String name) {
+        android.graphics.Bitmap b = SNIPS.get(name);
+        if (b != null) return b;
+        File f = snipFile(c, name);
+        if (!f.exists()) return null;
+        BitmapFactory.Options o = new BitmapFactory.Options();
+        o.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(f.getPath(), o);
+        int sample = 1;
+        while (o.outWidth / sample > 2048 || o.outHeight / sample > 2048) sample *= 2;
+        o.inJustDecodeBounds = false;
+        o.inSampleSize = sample;
+        b = BitmapFactory.decodeFile(f.getPath(), o);
+        if (b != null) SNIPS.put(name, b);
+        return b;
     }
 
     static File snipDir(Context c) {
@@ -65,11 +94,52 @@ class NoteStore {
     }
 
     Loaded load() {
+        // Never let a corrupt file quietly become a fresh empty pad: quarantine
+        // it, fall back to the previous save, and only then start blank.
+        Loaded out = tryLoad(file);
+        if (out == null) {
+            if (file.exists()) {
+                file.renameTo(new File(file.getParent(),
+                        "notes.json.corrupt-" + System.currentTimeMillis()));
+            }
+            out = tryLoad(bak);
+        }
+        if (out == null) out = new Loaded();
+        if (out.books.isEmpty()) {
+            GlassPadView.Book b = new GlassPadView.Book();
+            b.name = "Notes";
+            b.template = GlassPadView.TPL_BLANK;
+            b.createdTime = b.lastModified = System.currentTimeMillis();
+            b.pages.add(new GlassPadView.PageData());
+            out.books.add(b);
+            out.cur = 0;
+        }
+        sweepOrphanSnips(out);
+        return out;
+    }
+
+    /** Old snip files nothing references any more; age-gated so undo stays safe. */
+    private void sweepOrphanSnips(Loaded loaded) {
+        try {
+            java.util.HashSet<String> live = new java.util.HashSet<>();
+            for (GlassPadView.Book b : loaded.books)
+                for (GlassPadView.PageData p : b.pages)
+                    for (GlassPadView.Snip s : p.snips) live.add(s.file);
+            long cutoff = System.currentTimeMillis() - 7L * 24 * 3600 * 1000;
+            File[] all = snipDir(ctx).listFiles();
+            if (all == null) return;
+            for (File f : all)
+                if (!live.contains(f.getName()) && f.lastModified() < cutoff) f.delete();
+        } catch (Exception ignored) {
+        }
+    }
+
+    private Loaded tryLoad(File src) {
         Loaded out = new Loaded();
         try {
-            if (file.exists()) {
-                byte[] buf = new byte[(int) file.length()];
-                try (FileInputStream in = new FileInputStream(file)) {
+            if (src.exists()) {
+                byte[] buf = new byte[(int) src.length()];
+                try (FileInputStream in = new FileInputStream(src)) {
                     int off = 0, r;
                     while (off < buf.length && (r = in.read(buf, off, buf.length - off)) > 0) off += r;
                 }
@@ -104,17 +174,8 @@ class NoteStore {
                     out.books.add(b);
                 }
             }
-        } catch (Exception ignored) {
-            // A corrupt file just means a fresh pad; it is overwritten on next save.
-            out.books.clear();
-        }
-        if (out.books.isEmpty()) {
-            GlassPadView.Book b = new GlassPadView.Book();
-            b.name = "Notes";
-            b.template = GlassPadView.TPL_BLANK;
-            b.pages.add(new GlassPadView.PageData());
-            out.books.add(b);
-            out.cur = 0;
+        } catch (Exception broken) {
+            return null; // caller quarantines and falls back to the previous save
         }
         return out;
     }
@@ -202,8 +263,15 @@ class NoteStore {
                 root.put("v", 2);
                 root.put("cur", cur);
                 root.put("books", bs);
+                // fsync before the atomic swap, and keep the previous save as .bak —
+                // a crash at any instant leaves at least one intact generation
                 try (FileOutputStream out = new FileOutputStream(tmp)) {
                     out.write(root.toString().getBytes(StandardCharsets.UTF_8));
+                    out.getFD().sync();
+                }
+                if (file.exists()) {
+                    bak.delete();
+                    file.renameTo(bak);
                 }
                 if (!tmp.renameTo(file)) {
                     tmp.delete();

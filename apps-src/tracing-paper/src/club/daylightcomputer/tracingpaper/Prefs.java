@@ -19,6 +19,9 @@ final class Prefs {
     static final String K_ERASE_SIZE = "erase_size";
     static final String K_ERASE_PIXEL = "erase_pixel";
     static final String K_HINTS = "hints_shown";
+    static final String K_LAST_BACKUP = "last_backup";
+    static final String K_BETA_FLICK = "beta_world_flick";
+    static final String K_BETA_FOLLOW = "beta_world_follow";
 
     /**
      * Eight parts paper, two parts world: enough opacity that the pad is a

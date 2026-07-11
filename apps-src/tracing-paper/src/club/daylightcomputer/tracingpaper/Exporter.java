@@ -108,8 +108,7 @@ final class Exporter {
                     GlassPadView.drawTemplate(cv, book.template, cw, ch, tplPaint, true);
 
                     for (GlassPadView.Snip s : pd.snips) {
-                        Bitmap bm = s.bmp != null ? s.bmp : BitmapFactory.decodeFile(
-                                NoteStore.snipFile(c, s.file).getPath());
+                        Bitmap bm = NoteStore.snipBitmap(c, s.file);
                         if (bm == null) continue;
                         RectF r = new RectF(s.x * cw, s.y * ch,
                                 (s.x + s.w) * cw, (s.y + s.h) * ch);

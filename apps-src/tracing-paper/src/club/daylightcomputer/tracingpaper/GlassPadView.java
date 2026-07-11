@@ -101,7 +101,6 @@ public class GlassPadView extends View {
         String file;
         float x, y, w, h;        // normalized within its page
         float r;                 // degrees about the center
-        Bitmap bmp;              // decoded lazily, not serialized
     }
 
     static class PageData {
@@ -131,6 +130,12 @@ public class GlassPadView extends View {
     }
 
     interface StateListener { void onPadStateChanged(); }
+
+    /** "Annotate the World" beta: finger gestures handed to the service to replay beneath. */
+    interface WorldGestures {
+        void flick(float[] xs, float[] ys, long[] ts, int n);
+        void tap(float x, float y);
+    }
 
     private final NoteStore store;
     private final List<Book> books;
@@ -183,8 +188,27 @@ public class GlassPadView extends View {
 
     // gesture state
     private static final int M_NONE = 0, M_DRAW = 1, M_SCROLL = 2,
-            M_MOVE = 3, M_RESIZE = 4, M_ROTATE = 5;
+            M_MOVE = 3, M_RESIZE = 4, M_ROTATE = 5, M_WORLD = 6;
     private int mode = M_NONE;
+
+    // "Annotate the World" beta
+    private boolean betaFlick;
+    private WorldGestures worldGestures;
+    private float[] wx = new float[128], wy = new float[128];
+    private long[] wt = new long[128];
+    private int wn;
+
+    void setBetaFlick(boolean v) { betaFlick = v; }
+    void setWorldGestures(WorldGestures g) { worldGestures = g; }
+
+    /** Beta: the app beneath scrolled this many pixels — keep the roll in step. */
+    void followWorld(int dy) {
+        scroller.abortAnimation();
+        scrollY += dy;
+        clampScroll();
+        invalidate();
+        notifyState();
+    }
     private float grabX, grabY, grabScroll;
     private float grabSnipX, grabSnipY, grabSnipW, grabSnipH, grabSnipR;
     private float editStartX, editStartY, editStartW, editStartH, editStartR;
@@ -244,8 +268,16 @@ public class GlassPadView extends View {
 
     private void notifyState() { if (listener != null) listener.onPadStateChanged(); }
 
+    private long lastPersist;
+
     private void markChanged() {
-        cb().lastModified = System.currentTimeMillis();
+        long now = System.currentTimeMillis();
+        cb().lastModified = now;
+        // debounced save, but never let the disk lag a writing session by >5s
+        if (now - lastPersist > 5000) {
+            flushSave();
+            return;
+        }
         saver.removeCallbacks(saveNow);
         saver.postDelayed(saveNow, 800);
     }
@@ -370,15 +402,14 @@ public class GlassPadView extends View {
     }
 
     private void drawSnip(Canvas cv, Snip s, float topOffset) {
-        if (s.bmp == null) s.bmp = BitmapFactory.decodeFile(
-                NoteStore.snipFile(getContext(), s.file).getPath());
-        if (s.bmp == null) return;
+        Bitmap bmp = NoteStore.snipBitmap(getContext(), s.file);
+        if (bmp == null) return;
         int w = getWidth(), h = pageH();
         RectF r = new RectF(s.x * w, topOffset + s.y * h,
                 (s.x + s.w) * w, topOffset + (s.y + s.h) * h);
         cv.save();
         if (s.r != 0) cv.rotate(s.r, r.centerX(), r.centerY());
-        cv.drawBitmap(s.bmp, null, r, null);
+        cv.drawBitmap(bmp, null, r, null);
         cv.restore();
     }
 
@@ -561,9 +592,8 @@ public class GlassPadView extends View {
     }
 
     private void drawSnipInto(Canvas cv, RectF r) {
-        if (sel.bmp == null) sel.bmp = BitmapFactory.decodeFile(
-                NoteStore.snipFile(getContext(), sel.file).getPath());
-        if (sel.bmp != null) cv.drawBitmap(sel.bmp, null, r, null);
+        Bitmap bmp = NoteStore.snipBitmap(getContext(), sel.file);
+        if (bmp != null) cv.drawBitmap(bmp, null, r, null);
     }
 
     /** Point mapped into the selection's un-rotated frame. */
@@ -651,14 +681,24 @@ public class GlassPadView extends View {
                     beginScroll(e);
                     return true;
                 }
+                if (finger && betaFlick && worldGestures != null) {
+                    // beta: record the finger; on lift it replays beneath the glass
+                    mode = M_WORLD;
+                    wn = 0;
+                    worldPoint(e.getX(), e.getY(), e.getEventTime());
+                    return true;
+                }
                 if (finger && penOnly) { beginScroll(e); return true; }
                 beginDraw(e);
                 return true;
             }
             case MotionEvent.ACTION_POINTER_DOWN:
-                // second finger: this gesture is a scroll, not a stroke
+                // second finger: this gesture is a scroll of the roll, not a stroke
                 if (mode == M_DRAW && cur != null && finger) {
                     abortStroke();
+                    beginScroll(e);
+                } else if (mode == M_WORLD) {
+                    mode = M_SCROLL;
                     beginScroll(e);
                 }
                 return true;
@@ -666,6 +706,12 @@ public class GlassPadView extends View {
                 switch (mode) {
                     case M_DRAW: moveDraw(e); break;
                     case M_SCROLL: moveScroll(e); break;
+                    case M_WORLD:
+                        for (int i = 0; i < e.getHistorySize(); i++)
+                            worldPoint(e.getHistoricalX(i), e.getHistoricalY(i),
+                                    e.getHistoricalEventTime(i));
+                        worldPoint(e.getX(), e.getY(), e.getEventTime());
+                        break;
                     case M_MOVE: case M_RESIZE: case M_ROTATE: moveSnipEdit(e); break;
                 }
                 return true;
@@ -673,6 +719,7 @@ public class GlassPadView extends View {
                 switch (mode) {
                     case M_DRAW: finishDraw(); break;
                     case M_SCROLL: finishScroll(e); break;
+                    case M_WORLD: finishWorld(e); break;
                     case M_MOVE: case M_RESIZE: case M_ROTATE: finishSnipEdit(); break;
                 }
                 mode = M_NONE;
@@ -684,6 +731,32 @@ public class GlassPadView extends View {
                 return true;
         }
         return true;
+    }
+
+    // --- "Annotate the World" recording
+
+    private void worldPoint(float x, float y, long t) {
+        if (wn == wx.length) {
+            wx = java.util.Arrays.copyOf(wx, wn * 2);
+            wy = java.util.Arrays.copyOf(wy, wn * 2);
+            wt = java.util.Arrays.copyOf(wt, wn * 2);
+        }
+        wx[wn] = x; wy[wn] = y; wt[wn] = t;
+        wn++;
+    }
+
+    private void finishWorld(MotionEvent e) {
+        worldPoint(e.getX(), e.getY(), e.getEventTime());
+        if (worldGestures == null || wn == 0) return;
+        float dist = (float) Math.hypot(wx[wn - 1] - wx[0], wy[wn - 1] - wy[0]);
+        long dur = wt[wn - 1] - wt[0];
+        if (dist < 24 * density && dur < 350) {
+            worldGestures.tap(wx[0], wy[0]);
+        } else {
+            worldGestures.flick(java.util.Arrays.copyOf(wx, wn),
+                    java.util.Arrays.copyOf(wy, wn), java.util.Arrays.copyOf(wt, wn), wn);
+        }
+        wn = 0;
     }
 
     // --- drawing
@@ -738,6 +811,8 @@ public class GlassPadView extends View {
         if (wetActive) wet.present();
     }
 
+    private long lastGrazeRebuild;
+
     private void grazeAt(float sx, float sy) {
         float top = pageTop(curPage) - scrollY;
         int w = Math.max(1, getWidth()), h = pageH();
@@ -752,8 +827,23 @@ public class GlassPadView extends View {
                 newGraze = true;
             }
         }
-        if (newGraze) rebuildActive();
+        if (newGraze) {
+            // throttled: dense pages shouldn't re-render per digitizer event
+            long now = android.os.SystemClock.uptimeMillis();
+            if (now - lastGrazeRebuild > 50) {
+                lastGrazeRebuild = now;
+                rebuildActive();
+            } else {
+                saver.removeCallbacks(grazeRebuild);
+                saver.postDelayed(grazeRebuild, 50);
+            }
+        }
     }
+
+    private final Runnable grazeRebuild = () -> {
+        lastGrazeRebuild = android.os.SystemClock.uptimeMillis();
+        rebuildActive();
+    };
 
     private void addPoint(float x, float y, float rawPressure, long tMs) {
         float pr = Math.max(0.15f, Math.min(rawPressure, 1.3f));
@@ -1194,6 +1284,7 @@ public class GlassPadView extends View {
     }
 
     void flushSave() {
+        lastPersist = System.currentTimeMillis();
         saver.removeCallbacks(saveNow);
         store.saveAsync(snapshotBooks(), book);
         Prefs.get(getContext()).edit().putInt(Prefs.K_LAST_PAGE, dominantPage()).apply();

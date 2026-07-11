@@ -129,7 +129,19 @@ public class PadService extends AccessibilityService {
         super.onDestroy();
     }
 
-    @Override public void onAccessibilityEvent(AccessibilityEvent event) {}
+    @Override
+    public void onAccessibilityEvent(AccessibilityEvent event) {
+        // "Annotate the World" beta: keep the roll in step with the app beneath.
+        // Only the scroll *amount* is used; window content is never read.
+        if (event.getEventType() != AccessibilityEvent.TYPE_VIEW_SCROLLED) return;
+        if (!shown || peeking || snipMode || pad == null) return;
+        if (!prefs.getBoolean(Prefs.K_BETA_FOLLOW, false)) return;
+        CharSequence from = event.getPackageName();
+        if (from == null || getPackageName().contentEquals(from)) return;
+        final int dy = Build.VERSION.SDK_INT >= 28 ? event.getScrollDeltaY() : 0;
+        if (dy != 0) handler.post(() -> { if (shown && pad != null) pad.followWorld(dy); });
+    }
+
     @Override public void onInterrupt() {}
 
     // ----------------------------------------------------------------- keys
@@ -199,6 +211,7 @@ public class PadService extends AccessibilityService {
         if (shown) return;
         if (root == null) buildUi();
         pad.setPenOnly(prefs.getBoolean(Prefs.K_PEN_ONLY, false));
+        pad.setBetaFlick(prefs.getBoolean(Prefs.K_BETA_FLICK, false));
         rootLp.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                 | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
                 | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
@@ -256,8 +269,37 @@ public class PadService extends AccessibilityService {
         if (hintCard != null) { root.removeView(hintCard); hintCard = null; }
         if (peeking) exitPeek();
         pad.flushSave();
+        maybeAutoBackup();
         try { wm.removeView(root); } catch (Exception ignored) {}
         shown = false;
+    }
+
+    /** Once a day, on pad close: the whole library into Download, quietly. */
+    private void maybeAutoBackup() {
+        long last = prefs.getLong(Prefs.K_LAST_BACKUP, 0);
+        if (System.currentTimeMillis() - last < 24L * 3600 * 1000) return;
+        final List<GlassPadView.Book> snap = pad.snapshotBooks();
+        new Thread(() -> {
+            try {
+                Backup.writeBackup(this, snap);
+                prefs.edit().putLong(Prefs.K_LAST_BACKUP, System.currentTimeMillis()).apply();
+                toast("Notebooks backed up to Download/Tracing Paper/Backups");
+            } catch (Exception ignored) {
+                // never let a failed backup interrupt putting the glass away
+            }
+        }).start();
+    }
+
+    /** After a restore wrote new notebooks to disk, drop the cached pad so the next open reloads. */
+    static void dropPadIfHidden() {
+        PadService s = instance;
+        if (s == null) return;
+        s.handler.post(() -> {
+            if (!s.shown) {
+                s.root = null;
+                s.pad = null;
+            }
+        });
     }
 
     private void removeEverything() {
@@ -370,6 +412,58 @@ public class PadService extends AccessibilityService {
                         toast("Snip failed (" + code + ")");
                     }
                 }), 180);
+    }
+
+    // -------------------------------------------- "Annotate the World" (beta)
+
+    /**
+     * Replay a recorded finger gesture beneath the glass. The pad window goes
+     * untouchable for the moment of the replay so the injected touches reach
+     * the app below instead of bouncing off our own glass.
+     */
+    private void replayFlick(float[] xs, float[] ys, long[] ts, int n) {
+        if (!shown || peeking || snipMode || n < 2) return;
+        android.graphics.Path p = new android.graphics.Path();
+        p.moveTo(xs[0], ys[0]);
+        int step = Math.max(1, n / 20);
+        for (int i = step; i < n; i += step) p.lineTo(xs[i], ys[i]);
+        p.lineTo(xs[n - 1], ys[n - 1]);
+        long dur = Math.max(80, Math.min(ts[n - 1] - ts[0], 400));
+        inject(new android.accessibilityservice.GestureDescription.Builder()
+                .addStroke(new android.accessibilityservice.GestureDescription
+                        .StrokeDescription(p, 0, dur))
+                .build(), dur + 300);
+    }
+
+    private void replayTap(float x, float y) {
+        if (!shown || peeking || snipMode) return;
+        android.graphics.Path p = new android.graphics.Path();
+        p.moveTo(x, y);
+        inject(new android.accessibilityservice.GestureDescription.Builder()
+                .addStroke(new android.accessibilityservice.GestureDescription
+                        .StrokeDescription(p, 0, 60))
+                .build(), 360);
+    }
+
+    private void inject(android.accessibilityservice.GestureDescription g, long safetyMs) {
+        rootLp.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
+        try { wm.updateViewLayout(root, rootLp); } catch (Exception ignored) {}
+        boolean ok = dispatchGesture(g, new GestureResultCallback() {
+            @Override public void onCompleted(android.accessibilityservice.GestureDescription gd) {
+                restoreTouchable();
+            }
+            @Override public void onCancelled(android.accessibilityservice.GestureDescription gd) {
+                restoreTouchable();
+            }
+        }, handler);
+        if (!ok) restoreTouchable();
+        handler.postDelayed(this::restoreTouchable, safetyMs);
+    }
+
+    private void restoreTouchable() {
+        if (!shown || peeking) return; // peek owns the untouchable flag while it lasts
+        rootLp.flags &= ~WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
+        try { wm.updateViewLayout(root, rootLp); } catch (Exception ignored) {}
     }
 
     // ------------------------------------------------------------ screenshot
@@ -576,6 +670,14 @@ public class PadService extends AccessibilityService {
 
         wet = new WetInk(this);
         pad.setWetInk(wet);
+        pad.setWorldGestures(new GlassPadView.WorldGestures() {
+            @Override public void flick(float[] xs, float[] ys, long[] ts, int n) {
+                replayFlick(xs, ys, ts, n);
+            }
+            @Override public void tap(float x, float y) {
+                replayTap(x, y);
+            }
+        });
         root.addView(wet, new FrameLayout.LayoutParams(
                 FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT));
 

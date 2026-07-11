@@ -14,8 +14,9 @@ rm -rf build
 mkdir -p build/gen build/obj
 
 "$BT/aapt2" compile --dir res -o build/res.zip
+# CHAOS=1 builds a debuggable APK so the chaos workflow can seed app storage
 "$BT/aapt2" link -o build/app.unsigned.apk -I "$PLAT" \
-    --manifest AndroidManifest.xml --java build/gen build/res.zip
+    --manifest AndroidManifest.xml --java build/gen ${CHAOS:+--debug-mode} build/res.zip
 
 javac --release 11 -classpath "$PLAT" -d build/obj \
     $(find src build/gen -name '*.java')

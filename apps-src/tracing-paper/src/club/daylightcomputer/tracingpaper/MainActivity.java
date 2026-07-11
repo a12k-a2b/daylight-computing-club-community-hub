@@ -94,11 +94,37 @@ public class MainActivity extends Activity {
         volNote.setTextColor(0xFF333333);
         col.addView(volNote);
 
+        col.addView(sectionRule("Annotate the World — beta"));
+        TextView betaNote = text("Two experiments for writing over a live page. They're new — "
+                + "if either feels broken, switch it off and the pad is back to normal.", 15, false);
+        betaNote.setTextColor(0xFF333333);
+        col.addView(betaNote);
+        Switch flick = mkSwitch("Flick-through: finger flicks & taps pass through the glass "
+                + "to the app beneath (pen still draws; two fingers scroll your roll)",
+                prefs.getBoolean(Prefs.K_BETA_FLICK, false));
+        flick.setOnCheckedChangeListener((v, on) ->
+                prefs.edit().putBoolean(Prefs.K_BETA_FLICK, on).apply());
+        col.addView(flick);
+        Switch follow = mkSwitch("Follow the world: your roll scrolls in step with the app "
+                + "beneath (only works where apps report how far they scrolled)",
+                prefs.getBoolean(Prefs.K_BETA_FOLLOW, false));
+        follow.setOnCheckedChangeListener((v, on) ->
+                prefs.edit().putBoolean(Prefs.K_BETA_FOLLOW, on).apply());
+        col.addView(follow);
+
         col.addView(sectionRule("Your notes"));
         col.addView(bigButton("Export every page to PDF", v -> exportAll()));
         col.addView(gap());
+        col.addView(bigButton("Back up notebooks now", v -> backupNow()));
+        col.addView(gap());
+        col.addView(bigButton("Restore from a backup file", v -> pickRestore()));
+        col.addView(gap());
         TextView fine = text("Snapshots land in Pictures/Tracing Paper, PDFs in "
-                + "Download/Tracing Paper. Notes live only on this tablet.\n\n"
+                + "Download/Tracing Paper. Notes live only on this tablet — and once a day, "
+                + "when you put the pad away, everything is backed up to Download/Tracing "
+                + "Paper/Backups (the last seven are kept). Restore never overwrites: backup "
+                + "notebooks come back as additions. It reads Glassnote backups (.gn_2.json) "
+                + "too, so old notebooks can move in.\n\n"
                 + "On the glass: PEN, HILITE and ERASE to switch nibs (the pen's other end "
                 + "erases too) — tap the tool you're already holding for its size card; the "
                 + "eraser also picks STROKE (graze lines, lift to erase) or PIXEL. HILITE is "
@@ -146,6 +172,73 @@ public class MainActivity extends Activity {
         int key = prefs.getInt(Prefs.K_TOGGLE, Prefs.DEFAULT_TOGGLE);
         keyLabel.setText("The pad opens with: " + PadService.keyName(key)
                 + (key == Prefs.DEFAULT_TOGGLE ? " (the DC-1's orange top button)" : ""));
+    }
+
+    private static final int PICK_BACKUP = 41;
+
+    private void backupNow() {
+        if (PadService.isShown()) {
+            Toast.makeText(this, "Put the pad away first (press the top button), then back up",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+        Toast.makeText(this, "Backing up…", Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            try {
+                String name = Backup.writeBackup(this, new NoteStore(this).load().books);
+                prefs.edit().putLong(Prefs.K_LAST_BACKUP, System.currentTimeMillis()).apply();
+                runOnUiThread(() -> Toast.makeText(this,
+                        "Saved " + name + " in Download/Tracing Paper/Backups",
+                        Toast.LENGTH_LONG).show());
+            } catch (Exception e) {
+                runOnUiThread(() -> Toast.makeText(this, "Backup failed",
+                        Toast.LENGTH_SHORT).show());
+            }
+        }).start();
+    }
+
+    private void pickRestore() {
+        if (PadService.isShown()) {
+            Toast.makeText(this, "Put the pad away first (press the top button), then restore",
+                    Toast.LENGTH_LONG).show();
+            return;
+        }
+        Intent i = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+        i.addCategory(Intent.CATEGORY_OPENABLE);
+        i.setType("*/*");
+        i.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"application/json",
+                "application/octet-stream", "text/plain"});
+        try {
+            startActivityForResult(i, PICK_BACKUP);
+        } catch (Exception e) {
+            Toast.makeText(this, "No file picker on this tablet?", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int req, int res, Intent data) {
+        super.onActivityResult(req, res, data);
+        if (req != PICK_BACKUP || res != RESULT_OK || data == null || data.getData() == null) return;
+        final android.net.Uri uri = data.getData();
+        Toast.makeText(this, "Restoring…", Toast.LENGTH_SHORT).show();
+        new Thread(() -> {
+            try {
+                java.util.List<GlassPadView.Book> restored = Backup.read(this, uri);
+                NoteStore store = new NoteStore(this);
+                NoteStore.Loaded cur = store.load();
+                cur.books.addAll(restored); // append, never overwrite
+                store.saveAsync(cur.books, cur.cur);
+                PadService.dropPadIfHidden();
+                int pages = 0;
+                for (GlassPadView.Book b : restored) pages += b.pages.size();
+                final String msg = "Restored " + restored.size() + " notebook(s), "
+                        + pages + " page(s) — open the pad and tap the ▾ button";
+                runOnUiThread(() -> Toast.makeText(this, msg, Toast.LENGTH_LONG).show());
+            } catch (Exception e) {
+                runOnUiThread(() -> Toast.makeText(this,
+                        "Couldn't read that file as a backup", Toast.LENGTH_LONG).show());
+            }
+        }).start();
     }
 
     private void exportAll() {
