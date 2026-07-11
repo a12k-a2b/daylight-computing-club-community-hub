@@ -48,6 +48,17 @@ marked *needs blessing* lights up in the same APK the day it lands.
       progress (downloads!) as a calm percentage line. *(weekend)*
 - [ ] **Media seek bar** — a thin ink line under the transport buttons with
       elapsed/total time. *(afternoon)*
+- [ ] **Make the heart work everywhere** — today the heart shows only when
+      an app supports Android's standard rating API, and Spotify mostly
+      doesn't; most players expose like/favorite as *custom actions* on
+      their media session instead. Read `PlaybackState.getCustomActions()`
+      and render them as extra ink buttons — this is also how "seek 15s"
+      arrives for apps that publish it as a custom action (Audible).
+      *(afternoon)*
+- [ ] **Choose-your-own pills** — a "which six?" editor in shade setup
+      (candidates: battery saver, flashlight-if-exists, cast, mute,
+      screenshot). The user-facing half of "modifiable, editable,
+      iterative". *(afternoon)*
 - [ ] **Lock-screen behavior** — currently the strip simply refuses to open
       over the keyguard. Decide what a *calm* locked shade shows (clock +
       media controls only, no settings?) and build that variant.
@@ -115,6 +126,8 @@ port the winner into `PanelView.java`. Variants worth mocking:
 - the dark (ink-paper) variant
 - presets row replacing sliders
 - a denser "power user" layout vs. the current calm one
+- the Wi-Fi / Bluetooth picker pages (in the app since v0.2 but not yet in
+  the mock — add them so picker design iterates at mock speed too)
 
 ## Open questions (answers change the queue)
 
