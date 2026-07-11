@@ -241,58 +241,16 @@ class NoteStore {
     void saveAsync(List<GlassPadView.Book> snapshot, int cur) {
         IO.execute(() -> {
             try {
-                JSONArray bs = new JSONArray();
-                for (GlassPadView.Book b : snapshot) {
-                    JSONObject bo = new JSONObject();
-                    bo.put("n", b.name);
-                    bo.put("t", b.template);
-                    if (b.opacity >= 0) bo.put("o", b.opacity);
-                    bo.put("c", b.createdTime);
-                    bo.put("m", b.lastModified);
-                    JSONArray ps = new JSONArray();
-                    for (GlassPadView.PageData pd : b.pages) {
-                        JSONObject po = new JSONObject();
-                        JSONArray ss = new JSONArray();
-                        for (GlassPadView.Stroke s : pd.strokes) {
-                            JSONObject o = new JSONObject();
-                            o.put("k", s.kind);
-                            if (s.shade != 0) o.put("c", s.shade);
-                            o.put("w", round(s.base));
-                            JSONArray a = new JSONArray();
-                            for (int k = 0; k < s.n * 3; k++) a.put(round(s.pts[k]));
-                            o.put("p", a);
-                            ss.put(o);
-                        }
-                        po.put("s", ss);
-                        if (!pd.snips.isEmpty()) {
-                            JSONArray si = new JSONArray();
-                            for (GlassPadView.Snip s : pd.snips) {
-                                JSONObject so = new JSONObject();
-                                so.put("f", s.file);
-                                so.put("x", round(s.x));
-                                so.put("y", round(s.y));
-                                so.put("w", round(s.w));
-                                so.put("h", round(s.h));
-                                if (s.r != 0) so.put("r", round(s.r));
-                                si.put(so);
-                            }
-                            po.put("i", si);
-                        }
-                        ps.put(po);
-                    }
-                    bo.put("pages", ps);
-                    bs.put(bo);
-                }
-                JSONObject root = new JSONObject();
-                root.put("v", 2);
-                root.put("cur", cur);
-                root.put("books", bs);
-                // fsync before the atomic swap, and keep the previous save as .bak —
-                // a crash at any instant leaves at least one intact generation
-                try (FileOutputStream out = new FileOutputStream(tmp)) {
-                    out.write(root.toString().getBytes(StandardCharsets.UTF_8));
-                    out.getFD().sync();
-                }
+                // stream, don't build: a 30,000-stroke shelf serializes in
+                // bounded memory (the chaos monkey OOM'd the one-big-string
+                // version), fsync'd before the atomic swap as before
+                FileOutputStream fos = new FileOutputStream(tmp);
+                java.io.BufferedWriter w = new java.io.BufferedWriter(
+                        new java.io.OutputStreamWriter(fos, StandardCharsets.UTF_8), 1 << 16);
+                writeLibrary(w, null, snapshot, cur);
+                w.flush();
+                fos.getFD().sync();
+                w.close();
                 if (file.exists()) {
                     bak.delete();
                     file.renameTo(bak);
@@ -300,9 +258,93 @@ class NoteStore {
                 if (!tmp.renameTo(file)) {
                     tmp.delete();
                 }
-            } catch (Exception ignored) {
+            } catch (Throwable ignored) {
+                // a failed save must never take the pad down with it —
+                // the previous generation is still intact on disk
             }
         });
+    }
+
+    /**
+     * Streams the library as JSON.
+     * @param embed non-null embeds snip pixels base64 (portable backups);
+     *              null writes snip file references (the on-device store)
+     */
+    static void writeLibrary(java.io.Writer w, Context embed,
+            List<GlassPadView.Book> books, int cur) throws java.io.IOException {
+        w.write("{\"v\":2,");
+        if (embed != null) w.write("\"app\":\"tracing-paper\",");
+        w.write("\"cur\":");
+        w.write(Integer.toString(cur));
+        w.write(",\"books\":[");
+        for (int bi = 0; bi < books.size(); bi++) {
+            GlassPadView.Book b = books.get(bi);
+            if (bi > 0) w.write(',');
+            w.write("{\"n\":");
+            w.write(JSONObject.quote(b.name == null ? "Notes" : b.name));
+            w.write(",\"t\":");
+            w.write(Integer.toString(b.template));
+            if (b.opacity >= 0) { w.write(",\"o\":"); w.write(Integer.toString(b.opacity)); }
+            w.write(",\"c\":");
+            w.write(Long.toString(b.createdTime));
+            w.write(",\"m\":");
+            w.write(Long.toString(b.lastModified));
+            w.write(",\"pages\":[");
+            for (int pi = 0; pi < b.pages.size(); pi++) {
+                GlassPadView.PageData pd = b.pages.get(pi);
+                if (pi > 0) w.write(',');
+                w.write("{\"s\":[");
+                for (int si = 0; si < pd.strokes.size(); si++) {
+                    GlassPadView.Stroke s = pd.strokes.get(si);
+                    if (si > 0) w.write(',');
+                    w.write("{\"k\":");
+                    w.write(Integer.toString(s.kind));
+                    if (s.shade != 0) { w.write(",\"c\":"); w.write(Integer.toString(s.shade)); }
+                    w.write(",\"w\":");
+                    w.write(Double.toString(round(s.base)));
+                    w.write(",\"p\":[");
+                    for (int k = 0; k < s.n * 3; k++) {
+                        if (k > 0) w.write(',');
+                        w.write(Double.toString(round(s.pts[k])));
+                    }
+                    w.write("]}");
+                }
+                w.write(']');
+                if (!pd.snips.isEmpty()) {
+                    w.write(",\"i\":[");
+                    for (int k = 0; k < pd.snips.size(); k++) {
+                        GlassPadView.Snip s = pd.snips.get(k);
+                        if (k > 0) w.write(',');
+                        w.write("{\"x\":");
+                        w.write(Double.toString(round(s.x)));
+                        w.write(",\"y\":");
+                        w.write(Double.toString(round(s.y)));
+                        w.write(",\"w\":");
+                        w.write(Double.toString(round(s.w)));
+                        w.write(",\"h\":");
+                        w.write(Double.toString(round(s.h)));
+                        if (s.r != 0) { w.write(",\"r\":"); w.write(Double.toString(round(s.r))); }
+                        if (embed == null) {
+                            w.write(",\"f\":");
+                            w.write(JSONObject.quote(s.file));
+                        } else {
+                            byte[] raw = snipBytes(embed, s.file);
+                            if (raw != null) {
+                                w.write(",\"data\":\"");
+                                w.write(android.util.Base64.encodeToString(raw,
+                                        android.util.Base64.NO_WRAP));
+                                w.write('\"');
+                            }
+                        }
+                        w.write('}');
+                    }
+                    w.write(']');
+                }
+                w.write('}');
+            }
+            w.write("]}");
+        }
+        w.write("]}");
     }
 
     private static double round(float v) {
