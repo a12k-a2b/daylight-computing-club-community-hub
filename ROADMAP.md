@@ -237,7 +237,9 @@ the simplest thing somebody made — and makes it *belong* on the DC-1:
 
 - **Screen skill**: redesign for the 10.5″ 4:3 monochrome reflective LCD —
   pure grayscale palette, real borders instead of shadows, no gradients or
-  banding-prone dithers, high contrast in sunlight, no animation (ghosting).
+  banding-prone dithers, high contrast in sunlight, motion as living
+  paper — brief and physical, never looping (the DC-1 runs 60–120 fps;
+  paper may move, ink never glows).
 - **Input skill**: touch targets sized for fingers, stylus affordances
   (hover, pressure where available), voice input hooks.
 - **Offline skill**: service worker, local-first storage, works on a walk.

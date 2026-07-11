@@ -73,6 +73,26 @@ And always append the negatives:
 - If the image replaces an inline `<svg class="scene">` on a page, swap it
   for `<img class="scene" src="images/…" alt="…">` — the CSS already fits.
 
+## Motion — living paper (core design language, settled by Anjan)
+
+The DC-1's reflective screen runs at 60–120 fps: it is **paper that can
+move**. The mental model is Harry Potter's newspapers — *the paper moves,
+the ink never glows.* For anything on-screen (the site, wizards, apps):
+
+- Motion is welcome when it behaves like paper: a lid **lifts**, a page
+  **settles**, a card **slides**, a corner **folds**. Physical verbs only.
+- Brief and then still: one movement, ≤ ~600 ms, ease like a real object
+  (fast start, soft landing), then complete stillness. Never looping,
+  pulsing, bouncing, parallaxing, or attention-seeking.
+- No glow, no fades-as-decoration, no motion for motion's sake — movement
+  should mean something happened (opened, arrived, granted).
+- Always honor `prefers-reduced-motion`.
+- Reusable pieces live in `site/style.css` under "living paper"
+  (`lid-lift`, `paper-settle`).
+
+Static art (posters, images, PNGs) is unaffected — paper at rest is still
+the default state of paper.
+
 ## Text-heavy diagrams and posters: don't image-gen, hand-build
 
 Instructional posters (step-by-steps, the six instincts) need crisp

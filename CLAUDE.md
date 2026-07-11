@@ -97,7 +97,10 @@ anything essential is missing, ask in an issue comment.
 ## Design rules for the site itself
 
 Built for a monochrome reflective LCD: pure grayscale, high contrast, real
-2px borders instead of shadows, no gradients, no animation, ≥48px touch
+2px borders instead of shadows, no gradients, motion only as "living
+paper" — brief, physical, paper-like movement (a lid lifts, a page
+settles; think Harry Potter's newspapers), never looping or
+attention-seeking — ≥48px touch
 targets, relative URLs only (the site is served from a subpath).
 
 ## Verifying changes
