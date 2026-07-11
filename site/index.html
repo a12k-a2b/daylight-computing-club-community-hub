@@ -136,17 +136,19 @@ Promise.all([
     if (fixtures.length) {
       const h = document.createElement('h2');
       h.className = 'shelf-heading';
-      h.textContent = 'The clubhouse, to go';
+      h.textContent = 'One club, two doors';
       catalog.appendChild(h);
       const why = document.createElement('p');
       why.className = 'meta';
       why.style.margin = '0 0 14px';
-      why.textContent = 'Not dishes — the club itself, in two halves. The website is the shelf; ' +
-        'the Companion is the butler who watches it for you. Pin the shelf first; ' +
-        'add the butler when you want the club to come to you.';
+      why.textContent = 'Not dishes — the club itself. On a Daylight, move into the ' +
+        'Clubhouse app: the whole club in one place. Everywhere else, the website ' +
+        'is the same club through any window.';
       catalog.appendChild(why);
       const row = document.createElement('div');
       row.style.cssText = 'display:flex; gap:16px; flex-wrap:wrap; align-items:stretch';
+      // the Clubhouse leads — on a Daylight it's the main door
+      fixtures.sort((a, b) => (a.id === 'dcc-companion' ? -1 : 1) - (b.id === 'dcc-companion' ? -1 : 1));
       fixtures.forEach(f => row.appendChild(buildFixtureCard(f)));
       catalog.appendChild(row);
     }
@@ -235,8 +237,10 @@ function buildGiftCard(app) {
 // explaining its role — so nobody mistakes the clubhouse for a casserole.
 function buildFixtureCard(f) {
   const role = f.id === 'dcc-companion'
-    ? { tag: '② THE BUTLER', line: 'A small Android app that watches the shelf: a quiet note when a friend brings a dish, one-tap installs, and it spots when apps fight.' }
-    : { tag: '① THE SHELF', line: 'This website, pinned to your home screen — the dishes, the guided installs, the guestbook, the wishes.' };
+    ? { tag: '① ON YOUR DAYLIGHT', btn: 'Move in →',
+        line: 'The Clubhouse app — the shelf inside, gifts knock at the door, one-tap installs, and a house inspector that spots when apps fight.' }
+    : { tag: '② EVERYWHERE ELSE', btn: 'Pin the website →',
+        line: 'The same club through any window — iPhone, Mac, a friend’s laptop. Nothing to install; the link is the door.' };
   const card = document.createElement('section');
   card.className = 'card';
   card.style.cssText = 'flex:1; min-width:260px; margin-bottom:0; display:flex; flex-direction:column';
@@ -245,8 +249,7 @@ function buildFixtureCard(f) {
     '<h2 style="font-size:22px"></h2>' +
     '<p class="tagline" style="font-size:17px; flex:1">' + esc(role.line) + '</p>' +
     '<a class="btn secondary" style="min-height:48px; font-size:18px; padding:10px 12px" ' +
-      'href="install.html?app=' + encodeURIComponent(f.id) + '">' +
-      (f.type === 'apk' ? 'Install the butler →' : 'Pin the shelf →') + '</a>';
+      'href="install.html?app=' + encodeURIComponent(f.id) + '">' + role.btn + '</a>';
   card.querySelector('h2').textContent = f.name;
   return card;
 }
