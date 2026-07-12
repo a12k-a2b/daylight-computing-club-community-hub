@@ -10,7 +10,7 @@ import android.view.View;
  *  renders identically regardless of which fonts the device ships. */
 public class IconButton extends View {
 
-    public enum Glyph { PLAY, PAUSE, PREV, NEXT, BACK15, FWD15, HEART, HEART_OUTLINE, X, BACK }
+    public enum Glyph { PLAY, PAUSE, PREV, NEXT, BACK15, FWD15, HEART, HEART_OUTLINE, X, BACK, MIC }
 
     private final Paint fill = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Paint stroke = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -108,6 +108,18 @@ public class IconButton extends View {
                 cv.drawLine(cx + u * 0.7f, cy - u * 1.1f, cx - u * 0.7f, cy, stroke);
                 cv.drawLine(cx - u * 0.7f, cy, cx + u * 0.7f, cy + u * 1.1f, stroke);
                 break;
+            case MIC: {
+                // capsule body, cradle arc, stem, base — a mic in four strokes
+                cv.drawRoundRect(cx - u * 0.55f, cy - u * 1.5f, cx + u * 0.55f, cy + u * 0.2f,
+                        u * 0.55f, u * 0.55f, fill);
+                stroke.setStrokeWidth(Ui.dp(getContext(), 2));
+                stroke.setStyle(Paint.Style.STROKE);
+                cv.drawArc(cx - u * 1.05f, cy - u * 0.9f, cx + u * 1.05f, cy + u * 0.75f,
+                        20, 140, false, stroke);
+                cv.drawLine(cx, cy + u * 0.75f, cx, cy + u * 1.3f, stroke);
+                cv.drawLine(cx - u * 0.6f, cy + u * 1.3f, cx + u * 0.6f, cy + u * 1.3f, stroke);
+                break;
+            }
         }
     }
 }
