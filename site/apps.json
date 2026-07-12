@@ -118,11 +118,11 @@
       "tagline": "The club, at home on your Daylight — the shelf inside, gifts at the door, one-tap installs.",
       "author": "Anjan",
       "type": "apk",
-      "version": "0.1 (build a2d565e)",
-      "updated": "2026-07-09",
+      "version": "0.2 (build 5b25f85)",
+      "updated": "2026-07-11",
       "apk": {
         "file": "apps/dcc-companion/dcc-companion.apk",
-        "size": "25 KB",
+        "size": "28 KB",
         "package": "club.daylightcomputer.companion"
       },
       "uses": [
