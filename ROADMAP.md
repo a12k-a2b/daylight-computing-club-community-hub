@@ -106,6 +106,20 @@ marked *needs blessing* lights up in the same APK the day it lands.
       presets row, vocabulary): `design/BRIGHTNESS-DIAL-BRIEF.md` —
       pasteable straight into Claude Design.
 
+- [x] **"looking for a setting?"** — *built 2026-07-12 (founder idea):*
+      plain-language settings search, fully offline — a bundled catalog
+      of ~30 destinations with iPhone-vocabulary synonyms ("passcode",
+      "make text bigger"), scored matching, tap → the right Settings
+      screen; dead entries dropped per-device; no-match hands off to
+      full Settings, plainly. No INTERNET, no model — the synonym table
+      IS the offline brain. Post-blessing: READ_SEARCH_INDEXABLES (now
+      in the platform ask) swaps the catalog for Settings' own live
+      index. Queued: hold-to-speak (SpeechRecognizer, needs an on-glass
+      check), row-highlight keys (verified per-version only), and — only
+      if offline search demonstrably disappoints — a smarter networked
+      tier via a companion app, never in the shade (the no-INTERNET
+      promise is the trust story).
+
 ## v2 — replace the hand-off surfaces *(needs blessing)*
 
 The three places v1 still shows stock Material, in order of annoyance:

@@ -368,6 +368,15 @@ public class PanelView extends FrameLayout {
     }
 
     private void buildFooter(Context c) {
+        // the lantern for the attic: ask for a setting in your own words
+        LinearLayout searchWrap = pad(c, LinearLayout.VERTICAL);
+        searchWrap.setPadding(Ui.dp(c, 20), Ui.dp(c, 14), Ui.dp(c, 20), 0);
+        searchWrap.addView(Ui.button(c, "looking for a setting?", () ->
+                        showPicker(new SettingsSearchView(c, host::requestHide))),
+                new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT, Ui.dp(c, 52)));
+        sheet.addView(searchWrap);
+
         LinearLayout row = pad(c, LinearLayout.HORIZONTAL);
         // essentials is the front door; stock Settings is the attic
         TextView essentials = Ui.button(c, "essentials", () ->
