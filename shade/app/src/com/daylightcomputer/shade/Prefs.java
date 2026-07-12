@@ -29,6 +29,15 @@ public final class Prefs {
     public static boolean pickers(Context c) { return p(c).getBoolean("pickers", true); }
     public static void setPickers(Context c, boolean b) { p(c).edit().putBoolean("pickers", b).apply(); }
 
+    /** Where "paper-like" ends on the brightness dial (fraction of
+     *  travel). Past this point the backlight starts to out-glow the
+     *  room and the legend says "screen-like". Tunable in shade setup —
+     *  Anjan's field guess is ~30%; adjust by eye, not by math. */
+    public static float paperZoneEnd(Context c) { return p(c).getFloat("paper_zone_end", 0.30f); }
+    public static void setPaperZoneEnd(Context c, float v) {
+        p(c).edit().putFloat("paper_zone_end", Math.max(0.05f, Math.min(0.95f, v))).apply();
+    }
+
     // ---- crash bookkeeping (the crash-loop breaker) ----
     private static final long CRASH_WINDOW_MS = 15 * 60_000L;
     private static final int CRASH_LIMIT = 3;
