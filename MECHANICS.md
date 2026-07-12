@@ -171,6 +171,31 @@ llms.txt and the share form exist, all robot workflows parse — and posts
 a 🟢/🟡/🔴 report on the standing "Caretaker log" issue. Red fails the
 run so breakage is loud.
 
+## Move 4 — The kami kami card *(every dish travels with its spirit)*
+
+Named by Anjan 2026-07-11 (kami 紙 paper · kami 神 spirit; full format in
+KAMI-CARDS.md). A dish's APK is what it *is*; its kami is what it's *for*
+— the cook's intent, decisions with reasons, paths not taken, the
+one-paragraph regeneration spec, and lineage. Written for two readers at
+once: a friend flipping a postcard, and that friend's Claude, one
+sentence from warming the dish into something new. This is the move that
+turns eaters into cooks: our friends don't read code — they talk to
+kitchens — and until now a dish's soul died with its cook's chat history.
+
+Lives at `site/apps/<id>/kami.md` (catalog field `"kami"`), rendered as
+an actual postcard at `kami.html?app=<id>` — picture side, message side,
+stamp, postmark, and the letter that came folded with it. "Warm this
+dish" copies a remix prompt that carries the whole kami. First card:
+Daylight Keys. The honesty rule extends: a warmed dish's card says what
+changed, lineage is credit not inheritance, and the inspectors re-run on
+what actually ships.
+
+Desktop thread has built: the format (KAMI-CARDS.md), the first kami, the
+postcard page. The website thread is warmly invited to: link the card
+from each dish on the shelf, let the Remix button carry the kami, have
+the share-form robot ask new dishes for one (gently, optional at first),
+and mention the postcard in wizard step 7.
+
 ## The container rule — one bar, not one format
 
 Settled 2026-07-09 (Anjan + desktop thread): **every dish leaves the

@@ -1,0 +1,319 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kami kami card — Daylight Computer Club</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  /* ---- the postcard ------------------------------------------------ */
+  .kami-stage { margin: 26px 0 10px; perspective: 1400px; }
+  .postcard {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    max-height: 520px;
+    cursor: pointer;
+    transform: rotate(-0.4deg);          /* handmade, not machined */
+  }
+  .postcard-inner {
+    position: absolute; inset: 0;
+    transition: transform 0.26s ease-in;
+  }
+  .postcard-inner.midturn { transform: rotateY(90deg); }
+  .postcard-inner.settling { transition: transform 0.26s ease-out; }
+  @media (prefers-reduced-motion: reduce) {
+    .postcard-inner, .postcard-inner.settling { transition: none; }
+  }
+  .side {
+    position: absolute; inset: 0;
+    display: none;
+    background: var(--paper);
+    border: var(--rule);
+    overflow: hidden;
+  }
+  .side.showing { display: block; }
+  .side.front.showing { display: flex; }
+
+  /* ---- front: the picture side ------------------------------------- */
+  .front { flex-direction: column; align-items: center;
+           justify-content: center; text-align: center; padding: 6% 8%; }
+  .front .dogear {                        /* the club's folded corner */
+    position: absolute; top: 0; left: 0; width: 0; height: 0;
+    border-top: 34px solid var(--ink);
+    border-right: 34px solid transparent;
+  }
+  .front h2 { font-size: clamp(26px, 5vw, 44px); margin: 10px 0 6px;
+              font-weight: normal; letter-spacing: 0.5px; }
+  .front .tagline { font-style: italic; color: var(--mid); margin: 0;
+                    font-size: clamp(15px, 2.6vw, 19px); }
+  .front .dedication { font-style: italic; margin: 14px 0 0; font-size: 17px; }
+  .front .dedication .sun { color: #a06a00; }
+  .front .ribbon {
+    margin-top: 18px; padding: 6px 16px;
+    border: 2px solid var(--ink);
+    font-family: ui-monospace, 'Courier New', monospace;
+    font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+  }
+  .turn-hint { text-align: center; color: var(--faint); font-style: italic;
+               font-size: 15px; margin: 10px 0 0; }
+
+  /* ---- back: the message side --------------------------------------- */
+  .back-grid {
+    display: grid; height: 100%;
+    grid-template-columns: 58% 2px 1fr;
+  }
+  .msg { padding: 5% 5% 4% 6%; overflow: hidden; position: relative; }
+  .msg .salute { font-style: italic; font-size: clamp(16px, 2.6vw, 20px); margin: 0 0 8px; }
+  .msg .body { font-style: italic; line-height: 1.45;
+               font-size: clamp(14px, 2.3vw, 18px); }
+  .msg .body p { margin: 0 0 10px; }
+  .msg .signoff { font-style: italic; margin-top: 10px; }
+  .divider { background: var(--ink); }
+  .addr { padding: 5% 5%; display: flex; flex-direction: column; position: relative; }
+  .stampzone { position: relative; align-self: flex-end; width: 96px; height: 116px; }
+  .stamp {
+    position: absolute; top: 0; right: 0; width: 78px; height: 96px;
+    border: 2px dashed var(--ink);        /* perforation */
+    display: flex; align-items: center; justify-content: center;
+    background: var(--paper);
+  }
+  .postmark {
+    position: absolute; top: 34px; right: 44px;
+    width: 104px; height: 104px; pointer-events: none;
+    transform: rotate(-11deg); opacity: 0.85;
+  }
+  .tofrom { margin-top: auto; font-size: clamp(13px, 2.2vw, 17px); }
+  .tofrom .line { border-bottom: 2px solid var(--ink); padding: 10px 2px 3px;
+                  margin-bottom: 4px; }
+  .tofrom .lbl { font-family: ui-monospace, 'Courier New', monospace;
+                 font-size: 11px; letter-spacing: 1.5px; color: var(--mid); }
+  .tofrom .who { font-style: italic; }
+
+  /* ---- the letter folded with it ------------------------------------ */
+  .letter { margin-top: 34px; }
+  .letter h3 {
+    font-weight: normal; font-style: italic; font-size: 21px;
+    margin: 28px 0 10px; padding-bottom: 5px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .letter .note { border-left: 4px solid var(--ink); padding: 2px 0 2px 14px;
+                  margin: 0 0 12px; }
+  .letter ul { padding-left: 22px; margin: 0; }
+  .letter li { margin: 0 0 10px; }
+  .letter .lineage li { font-style: italic; }
+  .kami-actions { display: flex; gap: 12px; flex-wrap: wrap; margin: 30px 0 8px; }
+  .kami-actions .btn { flex: 1; min-width: 220px; }
+  .plainlink { text-align: center; margin: 8px 0 0; font-size: 16px; }
+  .missing { border: var(--rule); padding: 22px; font-style: italic;
+             color: var(--mid); margin-top: 26px; }
+  @media (max-width: 560px) {
+    .postcard { aspect-ratio: auto; height: auto; min-height: 380px; }
+    .back-grid { grid-template-columns: 1fr; grid-template-rows: auto 2px 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="club">
+    <a class="club-mark" href="index.html">
+      <img src="icons/icon-192.png" alt="Daylight Computer Club sun mark">
+      <h1>Daylight Computer Club</h1>
+    </a>
+    <p class="club-tagline">every dish travels with its kami — the paper spirit of how it came to be.</p>
+  </header>
+
+  <main id="main">
+    <p class="missing" id="loading">finding this dish's kami…</p>
+  </main>
+
+  <p style="margin-top:34px"><a href="index.html">← back to the shelf</a></p>
+</div>
+
+<script>
+(async function () {
+  const main = document.getElementById('main');
+  const qs = new URLSearchParams(location.search);
+  const id = qs.get('app');
+  const esc = s => String(s).replace(/[&<>"']/g,
+    c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const cap = s => s.charAt(0).toUpperCase() + s.slice(1);
+
+  function fail(msg) {
+    main.innerHTML = '<p class="missing">' + esc(msg) + '</p>';
+  }
+
+  let app;
+  try {
+    const catalog = await (await fetch('apps.json')).json();
+    const entries = catalog.apps || catalog;
+    app = entries.find(a => a.id === id);
+  } catch (e) { return fail('the shelf itself is out of reach right now — try again in a moment.'); }
+  if (!app) return fail('no dish by that name on the shelf. (kami.html?app=<dish-id>)');
+
+  const kamiPath = app.kami || ('apps/' + app.id + '/kami.md');
+  let md;
+  try {
+    const r = await fetch(kamiPath);
+    if (!r.ok) throw 0;
+    md = await r.text();
+  } catch (e) {
+    return fail('“' + app.name + '” hasn’t written its kami yet — its spirit still lives only in its cook’s kitchen.');
+  }
+
+  // ---- tiny markdown: ## sections, - lists, paragraphs, *em* ----------
+  function inline(s) {
+    s = esc(s);
+    s = s.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    s = s.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    s = s.replace(/`([^`]+)`/g, '<code>$1</code>');
+    return s;
+  }
+  function blocks(text) {
+    const out = []; let list = null, para = [];
+    const flushP = () => { if (para.length) { out.push('<p>' + inline(para.join(' ')) + '</p>'); para = []; } };
+    const flushL = () => { if (list) { out.push('<ul>' + list.join('') + '</ul>'); list = null; } };
+    let liOpen = null;                 // raw text of the bullet being built
+    const closeLi = () => { if (liOpen !== null) { (list = list || []).push('<li>' + inline(liOpen) + '</li>'); liOpen = null; } };
+    for (const raw of text.split('\n')) {
+      const line = raw.trimEnd();
+      if (/^\s*[-*] /.test(line)) { flushP(); closeLi(); liOpen = line.replace(/^\s*[-*] /,''); }
+      else if (line.trim() === '') { closeLi(); flushP(); flushL(); }
+      else if (liOpen !== null) { liOpen += ' ' + line.trim(); }   // wrapped bullet continues
+      else { flushL(); para.push(line.trim()); }
+    }
+    closeLi();
+    flushP(); flushL();
+    return out.join('');
+  }
+  const sections = {};
+  let cur = null;
+  for (const line of md.split('\n')) {
+    const h = line.match(/^## (.+)$/);
+    if (h) { cur = h[1].trim().toLowerCase(); sections[cur] = []; continue; }
+    if (cur && !/^# /.test(line)) sections[cur].push(line);
+  }
+  for (const k in sections) sections[k] = sections[k].join('\n').trim();
+
+  const dear = sections['dear friend'] || '';
+  const why = sections["why it's this way"] || sections['why it’s this way'] || '';
+  const paths = sections['paths not taken'] || '';
+  const cook = sections['to cook it again'] || '';
+  const lineage = sections['lineage'] || '';
+
+  const forNames = (app.for || []).map(cap).join(' & ');
+  const toLine = forNames || 'whoever takes it from the shelf';
+  const shelfDate = app.updated || '';
+
+  // amber is the accent; everything must survive the grayscale squint
+  const AMBER = '#a06a00';
+  const sunSVG =
+    '<svg width="46" height="46" viewBox="0 0 46 46" aria-hidden="true">' +
+    '<circle cx="23" cy="23" r="9" fill="none" stroke="' + AMBER + '" stroke-width="3.5"/>' +
+    [0,45,90,135,180,225,270,315].map(a =>
+      '<line x1="23" y1="4" x2="23" y2="10" stroke="' + AMBER + '" stroke-width="3.5" stroke-linecap="round" transform="rotate(' + a + ' 23 23)"/>'
+    ).join('') + '</svg>';
+  const postmarkSVG =
+    '<svg viewBox="0 0 104 104" width="104" height="104" aria-hidden="true">' +
+    '<defs><path id="pmarc" d="M 52 96 A 44 44 0 1 1 52.01 96"/></defs>' +
+    '<circle cx="52" cy="52" r="44" fill="none" stroke="#555" stroke-width="2"/>' +
+    '<circle cx="52" cy="52" r="33" fill="none" stroke="#555" stroke-width="1.5"/>' +
+    '<text font-family="ui-monospace, Courier New, monospace" font-size="10.5" letter-spacing="2.5" fill="#555">' +
+    '<textPath href="#pmarc" startOffset="4%">DAYLIGHT COMPUTER CLUB · THE SHELF ·</textPath></text>' +
+    '<text x="52" y="49" text-anchor="middle" font-family="ui-monospace, Courier New, monospace" font-size="10" fill="#555">' + esc(shelfDate) + '</text>' +
+    '<text x="52" y="62" text-anchor="middle" font-family="Georgia, serif" font-style="italic" font-size="9.5" fill="#555">with care</text>' +
+    '</svg>';
+
+  document.title = 'Kami — ' + app.name + ' — Daylight Computer Club';
+
+  main.innerHTML =
+    '<div class="kami-stage">' +
+      '<div class="postcard" id="card" role="button" tabindex="0" ' +
+           'aria-label="Kami kami card for ' + esc(app.name) + ' — press to turn over">' +
+        '<div class="postcard-inner">' +
+          '<div class="side front showing">' +
+            '<div class="dogear"></div>' +
+            sunSVG +
+            '<h2>' + esc(app.name) + '</h2>' +
+            '<p class="tagline">' + esc(app.tagline || '') + '</p>' +
+            (forNames ? '<p class="dedication"><span class="sun">☀</span> made for ' + esc(forNames) + '</p>' : '') +
+            '<div class="ribbon">a dish from the potluck</div>' +
+          '</div>' +
+          '<div class="side back">' +
+            '<div class="back-grid">' +
+              '<div class="msg">' +
+                '<p class="salute">dear friend,</p>' +
+                '<div class="body">' + blocks(dear) + '</div>' +
+                '<p class="signoff">— ' + esc(app.author || 'the cook') + '</p>' +
+              '</div>' +
+              '<div class="divider"></div>' +
+              '<div class="addr">' +
+                '<div class="stampzone">' +
+                  '<div class="stamp">' + sunSVG + '</div>' +
+                  '<div class="postmark">' + postmarkSVG + '</div>' +
+                '</div>' +
+                '<div class="tofrom">' +
+                  '<div class="lbl">TO</div><div class="line who">' + esc(toLine) + '</div>' +
+                  '<div class="lbl">FROM</div><div class="line who">' + esc(app.author || '') + '’s kitchen</div>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<p class="turn-hint">tap the card to turn it over ☼</p>' +
+
+    '<div class="letter">' +
+      (why ? '<h3>why it’s this way</h3><div class="note">' + blocks(why) + '</div>' : '') +
+      (paths ? '<h3>paths not taken</h3><div class="note">' + blocks(paths) + '</div>' : '') +
+      (cook ? '<h3>to cook it again</h3><div class="note">' + blocks(cook) + '</div>' : '') +
+      (lineage ? '<h3>lineage</h3><div class="note lineage">' + blocks(lineage) + '</div>' : '') +
+    '</div>' +
+
+    '<div class="kami-actions">' +
+      '<button class="btn" id="warm" type="button">⑂ Warm this dish — the kami travels with it</button>' +
+    '</div>' +
+    '<p class="plainlink"><a href="' + esc(kamiPath) + '">read the kami as plain text →</a>' +
+    (app.source ? ' · <a href="' + esc(app.source) + '">source code</a>' : '') + '</p>';
+
+  const card = document.getElementById('card');
+  const inner = card.querySelector('.postcard-inner');
+  const swapSides = () => {
+    card.querySelectorAll('.side').forEach(s => s.classList.toggle('showing'));
+  };
+  let turning = false;
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const flip = () => {
+    if (turning) return;
+    if (reduced) { swapSides(); return; }
+    turning = true;
+    inner.classList.add('midturn');            // edge-on…
+    setTimeout(() => {
+      swapSides();                             // …swap the paper…
+      inner.classList.add('settling');
+      inner.classList.remove('midturn');       // …and settle flat
+      setTimeout(() => { inner.classList.remove('settling'); turning = false; }, 300);
+    }, 280);
+  };
+  card.addEventListener('click', flip);
+  card.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); }
+  });
+
+  document.getElementById('warm').addEventListener('click', () => {
+    const prompt =
+'I want to warm a dish from the Daylight Computer Club — take "' + app.name + '" and make my own version, then shelve it back.\n\n' +
+'Its kami kami card (the cook’s own record of what it’s for, why it’s this way, dead ends, and how to cook it again) follows. Read it before touching anything — it is the dish’s spirit:\n\n' +
+'----------------\n' + md + '\n----------------\n\n' +
+'Source: ' + (app.source || '(no public source — cook from the kami’s “to cook it again” section)') + '\n\n' +
+'What I want to change: ____________\n\n' +
+'When it’s ready: keep the club’s design language (grayscale, 2px borders, one amber accent), append a line to the kami’s Lineage (“warmed by <me>, <date> — <what changed>”), update the other kami sections if my change alters them, and shelve it to the club (github.com/a12k-a2b/daylight-computing-club-community-hub) as a warming of "' + app.name + '". Honest labels: the card says what changed, and the inspectors re-run on what actually ships.';
+    navigator.clipboard.writeText(prompt)
+      .then(() => alert('Warming prompt copied — paste it into your Claude and fill in the blank. The kami rides along.'))
+      .catch(() => alert('Couldn’t reach the clipboard — the plain-text kami link below has everything.'));
+  });
+})();
+</script>
+</body>
+</html>

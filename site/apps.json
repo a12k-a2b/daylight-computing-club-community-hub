@@ -45,7 +45,8 @@
         "Allow “Modify system settings” if the app asks — that's how it changes brightness.",
         "Say yes to the notification, microphone, and calendar prompts if you want the dog-ear's timer and next-event features."
       ],
-      "source": "https://github.com/a12k-a2b/dc1-keys"
+      "source": "https://github.com/a12k-a2b/dc1-keys",
+      "kami": "apps/dc1-keys/kami.md"
     },
     {
       "id": "tracing-paper",
