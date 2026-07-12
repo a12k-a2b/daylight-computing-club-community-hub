@@ -136,11 +136,16 @@ Nothing to rebuild; `shade setup` grows the extra switches.
 >        <permission name="android.permission.MODIFY_DAY_NIGHT_MODE"/>
 >        <permission name="android.permission.NETWORK_AIRPLANE_MODE"/>
 >        <permission name="android.permission.BLUETOOTH_PRIVILEGED"/>
+>        <permission name="android.permission.READ_SEARCH_INDEXABLES"/>
 >      </privapp-permissions>
 >    </permissions>
 >    ```
 >    (`BLUETOOTH_PRIVILEGED` is what lets tapping a paired device in the
->    shade actually route audio to it.)
+>    shade actually route audio to it. `READ_SEARCH_INDEXABLES` lets the
+>    shade's plain-language settings search query the Settings app's own
+>    live search index — complete and always in sync with the build —
+>    instead of a hand-curated catalog; until it's granted, the search
+>    ships with its own bundled index and works anyway.)
 >
 >    (`INTERNAL_SYSTEM_WINDOW` and `NETWORK_SETTINGS` are signature-level;
 >    the platform signature from step 1 covers them.)
