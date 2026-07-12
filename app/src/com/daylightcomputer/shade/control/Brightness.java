@@ -51,14 +51,18 @@ public final class Brightness {
     }
 
     /** The little legend above the slider: name the light, guide the
-     *  hand. People settle where the word feels right — "paper-like" is
-     *  the home zone (backlight just improving contrast, the page still
-     *  ambient-lit); "screen-like" starts where the panel begins to look
-     *  emissive. That boundary is a matter of eyes, not math, so it's
-     *  tunable in shade setup (Prefs.paperZoneEnd, default 30%). */
+     *  hand. "candlelit" is the dimmest half of the calm range (night
+     *  reading — paper in a dark room isn't "paper-like", it's lit by a
+     *  candle); "paper-like" is the home zone (backlight just improving
+     *  contrast); "screen-like" starts where the panel begins to look
+     *  emissive. That last boundary is a matter of eyes, not math, so
+     *  it's tunable in shade setup (Prefs.paperZoneEnd, default 30%) —
+     *  candlelit scales with it as its lower half, one knob for all. */
     public static String zoneLabel(Context c, float p) {
         if (p <= 0.001f) return "pure reflective";
-        if (p <= com.daylightcomputer.shade.Prefs.paperZoneEnd(c)) return "paper-like";
+        float paperEnd = com.daylightcomputer.shade.Prefs.paperZoneEnd(c);
+        if (p <= paperEnd / 2f) return "candlelit";
+        if (p <= paperEnd) return "paper-like";
         return "screen-like";
     }
 }

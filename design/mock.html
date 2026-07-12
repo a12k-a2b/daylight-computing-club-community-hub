@@ -256,6 +256,7 @@ document.querySelectorAll(".tile").forEach(function (t) {
 // out-glow the room instead of just improving contrast)
 function zoneFor(v) {
   if (v <= 0.001) return "pure reflective";
+  if (v <= 0.15) return "candlelit";
   if (v <= 0.30) return "paper-like";
   return "screen-like";
 }

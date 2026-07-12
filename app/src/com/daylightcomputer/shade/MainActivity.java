@@ -148,8 +148,9 @@ public class MainActivity extends Activity {
         section("the brightness dial");
         note("Where should “paper-like” end? Up to here the backlight "
                 + "only improves contrast; past it the page starts to look "
-                + "emissive and the legend says “screen-like”. Drag to "
-                + "taste — the panel reads it live, no rebuild.");
+                + "emissive and the legend says “screen-like”. (The dimmest "
+                + "half of this range reads “candlelit”.) Drag to taste — "
+                + "the panel reads it live, no rebuild.");
         InkSlider zoneEnd = new InkSlider(this, InkSlider.EndGlyphs.BRIGHTNESS);
         zoneEnd.setValue(Prefs.paperZoneEnd(this));
         zoneEnd.setLabeler(v -> "paper-like ends at " + Math.round(v * 100) + "%");

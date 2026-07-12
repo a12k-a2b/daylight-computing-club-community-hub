@@ -55,8 +55,9 @@ a legend, not a thesaurus.
 ## What exists today (v1, on device)
 
 A quiet italic serif caption floats above the thumb and updates live as
-you drag: `pure reflective` → `paper-like` → `screen-like`. The
-paper/screen boundary defaults to 30% of travel — "backlight only
+you drag: `pure reflective` → `candlelit` → `paper-like` →
+`screen-like` (candlelit = the dimmest half of the calm range — night
+reading). The paper/screen boundary defaults to 30% of travel — "backlight only
 improves contrast" vs "the page starts to look emissive" — and is
 user-tunable with a slider in shade setup, so the words can be placed by
 eye. The dial itself is perceptual (logarithmic, like Android's own)
