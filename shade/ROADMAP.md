@@ -112,7 +112,12 @@ marked *needs blessing* lights up in the same APK the day it lands.
       "make text bigger"), scored matching, tap → the right Settings
       screen; dead entries dropped per-device; no-match hands off to
       full Settings, plainly. No INTERNET, no model — the synonym table
-      IS the offline brain. Post-blessing: READ_SEARCH_INDEXABLES (now
+      IS the offline brain. Device-verified end to end (2026-07-12):
+      typed "pin code" into the in-shade box, tapped the answer, landed
+      on Settings → Security with Screen lock in view. One real bug
+      found and fixed on glass along the way: the panel was re-grabbing
+      keyboard focus on every layout, which handed the IME to the
+      launcher behind it. Post-blessing: READ_SEARCH_INDEXABLES (now
       in the platform ask) swaps the catalog for Settings' own live
       index. Queued: hold-to-speak (SpeechRecognizer, needs an on-glass
       check), row-highlight keys (verified per-version only), and — only
