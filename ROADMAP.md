@@ -81,6 +81,14 @@ marked *needs blessing* lights up in the same APK the day it lands.
       *(weekend; design decision first)*
 - [ ] **Open/close feel menu** — instant vs 130 ms slide; "reduce motion"
       switch for purists. *(afternoon)*
+- [x] **The dial that names the light** — *built (v1):* the brightness
+      slider is soft-capped ("100%" ≈ 60% duty — slamming it right can't
+      burn eyes or battery; true max lives in full Settings) and a quiet
+      italic legend above the thumb names the zone: pure reflective /
+      paper-like / screen-like. Perceptual (log) dial from dc1-keys
+      underneath. Design exploration for richer treatments (zone ticks,
+      presets row, vocabulary): `design/BRIGHTNESS-DIAL-BRIEF.md` —
+      pasteable straight into Claude Design.
 
 ## v2 — replace the hand-off surfaces *(needs blessing)*
 

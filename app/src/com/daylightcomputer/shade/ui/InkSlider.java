@@ -13,6 +13,10 @@ public class InkSlider extends View {
 
     public interface Listener { void onValue(float v, boolean fromUser); }
 
+    /** Optional legend: names the current position ("paper-like", …),
+     *  drawn above the thumb and updated live as the finger moves. */
+    public interface Labeler { String labelFor(float v); }
+
     public enum EndGlyphs { BRIGHTNESS, WARMTH }
 
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -21,6 +25,7 @@ public class InkSlider extends View {
     private boolean enabled = true;
     private String disabledHint = "";
     private Listener listener;
+    private Labeler labeler;
 
     public InkSlider(Context c, EndGlyphs g) {
         super(c);
@@ -29,6 +34,7 @@ public class InkSlider extends View {
     }
 
     public void setListener(Listener l) { listener = l; }
+    public void setLabeler(Labeler l) { labeler = l; invalidate(); }
     public void setValue(float v) { value = Math.max(0f, Math.min(1f, v)); invalidate(); }
     public float getValue() { return value; }
     public void setSliderEnabled(boolean e, String hint) {
@@ -76,6 +82,7 @@ public class InkSlider extends View {
         if (!enabled) {
             if (!disabledHint.isEmpty()) {
                 paint.setStyle(Paint.Style.FILL);
+                paint.setTypeface(android.graphics.Typeface.SERIF);
                 paint.setTextSize(Ui.dp(c, 13));
                 paint.setTextAlign(Paint.Align.CENTER);
                 paint.setColor(Ui.MID);
@@ -94,6 +101,20 @@ public class InkSlider extends View {
         paint.setStrokeWidth(Ui.dp(c, 3));
         paint.setColor(Ui.INK);
         cv.drawRect(x - half, cy - half, x + half, cy + half, paint);
+
+        // the legend: a quiet word above the thumb naming this light
+        String zone = labeler == null ? null : labeler.labelFor(value);
+        if (zone != null && !zone.isEmpty()) {
+            paint.setStyle(Paint.Style.FILL);
+            paint.setTypeface(android.graphics.Typeface.create(
+                    android.graphics.Typeface.SERIF, android.graphics.Typeface.ITALIC));
+            paint.setTextSize(Ui.dp(c, 12.5f));
+            paint.setTextAlign(Paint.Align.CENTER);
+            paint.setColor(Ui.MID);
+            float tw = paint.measureText(zone) / 2f;
+            float tx = Math.max(left + tw, Math.min(right - tw, x));
+            cv.drawText(zone, tx, cy - half - Ui.dp(c, 6), paint);
+        }
     }
 
     /** Left/right end glyphs: dim sun → bright sun, or warm sun → open sun
