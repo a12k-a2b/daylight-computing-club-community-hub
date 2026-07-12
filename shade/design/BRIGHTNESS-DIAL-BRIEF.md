@@ -91,3 +91,23 @@ sheet is 660dp wide; the slider row currently 72dp tall; captions are
 Deliverable: variations of the sliders section of `mock.html` (it's
 self-contained HTML/CSS/JS — the pills and sliders already interact), or
 sketches in the same idiom, plus a one-paragraph recommendation.
+
+## Addendum (2026-07-12): the three pairs
+
+Founder-approved and now shipped: the six controls sit as three captioned
+pairs — **connection** (Wi-Fi, Bluetooth), **attention** (Do Not
+Disturb, Airplane Mode), **page** (Dark Mode, Rotation Lock) — three
+two-pill rows with a small uppercase caption over each. Control names
+are Apple's exact vocabulary on purpose (customers come from
+iPhone/iPad); invented words are reserved for the light.
+
+Wanted: **variations of this pairs layout.** Ideas to explore — caption
+placement (above each pair vs a hairline-separated left rail vs inside
+the pill row), pair separation (whitespace vs hairlines vs nothing),
+whether "attention" and "page" read as naturally as "connection" or
+better words exist (keep the *concept*: how the tablet reaches things /
+what reaches you / how reading looks), landscape (three pairs across one
+row?), and how the pairs breathe next to the media card and
+notifications below. Same constraints as above: canvas-drawable, serif,
+grayscale, ≥48dp targets, night variant included. The current version is
+in mock.html — start from it.

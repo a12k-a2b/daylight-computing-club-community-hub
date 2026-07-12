@@ -70,3 +70,13 @@ Airplane → "Airplane Mode", Dark → "Dark Mode"; all sublabels plain
 on/off. Invented vocabulary is reserved for what is genuinely novel on
 this device: the light (zone legend, presets-to-be). Outcome-poetry on
 familiar pills ("radios resting", "page can turn") is rejected.
+
+## Founder ruling (Anjan, 2026-07-12, on the presets disagreement)
+
+"yea i think we keep it as is, but nice try" — Sol's order stands: the
+dials-with-vocabulary remain the face of light control; named presets
+stay in the queue as possible graduation shortcuts, not the primary
+surface. Also approved from the merged list, same day: first-pull notes
+(Sol's dismissal-by-doing mechanic), the essentials page + "everything
+else…" footer, the three pairs (with a Claude Design variations
+addendum in BRIGHTNESS-DIAL-BRIEF.md), battery as words, VOICE.md.

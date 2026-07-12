@@ -76,7 +76,21 @@ marked *needs blessing* lights up in the same APK the day it lands.
 - [ ] **Choose-your-own pills** — a "which six?" editor in shade setup
       (candidates: battery saver, flashlight-if-exists, cast, mute,
       screenshot). The user-facing half of "modifiable, editable,
-      iterative". *(afternoon)*
+      iterative". NOTE: the pills now live as three captioned pairs
+      (connection / attention / page) — the editor must fill roles
+      within pairs, not shuffle an unstructured bag of six. *(afternoon)*
+- [x] **The ideation-round batch** — *built 2026-07-12, from the
+      two-brain round (see shade/decisions/2026-07-12-qs-redesign-...):*
+      Apple vocabulary on the pills (founder ruling: familiar where
+      familiar, novel where novel); three human pairs with captions;
+      battery in words ("plenty", "full by 9:40" while charging);
+      first-pull notes that dismiss by doing and never return (reset row
+      in shade setup); the essentials page (text size, screen sleep,
+      sound, alarms, storage, wallpaper, date & time, software update,
+      shade setup — live rows where public APIs allow, honest hand-offs
+      elsewhere) with the footer reframed as essentials · everything
+      else…; VOICE.md. Presets-as-the-face was proposed and REJECTED
+      (founder): the dials teach first.
 - [ ] **Lock-screen behavior** — currently the strip simply refuses to open
       over the keyguard. Decide what a *calm* locked shade shows (clock +
       media controls only, no settings?) and build that variant.

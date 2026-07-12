@@ -64,9 +64,16 @@ public class PanelView extends FrameLayout {
     private boolean closing;
     private float pendingDrag = -1;
 
+    // the first-pull notes: three quiet italic lines, each dismissed by
+    // DOING the thing it names, all gone forever after this one open
+    private boolean firstPull;
+    private TextView guideLight, guidePills, guideLeave;
+
     public PanelView(Context c, Host host) {
         super(c);
         this.host = host;
+        firstPull = !Prefs.guideShown(c);
+        if (firstPull) Prefs.setGuideShown(c); // marked now — a crash can't loop it
         setBackgroundColor(Ui.SCRIM);
         setOnClickListener(v -> host.requestHide());
         setFocusableInTouchMode(true); // so the BACK key reaches us
@@ -148,6 +155,7 @@ public class PanelView extends FrameLayout {
         LinearLayout col = pad(c, LinearLayout.VERTICAL);
         brightness = new InkSlider(c, InkSlider.EndGlyphs.BRIGHTNESS);
         brightness.setListener((v, fromUser) -> {
+            if (fromUser) dismissGuide(guideLight);
             if (fromUser && throttleOk()) Brightness.set(c, v);
         });
         // the legend above the thumb ("pure reflective / paper-like /
@@ -155,6 +163,10 @@ public class PanelView extends FrameLayout {
         brightness.setLabeler(v -> Brightness.zoneLabel(c, v));
         col.addView(brightness, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, Ui.dp(c, 72)));
+        if (firstPull) {
+            guideLight = guideLine(c, "start with the room — add light only when it can't keep up");
+            col.addView(guideLight);
+        }
 
         // slider runs amber→white left-to-right, matching the stock shade
         // (and "right = more light" on both sliders), so position = 1 − warmth
@@ -180,10 +192,12 @@ public class PanelView extends FrameLayout {
         // (or the system surface when pickers are switched off);
         // long-press = always go deeper
         tWifi = new TileButton(c, "Wi-Fi", () -> {
+            dismissGuide(guidePills);
             if (WifiNets.toggleDirect(c)) postDelayed(this::refreshTiles, 300);
             else openWifiSurface();
         }, this::openWifiSurface);
         tBt = new TileButton(c, "Bluetooth", () -> {
+            dismissGuide(guidePills);
             if (BtDevices.toggleDirect(c)) postDelayed(this::refreshTiles, 400);
             else openBtSurface();
         }, this::openBtSurface);
@@ -195,11 +209,41 @@ public class PanelView extends FrameLayout {
         tDnd = tile(c, "Do Not Disturb", () -> Toggles.dndToggle(c), Settings.ACTION_SOUND_SETTINGS);
         tDark = tile(c, "Dark Mode", () -> Toggles.darkToggle(c), Settings.ACTION_DISPLAY_SETTINGS);
         tRot = tile(c, "Rotation Lock", () -> Toggles.rotationToggle(c), Settings.ACTION_DISPLAY_SETTINGS);
-        col.addView(tileRow(c, tWifi, tBt, tAir));
-        View gap = new View(c);
-        col.addView(gap, new LinearLayout.LayoutParams(1, Ui.dp(c, 10)));
-        col.addView(tileRow(c, tDnd, tDark, tRot));
+
+        // three human pairs, not six unrelated tiles: connection is how
+        // the tablet reaches things, attention is what reaches you, page
+        // is how reading looks
+        if (firstPull) {
+            guidePills = guideLine(c, "tap changes it · hold opens it — like Control Center");
+            col.addView(guidePills);
+        }
+        col.addView(pairLabel(c, "connection"));
+        col.addView(pairRow(c, tWifi, tBt));
+        col.addView(pairLabel(c, "attention"));
+        col.addView(pairRow(c, tDnd, tAir));
+        col.addView(pairLabel(c, "page"));
+        col.addView(pairRow(c, tDark, tRot));
         sheet.addView(col);
+    }
+
+    private TextView pairLabel(Context c, String s) {
+        TextView t = Ui.text(c, 12, Ui.MID, false, false);
+        t.setText(s);
+        t.setAllCaps(true);
+        t.setLetterSpacing(0.09f);
+        t.setPadding(Ui.dp(c, 2), Ui.dp(c, 8), 0, Ui.dp(c, 6));
+        return t;
+    }
+
+    private LinearLayout pairRow(Context c, TileButton a, TileButton b) {
+        LinearLayout row = new LinearLayout(c);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        LinearLayout.LayoutParams lp1 = new LinearLayout.LayoutParams(0, Ui.dp(c, 64), 1f);
+        LinearLayout.LayoutParams lp2 = new LinearLayout.LayoutParams(0, Ui.dp(c, 64), 1f);
+        lp2.leftMargin = Ui.dp(c, 10);
+        row.addView(a, lp1);
+        row.addView(b, lp2);
+        return row;
     }
 
     private interface ToggleAction { boolean run(); }
@@ -208,6 +252,7 @@ public class PanelView extends FrameLayout {
         final TileButton[] ref = new TileButton[1];
         TileButton t = new TileButton(c, name,
                 () -> {
+                    dismissGuide(guidePills);
                     boolean direct = action.run();
                     if (!direct) { host.requestHide(); return; }
                     ref[0].postDelayed(this::refreshTiles, 300);
@@ -221,18 +266,6 @@ public class PanelView extends FrameLayout {
                 });
         ref[0] = t;
         return t;
-    }
-
-    private LinearLayout tileRow(Context c, TileButton a, TileButton b, TileButton d) {
-        LinearLayout row = new LinearLayout(c);
-        row.setOrientation(LinearLayout.HORIZONTAL);
-        int gap = Ui.dp(c, 10);
-        LinearLayout.LayoutParams lp1 = new LinearLayout.LayoutParams(0, Ui.dp(c, 72), 1f);
-        LinearLayout.LayoutParams lp2 = new LinearLayout.LayoutParams(0, Ui.dp(c, 72), 1f);
-        LinearLayout.LayoutParams lp3 = new LinearLayout.LayoutParams(0, Ui.dp(c, 72), 1f);
-        lp2.leftMargin = gap; lp3.leftMargin = gap;
-        row.addView(a, lp1); row.addView(b, lp2); row.addView(d, lp3);
-        return row;
     }
 
     private void buildMedia(Context c) {
@@ -336,20 +369,41 @@ public class PanelView extends FrameLayout {
 
     private void buildFooter(Context c) {
         LinearLayout row = pad(c, LinearLayout.HORIZONTAL);
-        TextView settings = Ui.button(c, "all settings", () -> {
+        // essentials is the front door; stock Settings is the attic
+        TextView essentials = Ui.button(c, "essentials", () ->
+                showPicker(new EssentialsView(c, host::requestHide, host::openShadeSetup)));
+        TextView rest = Ui.button(c, "everything else…", () -> {
             try {
                 getContext().startActivity(new Intent(Settings.ACTION_SETTINGS)
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             } catch (Throwable ignored) {}
             host.requestHide();
         });
-        TextView setup = Ui.button(c, "shade setup", host::openShadeSetup);
         LinearLayout.LayoutParams l1 = new LinearLayout.LayoutParams(0, Ui.dp(c, 52), 1f);
         LinearLayout.LayoutParams l2 = new LinearLayout.LayoutParams(0, Ui.dp(c, 52), 1f);
         l2.leftMargin = Ui.dp(c, 10);
-        row.addView(settings, l1);
-        row.addView(setup, l2);
+        row.addView(essentials, l1);
+        row.addView(rest, l2);
         sheet.addView(row);
+        if (firstPull) {
+            guideLeave = guideLine(c, "tap outside or press back to leave");
+            guideLeave.setGravity(Gravity.CENTER_HORIZONTAL);
+            guideLeave.setPadding(0, 0, 0, Ui.dp(c, 10));
+            sheet.addView(guideLeave);
+        }
+    }
+
+    private TextView guideLine(Context c, String s) {
+        TextView t = Ui.text(c, 13, Ui.MID, true, false);
+        t.setTypeface(android.graphics.Typeface.create(
+                android.graphics.Typeface.SERIF, android.graphics.Typeface.ITALIC));
+        t.setText(s);
+        t.setPadding(Ui.dp(c, 2), Ui.dp(c, 2), 0, Ui.dp(c, 8));
+        return t;
+    }
+
+    private void dismissGuide(TextView t) {
+        if (t != null) t.setVisibility(GONE);
     }
 
     // ------------------------------------------------------------ pickers
@@ -432,9 +486,7 @@ public class PanelView extends FrameLayout {
         String alarm = Toggles.nextAlarmText(c);
         dateLine.setText(DateFormat.format("EEEE, MMMM d", new Date())
                 + (alarm.isEmpty() ? "" : "   ·   " + alarm));
-        int pct = Toggles.batteryPercent(c);
-        battery.setText(pct < 0 ? ""
-                : pct + "%" + (Toggles.batteryCharging(c) ? " charging" : ""));
+        battery.setText(Toggles.batteryLine(c));
 
         brightness.setSliderEnabled(Brightness.available(c),
                 "brightness needs the \"modify settings\" grant — see shade setup");
