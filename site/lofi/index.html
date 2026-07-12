@@ -67,6 +67,27 @@
       <input type="range" id="vol" min="0" max="100" value="70">
     </label>
     <button id="timer" class="knob" aria-label="Sleep timer">timer&nbsp;off</button>
+    <div id="timer-panel" class="timer-panel" hidden>
+      <p class="tp-title">stop the music &mdash;</p>
+      <div class="tp-row">
+        <button class="tp-btn" data-mins="15">in 15m</button>
+        <button class="tp-btn" data-mins="30">30m</button>
+        <button class="tp-btn" data-mins="45">45m</button>
+        <button class="tp-btn" data-mins="60">60m</button>
+        <button class="tp-btn" data-mins="90">90m</button>
+      </div>
+      <div class="tp-row">
+        <button class="tp-btn" data-mins="22">after one side</button>
+        <button class="tp-btn" data-mins="44">two sides</button>
+        <button class="tp-btn" data-mins="66">three sides</button>
+      </div>
+      <div class="tp-row">
+        <button class="tp-btn tp-wide" id="tp-side-now">when this side ends</button>
+        <button class="tp-btn" id="tp-off">never (off)</button>
+      </div>
+      <p class="tp-note">a side of a record is about 22 minutes; the sound
+      steps down slowly, like a hand easing the volume away</p>
+    </div>
     <button id="binaural" class="knob on" aria-label="Binaural undertone">undertone&nbsp;on</button>
     <button id="texture" class="knob on" aria-label="Lo-fi texture">texture&nbsp;on</button>
   </div>

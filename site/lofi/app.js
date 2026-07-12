@@ -71,6 +71,9 @@
   function start() {
     if (!currentScene) return;
     Engine.play(currentScene);
+    // a side starts spinning when play begins; switching scenes mid-side
+    // keeps it spinning (the side belongs to the session, not the record)
+    if (!isPlaying) sideAnchor = Date.now();
     isPlaying = true;
 
     // the nap arms its own timer unless one is already running
@@ -121,15 +124,24 @@
     }, 1000);
   };
 
-  /* ---------- sleep timer ---------- */
+  /* ---------- sleep timer ----------
+     Three ways to say "stop later": minutes, record sides (this is a lo-fi
+     machine — a side is about 22 minutes), or "finish this side", which
+     stops at the current side's edge, counted from when play began. */
 
-  const TIMER_STEPS = [0, 15, 30, 45, 60];
+  const SIDE_MINS = 22;
+  let sideAnchor = null;        // when this play session started
 
   function setTimer(mins) {
+    setTimerEnd(mins ? Date.now() + mins * 60000 : null);
     timerMins = mins;
+  }
+
+  function setTimerEnd(endsAt) {
+    timerMins = 0;
     if (timerTick) { clearInterval(timerTick); timerTick = null; }
-    if (!mins) { timerEndsAt = null; paintTimer(); return; }
-    timerEndsAt = Date.now() + mins * 60000;
+    timerEndsAt = endsAt;
+    if (!endsAt) { paintTimer(); return; }
     timerTick = setInterval(() => {
       if (Date.now() >= timerEndsAt) {
         clearInterval(timerTick); timerTick = null;
@@ -139,6 +151,14 @@
       }
     }, 5000);
     paintTimer();
+  }
+
+  // the edge of the side currently spinning — where "finish this side" stops
+  function currentSideEnd() {
+    const anchor = sideAnchor || Date.now();
+    const side = SIDE_MINS * 60000;
+    const spun = Date.now() - anchor;
+    return anchor + Math.ceil((spun + 1) / side) * side;
   }
 
   function timerExpired() {
@@ -167,9 +187,40 @@
     }
   }
 
+  /* ---------- timer panel ---------- */
+
+  function paintPanel() {
+    const open = !$('timer-panel').hidden;
+    $('timer').classList.toggle('open', open);
+    $('tp-side-now').disabled = !isPlaying;
+  }
+
+  function closePanel() { $('timer-panel').hidden = true; paintPanel(); }
+
   $('timer').addEventListener('click', () => {
-    const idx = TIMER_STEPS.indexOf(timerMins);
-    setTimer(TIMER_STEPS[(idx + 1) % TIMER_STEPS.length]);
+    $('timer-panel').hidden = !$('timer-panel').hidden;
+    paintPanel();
+  });
+
+  document.querySelectorAll('#timer-panel [data-mins]').forEach(b => {
+    b.addEventListener('click', () => {
+      setTimer(Number(b.dataset.mins));
+      closePanel();
+    });
+  });
+
+  $('tp-side-now').addEventListener('click', () => {
+    if (!isPlaying) return;
+    setTimerEnd(currentSideEnd());
+    closePanel();
+  });
+
+  $('tp-off').addEventListener('click', () => { setTimer(0); closePanel(); });
+
+  // tapping anywhere outside folds the panel away
+  document.addEventListener('click', e => {
+    if ($('timer-panel').hidden) return;
+    if (!e.target.closest('#timer-panel') && !e.target.closest('#timer')) closePanel();
   });
 
   /* ---------- knobs ---------- */
@@ -198,11 +249,13 @@
 
   /* ---------- keep audio alive with the screen off ---------- */
   // A silent looped <audio> element marks the page as "playing media", so
-  // Android keeps the audio context running when the screen sleeps.
+  // Chrome holds its foreground media service and Android spares the app
+  // when the screen sleeps or we lose the foreground. If the system pauses
+  // the element out from under us (focus loss, interruption), re-arm it.
 
   let silentEl = null;
   function silentWav() {
-    const rate = 8000, secs = 1, data = rate * secs;
+    const rate = 8000, secs = 10, data = rate * secs;
     const buf = new ArrayBuffer(44 + data);
     const v = new DataView(buf);
     const w = (off, s) => { for (let i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i)); };
@@ -221,12 +274,33 @@
         silentEl = new Audio(silentWav());
         silentEl.loop = true;
         silentEl.volume = 0.001;
+        // the system paused us (interruption, focus loss) while we should
+        // be playing — take the needle back after a beat
+        silentEl.addEventListener('pause', () => {
+          if (isPlaying) setTimeout(() => {
+            if (isPlaying && silentEl.paused) {
+              silentEl.play().catch(() => {});
+              Engine.resume();
+            }
+          }, 1000);
+        });
       }
       silentEl.play().catch(() => {});
     } else if (silentEl) {
       silentEl.pause();
     }
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.playbackState = on ? 'playing' : 'paused';
+    }
   }
+
+  // waking the page back up is the moment suspended audio can resume
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && isPlaying) {
+      Engine.resume();
+      keepAlive(true);
+    }
+  });
 
   function updateMediaSession() {
     if (!('mediaSession' in navigator) || !currentScene) return;
@@ -237,6 +311,7 @@
     });
     navigator.mediaSession.setActionHandler('play', () => start());
     navigator.mediaSession.setActionHandler('pause', () => pause());
+    try { navigator.mediaSession.setActionHandler('stop', () => pause()); } catch (e) {}
   }
 
   /* ---------- boot ---------- */
@@ -258,6 +333,7 @@
   window.__lofi = {
     get playing() { return isPlaying; },
     get scene() { return currentScene && currentScene.id; },
+    get timerEnd() { return timerEndsAt; },
     scenes: SCENES.length
   };
 })();

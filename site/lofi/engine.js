@@ -582,8 +582,13 @@ const Engine = (() => {
     setTimeout(() => { try { b.disconnect(); } catch (e) {} }, 16000);
   }
 
+  // nudge a context the system suspended (screen-off, focus loss) back awake
+  function resume() {
+    if (ctx && ctx.state !== 'running') ctx.resume().catch(() => {});
+  }
+
   return {
-    play, stop, fadeOut, wakeChime, strikeBowl, setVolume, setBinaural, setTexture,
+    play, stop, fadeOut, wakeChime, strikeBowl, setVolume, setBinaural, setTexture, resume,
     set onBreath(fn) { onBreath = fn; },
     get playing() { return live ? live.scene : null; }
   };

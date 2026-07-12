@@ -3,7 +3,7 @@
 // Navigations: network-first (so updates land), everything else:
 // cache-first with background refresh.
 
-const CACHE = 'lofi-v2';
+const CACHE = 'lofi-v3';
 const SHELL = [
   './',
   'index.html',
