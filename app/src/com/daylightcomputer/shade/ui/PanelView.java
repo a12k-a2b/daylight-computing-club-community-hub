@@ -187,10 +187,14 @@ public class PanelView extends FrameLayout {
             if (BtDevices.toggleDirect(c)) postDelayed(this::refreshTiles, 400);
             else openBtSurface();
         }, this::openBtSurface);
-        tAir = tile(c, "Airplane", () -> Toggles.airplaneToggle(c), Settings.ACTION_AIRPLANE_MODE_SETTINGS);
-        tDnd = tile(c, "Quiet", () -> Toggles.dndToggle(c), Settings.ACTION_SOUND_SETTINGS);
-        tDark = tile(c, "Dark", () -> Toggles.darkToggle(c), Settings.ACTION_DISPLAY_SETTINGS);
-        tRot = tile(c, "Rotation", () -> Toggles.rotationToggle(c), Settings.ACTION_DISPLAY_SETTINGS);
+        // pill names are Apple's, on purpose: our customers arrive from
+        // iPhone/iPad, and these concepts aren't new — only the light is.
+        // (Founder ruling 2026-07-12: familiar where familiar, novel where
+        // novel — see shade/decisions/2026-07-12-qs-redesign-ideation.)
+        tAir = tile(c, "Airplane Mode", () -> Toggles.airplaneToggle(c), Settings.ACTION_AIRPLANE_MODE_SETTINGS);
+        tDnd = tile(c, "Do Not Disturb", () -> Toggles.dndToggle(c), Settings.ACTION_SOUND_SETTINGS);
+        tDark = tile(c, "Dark Mode", () -> Toggles.darkToggle(c), Settings.ACTION_DISPLAY_SETTINGS);
+        tRot = tile(c, "Rotation Lock", () -> Toggles.rotationToggle(c), Settings.ACTION_DISPLAY_SETTINGS);
         col.addView(tileRow(c, tWifi, tBt, tAir));
         View gap = new View(c);
         col.addView(gap, new LinearLayout.LayoutParams(1, Ui.dp(c, 10)));
@@ -464,7 +468,8 @@ public class PanelView extends FrameLayout {
         tAir.setState(Toggles.airplaneOn(c), Toggles.airplaneOn(c) ? "on" : "off", true);
         tDnd.setState(Toggles.dndOn(c), Toggles.dndOn(c) ? "on" : "off", Caps.dnd(c));
         tDark.setState(Toggles.darkOn(c), Toggles.darkOn(c) ? "on" : "off", true);
-        tRot.setState(Toggles.rotationLocked(c), Toggles.rotationLocked(c) ? "locked" : "auto",
+        // Apple's frame: the LOCK is the feature — on when the page holds still
+        tRot.setState(Toggles.rotationLocked(c), Toggles.rotationLocked(c) ? "on" : "off",
                 Caps.writeSettings(c));
     }
 
