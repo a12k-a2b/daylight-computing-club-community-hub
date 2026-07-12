@@ -185,10 +185,10 @@ svg text { fill: currentColor; }
       <div class="tiles">
         <div class="tile on" data-name="Wi-Fi"><span class="name">Wi-Fi</span><span class="state">on</span></div>
         <div class="tile" data-name="Bluetooth"><span class="name">Bluetooth</span><span class="state">off</span></div>
-        <div class="tile" data-name="Airplane"><span class="name">Airplane</span><span class="state">off</span></div>
-        <div class="tile" data-name="Quiet"><span class="name">Quiet</span><span class="state">off</span></div>
-        <div class="tile" data-name="Dark"><span class="name">Dark</span><span class="state">off</span></div>
-        <div class="tile on" data-name="Rotation"><span class="name">Rotation</span><span class="state">locked</span></div>
+        <div class="tile" data-name="Airplane Mode"><span class="name">Airplane Mode</span><span class="state">off</span></div>
+        <div class="tile" data-name="Do Not Disturb"><span class="name">Do Not Disturb</span><span class="state">off</span></div>
+        <div class="tile" data-name="Dark Mode"><span class="name">Dark Mode</span><span class="state">off</span></div>
+        <div class="tile on" data-name="Rotation Lock"><span class="name">Rotation Lock</span><span class="state">on</span></div>
       </div>
     </div>
 
@@ -241,8 +241,9 @@ document.querySelectorAll(".tile").forEach(function (t) {
   t.addEventListener("click", function () {
     t.classList.toggle("on");
     var s = t.querySelector(".state");
-    if (t.dataset.name === "Rotation") s.textContent = t.classList.contains("on") ? "locked" : "auto";
-    else s.textContent = t.classList.contains("on") ? "on" : "off";
+    // Apple vocabulary on purpose (founder ruling 2026-07-12); every
+    // pill, Rotation Lock included, just reads on/off now
+    s.textContent = t.classList.contains("on") ? "on" : "off";
   });
 });
 

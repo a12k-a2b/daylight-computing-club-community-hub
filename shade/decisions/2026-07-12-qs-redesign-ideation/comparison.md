@@ -58,3 +58,15 @@ experiment this round (ideation, fully reversible); the sealed files
 stand as the record. Reopen trigger: first real novice user test of the
 shade (the shared blind spot all of this rests on). Review point: before
 shelving the shade on the club (v0.2 exit).
+
+## Founder ruling (Anjan, 2026-07-12, on convergence #1)
+
+Partially adopted, with a correction both brains missed: do NOT invent
+vocabulary for concepts that aren't new. Customers arrive from
+iPhone/iPad/Mac — where the concept already has an Apple name, use it
+verbatim. Applied immediately: Quiet → "Do Not Disturb", Rotation →
+"Rotation Lock" (Apple's inverted frame: on = page holds still),
+Airplane → "Airplane Mode", Dark → "Dark Mode"; all sublabels plain
+on/off. Invented vocabulary is reserved for what is genuinely novel on
+this device: the light (zone legend, presets-to-be). Outcome-poetry on
+familiar pills ("radios resting", "page can turn") is rejected.
