@@ -51,17 +51,20 @@ public final class Brightness {
     }
 
     /** The little legend above the slider: name the light, guide the
-     *  hand. "candlelit" is the dimmest half of the calm range (night
-     *  reading — paper in a dark room isn't "paper-like", it's lit by a
-     *  candle); "paper-like" is the home zone (backlight just improving
-     *  contrast); "screen-like" starts where the panel begins to look
-     *  emissive. That last boundary is a matter of eyes, not math, so
-     *  it's tunable in shade setup (Prefs.paperZoneEnd, default 30%) —
-     *  candlelit scales with it as its lower half, one knob for all. */
+     *  hand. "candlelit" is night reading (paper in a dark room isn't
+     *  "paper-like", it's lit by a candle); "paper-like" is the home zone
+     *  (backlight just improving contrast); "screen-like" starts where
+     *  the panel begins to look emissive. Both boundaries are matters of
+     *  eyes, not math, so each has its own knob in shade setup
+     *  (defaults: candlelit ends at 15%, paper-like at 30%). If the
+     *  candle knob is pushed past the paper knob, candlelit just fills
+     *  the whole calm range. */
     public static String zoneLabel(Context c, float p) {
         if (p <= 0.001f) return "pure reflective";
         float paperEnd = com.daylightcomputer.shade.Prefs.paperZoneEnd(c);
-        if (p <= paperEnd / 2f) return "candlelit";
+        float candleEnd = Math.min(
+                com.daylightcomputer.shade.Prefs.candleZoneEnd(c), paperEnd);
+        if (p <= candleEnd) return "candlelit";
         if (p <= paperEnd) return "paper-like";
         return "screen-like";
     }

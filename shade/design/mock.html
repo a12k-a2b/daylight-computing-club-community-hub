@@ -251,9 +251,9 @@ document.querySelectorAll(".tile").forEach(function (t) {
 // maps to raw = 153^p (NOT the panel's true 255 — "100%" is ~60% duty,
 // so a slammed slider can't burn eyes or battery). The legend names the
 // zone; people settle where the word feels right.
-// the paper/screen boundary is user-tunable in shade setup on the
-// device (default 30% of travel — where the backlight starts to
-// out-glow the room instead of just improving contrast)
+// both zone boundaries are user-tunable in shade setup on the device
+// (defaults: candlelit ends at 15% of travel, paper-like at 30% — where
+// the backlight starts to out-glow the room)
 function zoneFor(v) {
   if (v <= 0.001) return "pure reflective";
   if (v <= 0.15) return "candlelit";
