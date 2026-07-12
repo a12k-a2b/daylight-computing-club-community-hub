@@ -81,8 +81,12 @@ svg text { fill: currentColor; }
   margin: -15px 0 0 -15px; background: var(--paper); border: 3px solid var(--ink);
 }
 
-/* tiles */
-.tiles { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+/* tiles — three human pairs (founder-approved 2026-07-12) */
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pair-label {
+  font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--mid); margin: 10px 0 6px 2px;
+}
 .tile {
   border: 3px solid var(--ink); min-height: 72px; background: var(--paper);
   display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -159,7 +163,7 @@ svg text { fill: currentColor; }
   <div class="sheet">
     <div class="section">
       <div class="head-row"><span class="clock" id="clock">9:41</span>
-        <span class="battery">87%</span></div>
+        <span class="battery">plenty</span></div>
       <div class="dateline" id="dateline">Friday, July 11 &nbsp;·&nbsp; alarm 6:30 AM</div>
     </div>
     <div class="rule"></div>
@@ -182,11 +186,18 @@ svg text { fill: currentColor; }
     <div class="rule"></div>
 
     <div class="section">
+      <div class="pair-label">connection</div>
       <div class="tiles">
         <div class="tile on" data-name="Wi-Fi"><span class="name">Wi-Fi</span><span class="state">on</span></div>
         <div class="tile" data-name="Bluetooth"><span class="name">Bluetooth</span><span class="state">off</span></div>
-        <div class="tile" data-name="Airplane Mode"><span class="name">Airplane Mode</span><span class="state">off</span></div>
+      </div>
+      <div class="pair-label">attention</div>
+      <div class="tiles">
         <div class="tile" data-name="Do Not Disturb"><span class="name">Do Not Disturb</span><span class="state">off</span></div>
+        <div class="tile" data-name="Airplane Mode"><span class="name">Airplane Mode</span><span class="state">off</span></div>
+      </div>
+      <div class="pair-label">page</div>
+      <div class="tiles">
         <div class="tile" data-name="Dark Mode"><span class="name">Dark Mode</span><span class="state">off</span></div>
         <div class="tile on" data-name="Rotation Lock"><span class="name">Rotation Lock</span><span class="state">on</span></div>
       </div>
@@ -215,8 +226,8 @@ svg text { fill: currentColor; }
     <div class="rule"></div>
 
     <div class="section footer">
-      <div class="fbtn">all settings</div>
-      <div class="fbtn">shade setup</div>
+      <div class="fbtn">essentials</div>
+      <div class="fbtn">everything else…</div>
     </div>
   </div>
   <div class="caption">Daylight Shade — design mock (tap the pills, drag the sliders)</div>

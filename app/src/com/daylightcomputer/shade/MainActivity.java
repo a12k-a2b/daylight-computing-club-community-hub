@@ -166,6 +166,12 @@ public class MainActivity extends Activity {
         });
         page.addView(zoneEnd, lpFull(72, 8));
 
+        page.addView(Ui.button(this, Prefs.guideShown(this)
+                        ? "show the first-pull notes again"
+                        : "first-pull notes will appear on the next pull",
+                () -> { Prefs.clearGuideShown(this); rebuild(); }),
+                lpFull(52, 8));
+
         // ---- warmth backend ----
         section("warmth slider hookup");
         String backend = Warmth.backendName(this);

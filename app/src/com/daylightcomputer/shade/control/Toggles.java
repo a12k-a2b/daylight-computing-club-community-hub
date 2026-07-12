@@ -134,6 +134,30 @@ public final class Toggles {
         BatteryManager bm = c.getSystemService(BatteryManager.class);
         return bm != null && bm.isCharging();
     }
+
+    /** Battery in words — numbers are phone anxiety. While charging, the
+     *  one number people actually want is a time ("full by 9:40", public
+     *  API; some fuel gauges can't estimate → fall back to the percent).
+     *  Steady state: words, the percent surfacing only when it's time to
+     *  think about a charger. */
+    public static String batteryLine(Context c) {
+        int pct = batteryPercent(c);
+        if (pct < 0) return "";
+        if (batteryCharging(c)) {
+            if (pct >= 100) return "fully charged";
+            try {
+                BatteryManager bm = c.getSystemService(BatteryManager.class);
+                long ms = bm == null ? -1 : bm.computeChargeTimeRemaining();
+                if (ms > 0) return "full by " + DateFormat.getTimeFormat(c)
+                        .format(new java.util.Date(System.currentTimeMillis() + ms));
+            } catch (Throwable ignored) {}
+            return "charging · " + pct + "%";
+        }
+        if (pct >= 90) return "full";
+        if (pct >= 40) return "plenty";
+        if (pct >= 15) return "low · " + pct + "%";
+        return "nearly empty · " + pct + "%";
+    }
     public static String nextAlarmText(Context c) {
         AlarmManager am = c.getSystemService(AlarmManager.class);
         AlarmManager.AlarmClockInfo info = am == null ? null : am.getNextAlarmClock();

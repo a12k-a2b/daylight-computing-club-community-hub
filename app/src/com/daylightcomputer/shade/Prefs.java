@@ -46,6 +46,13 @@ public final class Prefs {
         p(c).edit().putFloat("candle_zone_end", Math.max(0.02f, Math.min(0.95f, v))).apply();
     }
 
+    /** The first-pull notes: three quiet lines inside the panel, each
+     *  dismissed by doing the thing it describes; never shown again.
+     *  Marked the moment they're first built, so a crash can't loop them. */
+    public static boolean guideShown(Context c) { return p(c).getBoolean("guide_shown", false); }
+    public static void setGuideShown(Context c) { p(c).edit().putBoolean("guide_shown", true).apply(); }
+    public static void clearGuideShown(Context c) { p(c).edit().putBoolean("guide_shown", false).apply(); }
+
     // ---- crash bookkeeping (the crash-loop breaker) ----
     private static final long CRASH_WINDOW_MS = 15 * 60_000L;
     private static final int CRASH_LIMIT = 3;
