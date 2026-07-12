@@ -44,6 +44,12 @@ public class MainActivity extends Activity {
         if (!Caps.btScan(this)) ask.add("android.permission.BLUETOOTH_SCAN");
         if (!Caps.nearbyWifi(this)) ask.add("android.permission.NEARBY_WIFI_DEVICES");
         if (!ask.isEmpty()) requestPermissions(ask.toArray(new String[0]), 1);
+
+        // the mic is asked for contextually — only when the person pressed
+        // hold-to-speak in "find a setting" and the grant was missing
+        if (getIntent() != null && getIntent().getBooleanExtra("ask_mic", false)) {
+            requestPermissions(new String[]{"android.permission.RECORD_AUDIO"}, 2);
+        }
     }
 
     @Override protected void onResume() {

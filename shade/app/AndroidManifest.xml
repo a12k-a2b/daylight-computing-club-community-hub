@@ -32,6 +32,10 @@
          is playing and re-inks its action icons — any app, not a fixed
          list. Sideloaded/priv-app, so the Play-policy caveat is moot. -->
     <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+    <!-- hold-to-speak in "find a setting": audio goes to the device's own
+         speech service, never to us or the network (we have no INTERNET);
+         asked for contextually, on first press of the mic -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
 
     <!-- tier 2 -->
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
