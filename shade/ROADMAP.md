@@ -42,8 +42,10 @@ marked *needs blessing* lights up in the same APK the day it lands.
 - [ ] Warmth slider drives the real amber backlight — the key is known and
       wired (`screen_brightness_amber_rate` = 256+amber, discovered
       on-glass); Android only accepts the write from a system install, so
-      this lights up automatically with the blessing. Night-light stand-in
-      covers preview until then.
+      this lights up automatically with the blessing. (The night-light
+      stand-in was retired on DC-1s after Anjan's hands-on: a software
+      tint over a hardware-amber backlight reads as broken — the slider
+      now waits, disabled and honest, instead.)
 
 ## v1 — polish that needs nothing
 
