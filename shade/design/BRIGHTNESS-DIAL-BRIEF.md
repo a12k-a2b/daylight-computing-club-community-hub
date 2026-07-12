@@ -75,10 +75,11 @@ to this file mirrors it — drag the brightness slider.
    Can the track itself hint (e.g. the line thins as light leaves it)?
 3. **The cap's presence** — invisible? a notch at the true-max ghost
    position? a hairline gap after 100%?
-4. **A presets alternative** — the same intent as one row of four named
-   lights (Daylight / Overcast / Candle / Moonless) *replacing* both
-   sliders for most people, with the sliders one tap deeper. Mock both
-   and argue for one.
+4. **Presets, someday, as a garnish** — founder-decided: the dials stay
+   the face; do NOT redesign around presets. But feel free to sketch how
+   a small row of named lights (Daylight / Overcast / Candle / Moonless)
+   could someday sit *beneath* the dials as graduation shortcuts, once
+   the words have taught the model.
 5. **Night variant** — all of the above inverted (paper type on ink),
    checked for legibility on a reflective panel at raw brightness 3–10,
    which is where this display actually lives after dark.
