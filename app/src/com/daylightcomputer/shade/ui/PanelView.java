@@ -152,7 +152,7 @@ public class PanelView extends FrameLayout {
         });
         // the legend above the thumb ("pure reflective / paper-like /
         // screen-like") wants a little headroom — hence the taller row
-        brightness.setLabeler(Brightness::zoneLabel);
+        brightness.setLabeler(v -> Brightness.zoneLabel(c, v));
         col.addView(brightness, new LinearLayout.LayoutParams(
                 LinearLayout.LayoutParams.MATCH_PARENT, Ui.dp(c, 72)));
 

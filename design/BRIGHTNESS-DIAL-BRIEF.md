@@ -55,9 +55,12 @@ a legend, not a thesaurus.
 ## What exists today (v1, on device)
 
 A quiet italic serif caption floats above the thumb and updates live as
-you drag: `pure reflective` → `paper-like` → `screen-like` (boundary at
-~68% of dial travel). The dial itself is perceptual (logarithmic, like
-Android's own) with the soft cap baked in. The mock in `mock.html` next
+you drag: `pure reflective` → `paper-like` → `screen-like`. The
+paper/screen boundary defaults to 30% of travel — "backlight only
+improves contrast" vs "the page starts to look emissive" — and is
+user-tunable with a slider in shade setup, so the words can be placed by
+eye. The dial itself is perceptual (logarithmic, like Android's own)
+with the soft cap baked in. The mock in `mock.html` next
 to this file mirrors it — drag the brightness slider.
 
 ## Design explorations wanted

@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import com.daylightcomputer.shade.control.Caps;
 import com.daylightcomputer.shade.control.Warmth;
+import com.daylightcomputer.shade.ui.InkSlider;
 import com.daylightcomputer.shade.ui.Ui;
 
 import java.util.ArrayList;
@@ -142,6 +143,20 @@ public class MainActivity extends Activity {
                 this::showAdbHelp);
         grant(Caps.statusBar(this), "silence the stock shade — arrives with Sol:OS blessing", null);
         grant(Caps.internalWindow(this), "own the status-bar swipe — arrives with Sol:OS blessing", null);
+
+        // ---- the brightness dial ----
+        section("the brightness dial");
+        note("Where should “paper-like” end? Up to here the backlight "
+                + "only improves contrast; past it the page starts to look "
+                + "emissive and the legend says “screen-like”. Drag to "
+                + "taste — the panel reads it live, no rebuild.");
+        InkSlider zoneEnd = new InkSlider(this, InkSlider.EndGlyphs.BRIGHTNESS);
+        zoneEnd.setValue(Prefs.paperZoneEnd(this));
+        zoneEnd.setLabeler(v -> "paper-like ends at " + Math.round(v * 100) + "%");
+        zoneEnd.setListener((v, fromUser) -> {
+            if (fromUser) Prefs.setPaperZoneEnd(this, v);
+        });
+        page.addView(zoneEnd, lpFull(72, 8));
 
         // ---- warmth backend ----
         section("warmth slider hookup");
