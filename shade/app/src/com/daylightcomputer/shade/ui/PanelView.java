@@ -150,8 +150,11 @@ public class PanelView extends FrameLayout {
         brightness.setListener((v, fromUser) -> {
             if (fromUser && throttleOk()) Brightness.set(c, v);
         });
+        // the legend above the thumb ("pure reflective / paper-like /
+        // screen-like") wants a little headroom — hence the taller row
+        brightness.setLabeler(Brightness::zoneLabel);
         col.addView(brightness, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, Ui.dp(c, 60)));
+                LinearLayout.LayoutParams.MATCH_PARENT, Ui.dp(c, 72)));
 
         // slider runs amber→white left-to-right, matching the stock shade
         // (and "right = more light" on both sliders), so position = 1 − warmth
