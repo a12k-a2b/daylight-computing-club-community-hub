@@ -38,6 +38,8 @@ instead of by *amount*:
 
 - position 0 — **pure reflective** — backlight off; the page is lit by
   your room, like paper.
+- the dim band — **candlelit** — night reading; paper in a dark room
+  isn't "paper-like", it's lit by a candle.
 - the low-middle — **paper-like** — a gentle assist; the page still
   feels ambient-lit. This is the home zone, where we want people to
   settle.
@@ -45,7 +47,7 @@ instead of by *amount*:
   named politely but pointedly (it's the "you're doing the phone thing
   again" zone).
 
-The vocabulary is open. Candidates to play with: *moonless / candlelit /
+The vocabulary is still open. Candidates to play with: *moonless /
 lamplit / overcast / daylight* (these echo a planned presets row:
 Daylight / Overcast / Candle / Moonless), *firelight*, *reading lamp*,
 *glow*. Warmth will someday want sibling words on its own slider
@@ -56,12 +58,11 @@ a legend, not a thesaurus.
 
 A quiet italic serif caption floats above the thumb and updates live as
 you drag: `pure reflective` → `candlelit` → `paper-like` →
-`screen-like` (candlelit = the dimmest half of the calm range — night
-reading). The paper/screen boundary defaults to 30% of travel — "backlight only
-improves contrast" vs "the page starts to look emissive" — and is
-user-tunable with a slider in shade setup, so the words can be placed by
-eye. The dial itself is perceptual (logarithmic, like Android's own)
-with the soft cap baked in. The mock in `mock.html` next
+`screen-like`. Both boundaries are calibration, not constants — each has
+its own slider in shade setup ("candlelit ends at N%", "paper-like ends
+at N%"; defaults 15% and 30% of travel) so the words can be placed by
+eye, per person, per room. The dial itself is perceptual (logarithmic,
+like Android's own) with the soft cap baked in. The mock in `mock.html` next
 to this file mirrors it — drag the brightness slider.
 
 ## Design explorations wanted

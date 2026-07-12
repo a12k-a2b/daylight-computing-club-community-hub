@@ -146,11 +146,18 @@ public class MainActivity extends Activity {
 
         // ---- the brightness dial ----
         section("the brightness dial");
-        note("Where should “paper-like” end? Up to here the backlight "
-                + "only improves contrast; past it the page starts to look "
-                + "emissive and the legend says “screen-like”. (The dimmest "
-                + "half of this range reads “candlelit”.) Drag to taste — "
-                + "the panel reads it live, no rebuild.");
+        note("Two boundaries, tuned by eye. “candlelit” is night reading; "
+                + "“paper-like” is backlight that only improves contrast; "
+                + "past the second boundary the page starts to look emissive "
+                + "and the legend says “screen-like”. Drag to taste — the "
+                + "panel reads both live, no rebuild.");
+        InkSlider candleEnd = new InkSlider(this, InkSlider.EndGlyphs.BRIGHTNESS);
+        candleEnd.setValue(Prefs.candleZoneEnd(this));
+        candleEnd.setLabeler(v -> "candlelit ends at " + Math.round(v * 100) + "%");
+        candleEnd.setListener((v, fromUser) -> {
+            if (fromUser) Prefs.setCandleZoneEnd(this, v);
+        });
+        page.addView(candleEnd, lpFull(72, 0));
         InkSlider zoneEnd = new InkSlider(this, InkSlider.EndGlyphs.BRIGHTNESS);
         zoneEnd.setValue(Prefs.paperZoneEnd(this));
         zoneEnd.setLabeler(v -> "paper-like ends at " + Math.round(v * 100) + "%");

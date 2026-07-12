@@ -38,6 +38,14 @@ public final class Prefs {
         p(c).edit().putFloat("paper_zone_end", Math.max(0.05f, Math.min(0.95f, v))).apply();
     }
 
+    /** Where "candlelit" ends (fraction of travel) — its own knob, not a
+     *  proportion of the paper zone. If set past the paper boundary the
+     *  legend just clamps to it. Default: 15%. */
+    public static float candleZoneEnd(Context c) { return p(c).getFloat("candle_zone_end", 0.15f); }
+    public static void setCandleZoneEnd(Context c, float v) {
+        p(c).edit().putFloat("candle_zone_end", Math.max(0.02f, Math.min(0.95f, v))).apply();
+    }
+
     // ---- crash bookkeeping (the crash-loop breaker) ----
     private static final long CRASH_WINDOW_MS = 15 * 60_000L;
     private static final int CRASH_LIMIT = 3;
