@@ -450,6 +450,7 @@ public class PanelView extends FrameLayout {
         pickerWrap = new LinearLayout(c);
         pickerWrap.setOrientation(LinearLayout.VERTICAL);
         pickerWrap.setBackgroundColor(Ui.PAPER);
+        pickerWrap.setClickable(true); // absorb taps; never fall to the scrim
 
         LinearLayout head = new LinearLayout(c);
         head.setOrientation(LinearLayout.HORIZONTAL);
@@ -691,7 +692,11 @@ public class PanelView extends FrameLayout {
         if (pendingDrag >= 0 && scroller.getHeight() > 0) {
             scroller.setTranslationY(Math.min(0, -scroller.getHeight() + pendingDrag));
         }
-        requestFocus();
+        // grab focus so BACK reaches us — but NOT if a child already holds
+        // it (the search box needs to keep focus, or the keyboard appearing
+        // triggers a layout that would yank it back and hand the IME to the
+        // launcher behind us). found on glass 2026-07-12.
+        if (findFocus() == null) requestFocus();
     }
 
     public void open(boolean animate) {
