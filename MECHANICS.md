@@ -160,7 +160,19 @@ whole protocol. **And the Clubhouse is the one-stop club app** (Anjan,
 2026-07-11): its home tab IS the shelf — a WebView of
 daylightcomputer.club carrying the tablet's seat — with the
 butler/inspector screens alongside. One icon on the Daylight, the whole
-club inside.
+club inside. **Home tab SHIPPED in Clubhouse 0.2** (build 5b25f85,
+2026-07-11): ClubActivity = the site full-screen behind a thin ink bar
+(STAFF → the native butler/inspector/reporter room); DishWebActivity
+serves any web dish full-screen, no browser ceremony (the seat param is
+the remaining piece — website thread, the WebView will happily carry
+`?f=<seat>` once the shelf remembers seats). 0.2 also grew the OWNER'S
+TASTING COUNTER — a private pre-shelf feed (capability URL paired onto
+the tablet over USB, never in public source; fed by the maker's
+`daylight ship` command on their Mac) so a cook can taste a dish on real
+glass minutes after cooking it, before it ever meets the shelf. Friends'
+Clubhouses have no counter unless they pair one — it is the maker's
+loop, not a distribution channel; everything shelved still goes through
+the inspectors.
 
 ## The caretaker — pathways rot; someone sweeps weekly
 
