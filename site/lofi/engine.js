@@ -473,9 +473,27 @@ const Engine = (() => {
     state.nodes.push(g);
   }
 
+  /* ---------- recorded takes ---------- */
+  // Real field recordings, loop-baked offline (tail crossfades into head).
+  // Decoded once, kept for the session; the service worker caches the fetch
+  // so a take heard once keeps working offline.
+
+  const sampleCache = {};
+  let onTakeFallback = null;    // cb() when a take can't load and we fall back
+
+  function loadSample(src) {
+    if (!sampleCache[src]) {
+      sampleCache[src] = fetch(src)
+        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.arrayBuffer(); })
+        .then(b => new Promise((res, rej) => ctx.decodeAudioData(b, res, rej)));
+      sampleCache[src].catch(() => { delete sampleCache[src]; });
+    }
+    return sampleCache[src];
+  }
+
   /* ---------- public: play / stop ---------- */
 
-  function play(scene) {
+  function play(scene, take) {
     ensureCtx();
     if (ctx.state === 'suspended') ctx.resume();
     stop(0.4);
@@ -485,10 +503,27 @@ const Engine = (() => {
     bus.gain.exponentialRampToValueAtTime(1, ctx.currentTime + 1.5);
     bus.connect(master);
 
-    const state = { scene, bus, nodes: [], timers: [], stopped: false };
+    const state = { scene, take: (take && take.src) ? take : null, bus, nodes: [], timers: [], stopped: false };
     live = state;
 
-    scene.layers.forEach(l => buildLayer(l, bus, state));
+    if (state.take) {
+      loadSample(state.take.src).then(buf => {
+        if (state.stopped) return;
+        const src = ctx.createBufferSource();
+        src.buffer = buf;
+        src.loop = true;
+        src.connect(bus);
+        src.start();
+        state.nodes.push(src);
+      }).catch(() => {
+        if (state.stopped) return;
+        state.take = null;                            // offline or bad fetch:
+        scene.layers.forEach(l => buildLayer(l, bus, state));  // the instrument
+        if (onTakeFallback) onTakeFallback();
+      });
+    } else {
+      scene.layers.forEach(l => buildLayer(l, bus, state));
+    }
     if (scene.binaural) buildBinaural(scene.binaural, bus, state);
     setTexture(textureOn);
     return state;
@@ -590,6 +625,8 @@ const Engine = (() => {
   return {
     play, stop, fadeOut, wakeChime, strikeBowl, setVolume, setBinaural, setTexture, resume,
     set onBreath(fn) { onBreath = fn; },
-    get playing() { return live ? live.scene : null; }
+    set onTakeFallback(fn) { onTakeFallback = fn; },
+    get playing() { return live ? live.scene : null; },
+    get playingTake() { return live ? live.take : null; }
   };
 })();

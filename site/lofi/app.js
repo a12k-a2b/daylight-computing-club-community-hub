@@ -10,6 +10,8 @@
   };
 
   let currentScene = null;      // scene spec the user picked
+  let currentTake = null;       // recorded take, or null = the instrument
+  let tookFallback = false;     // take failed to load; instrument stepped in
   let isPlaying = false;
   let timerMins = 0;            // 0 = off
   let timerEndsAt = null;
@@ -52,9 +54,43 @@
                       '<span class="s-desc">' + scene.desc + '</span>';
         b.addEventListener('click', () => tapScene(scene));
         col.appendChild(b);
+        if (scene.takes) col.appendChild(buildTakesRow(scene));
       });
       board.appendChild(col);
     });
+  }
+
+  /* ---------- takes: the instrument, plus real recordings ---------- */
+
+  const LIVE_TAKE = {
+    id: 'live', name: 'The instrument',
+    desc: 'Generated live by the tablet — never the same twice, works offline.',
+    src: null
+  };
+
+  function takesFor(scene) { return [LIVE_TAKE].concat(scene.takes || []); }
+
+  function savedTake(scene) {
+    const id = store.get('take:' + scene.id, 'live');
+    return takesFor(scene).find(t => t.id === id) || LIVE_TAKE;
+  }
+
+  function buildTakesRow(scene) {
+    const row = document.createElement('div');
+    row.className = 'takes';
+    row.id = 'takes-' + scene.id;
+    takesFor(scene).forEach((take, i) => {
+      const c = document.createElement('button');
+      c.className = 'take-chip';
+      c.id = 'take-' + scene.id + '-' + take.id;
+      c.setAttribute('aria-label', scene.name + ' take ' + (i + 1) + ': ' + take.name);
+      c.innerHTML = '<span class="tc-n">' + (i + 1) + '</span>' +
+        '<span class="take-tip" role="tooltip"><strong>' + take.name + '</strong><br>' +
+        take.desc + '</span>';
+      c.addEventListener('click', () => tapTake(scene, take));
+      row.appendChild(c);
+    });
+    return row;
   }
 
   /* ---------- play control ---------- */
@@ -65,12 +101,25 @@
       return;
     }
     currentScene = scene;
+    currentTake = savedTake(scene).src ? savedTake(scene) : null;
+    start();
+  }
+
+  function tapTake(scene, take) {
+    const pick = take.src ? take : null;
+    const samePick = currentScene && currentScene.id === scene.id &&
+      ((pick && currentTake && currentTake.id === pick.id) || (!pick && !currentTake));
+    if (samePick && isPlaying) { pause(); return; }
+    currentScene = scene;
+    currentTake = pick;
+    store.set('take:' + scene.id, take.id);
     start();
   }
 
   function start() {
     if (!currentScene) return;
-    Engine.play(currentScene);
+    tookFallback = false;
+    Engine.play(currentScene, currentTake);
     // a side starts spinning when play begins; switching scenes mid-side
     // keeps it spinning (the side belongs to the session, not the record)
     if (!isPlaying) sideAnchor = Date.now();
@@ -94,15 +143,23 @@
 
   function refresh() {
     document.querySelectorAll('.scene').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.take-chip').forEach(el => el.classList.remove('active'));
     if (currentScene && isPlaying) {
       const el = $('scene-' + currentScene.id);
       if (el) el.classList.add('active');
+      const chip = $('take-' + currentScene.id + '-' + (currentTake ? currentTake.id : 'live'));
+      if (chip) chip.classList.add('active');
     }
     $('playpause').disabled = !currentScene;
     $('playpause').innerHTML = isPlaying ? '&#10073;&#10073;' : '&#9654;';
     $('now-name').textContent = currentScene ? currentScene.name : 'Pick a soundscape';
-    $('now-desc').textContent = currentScene ? currentScene.desc
-      : 'Morning wakes you, day settles you, night puts you down.';
+    $('now-desc').textContent = !currentScene
+      ? 'Morning wakes you, day settles you, night puts you down.'
+      : tookFallback
+        ? 'Couldn’t reach that recording (offline?) — the instrument is playing instead.'
+        : currentTake
+          ? currentTake.name + ' — ' + currentTake.desc
+          : currentScene.desc;
     const showBreath = !!(currentScene && currentScene.breath && isPlaying);
     $('breath').hidden = !showBreath;
     if (!showBreath && breathTick) { clearInterval(breathTick); breathTick = null; }
@@ -302,10 +359,17 @@
     }
   });
 
+  // a chosen take couldn't load — the engine already switched to generated
+  Engine.onTakeFallback = () => {
+    currentTake = null;
+    tookFallback = true;
+    refresh();
+  };
+
   function updateMediaSession() {
     if (!('mediaSession' in navigator) || !currentScene) return;
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: currentScene.name,
+      title: currentScene.name + (currentTake ? ' · ' + currentTake.name : ''),
       artist: 'Lofi — a quiet sound machine',
       album: currentScene.part
     });
@@ -333,6 +397,8 @@
   window.__lofi = {
     get playing() { return isPlaying; },
     get scene() { return currentScene && currentScene.id; },
+    get take() { return currentScene ? (currentTake ? currentTake.id : 'live') : null; },
+    get fellBack() { return tookFallback; },
     get timerEnd() { return timerEndsAt; },
     scenes: SCENES.length
   };
