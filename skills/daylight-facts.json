@@ -15,7 +15,11 @@
     "resolution": [1600, 1200],
     "aspect": "4:3",
     "ppi": 190,
-    "refresh_hz": 60,
+    "refresh": {
+      "vrr_range_hz": [30, 120],
+      "practical_ceiling_hz": { "value": 90, "measured": false },
+      "note": "variable-refresh IGZO; pixel response time vs refresh rate unresolved — motion blur reported at high rates; investigation prompt: REFRESH-MOTION-PROMPT.md"
+    },
     "type": "LivePaper: transflective TN LCD, IGZO oxide TFT backplane, no color filter array (e-paper-class, NOT e-ink)",
     "bit_depth": 8,
     "backlight": "amber (blue-free), transmissive through the transflective panel — a backlight, not a front-light",
