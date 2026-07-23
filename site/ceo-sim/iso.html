@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The Decider — a time-lapse tragedy in four acts (and one escape)</title>
+<title>The Decider — isometric edition</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='28' height='28' fill='white' stroke='black' stroke-width='3'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' font-family='Georgia'%3E☂%3C/text%3E%3C/svg%3E">
 <style>
 /* The Decider — pure grayscale, real borders, paper motion only.
@@ -219,6 +219,8 @@ button.primary, button[aria-pressed="true"] { background: var(--ink); color: var
   border: 3px solid var(--ink); padding: 8px 14px; transform: rotate(-3deg);
   display: inline-block; margin-top: 14px;
 }
+#isoCanvas { width: 100%; height: 380px; display: block; }
+@media (max-width: 800px) { #isoCanvas { height: 300px; } }
 </style>
 </head>
 <body>
@@ -227,7 +229,7 @@ button.primary, button[aria-pressed="true"] { background: var(--ink); color: var
   <!-- ============ TITLE ============ -->
   <section id="titleScreen">
     <header class="masthead">
-      <div class="kicker">Daylight Computer Club · Management Simulator №1</div>
+      <div class="kicker">Daylight Computer Club · Management Simulator №1 · Isometric Edition</div>
       <h1>THE DECIDER</h1>
       <p class="sub">A time-lapse tragedy in four acts — and one narrow escape.</p>
     </header>
@@ -284,7 +286,7 @@ button.primary, button[aria-pressed="true"] { background: var(--ink); color: var
     </div>
     <p class="title-foot">
       Best with sound on 🔉 — there are ka-chings, alarms, and one very sad trombone.<br>
-      Prefer little buildings? <a href="iso.html">Isometric edition</a> — same game, same save.<br>
+      Prefer the org-chart view? <a href="index.html">Classic edition</a> — same game, same save.<br>
       Brought to potluck by the <a href="../index.html">Daylight Computer Club</a>.
     </p>
   </section>
@@ -308,15 +310,8 @@ button.primary, button[aria-pressed="true"] { background: var(--ink); color: var
 
     <div id="main">
       <div id="orgboard">
-        <div class="boardtitle">SUNBEAM SYSTEMS — LIVE ORGANISM VIEW</div>
-        <div id="ceoRow">
-          <div>
-            <div id="pile"></div>
-            <div id="pileLabel">queue: 0</div>
-          </div>
-          <div id="ceoBox"><div class="who">YOU</div><div class="role">CHIEF EVERYTHING OFFICER</div></div>
-        </div>
-        <div id="depts"></div>
+        <div class="boardtitle">SUNBEAM SYSTEMS — THE COMPANY, FROM ABOVE</div>
+        <canvas id="isoCanvas"></canvas>
         <div id="doorsRow"><span id="doorsHint">ONE-WAY DOORS WALKED THROUGH APPEAR HERE ▸</span></div>
         <div id="bubble" hidden><div class="bwho"></div><div class="btext"></div></div>
       </div>
@@ -379,6 +374,7 @@ button.primary, button[aria-pressed="true"] { background: var(--ink); color: var
 
 </div>
 <script src="model.js"></script>
+<script src="iso.js"></script>
 <script src="game.js"></script>
 </body>
 </html>

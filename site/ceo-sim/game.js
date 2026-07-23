@@ -3,6 +3,9 @@
   'use strict';
   const S = window.CEOSIM;
   const $ = id => document.getElementById(id);
+  // Alternate skins (iso.html) define window.BOARD before this file loads;
+  // it takes over drawing the org view: {reset, render, fire, anchor}.
+  const board = () => window.BOARD;
 
   // ------------------------------------------------------------- audio
   // Tiny synth: everything is beeps, thuds, paper, and one sad trombone.
@@ -133,7 +136,9 @@
     $('ticker').innerHTML = '';
     $('doorsRow').innerHTML = '<span id="doorsHint">ONE-WAY DOORS WALKED THROUGH APPEAR HERE ▸</span>';
     $('bubble').hidden = true;
-    buildMetrics(); buildDepts(); renderAll();
+    buildMetrics(); buildDepts();
+    if (board()) board().reset(mode);
+    renderAll();
     FX.play('page');
     cancelAnimationFrame(raf);
     raf = requestAnimationFrame(loop);
@@ -183,21 +188,31 @@
   }
 
   function showBubble(who, text) {
-    const board = $('orgboard'), b = $('bubble');
+    const wrap = $('orgboard'), b = $('bubble');
     const home = WHO_HOME[who] || 'CEO';
-    const el = home === 'CEO' ? $('ceoBox') : document.querySelector('.dept[data-key="' + home + '"]');
-    if (!el) return;
+    let left, top;
+    if (board()) {
+      const pt = board().anchor(home);
+      if (!pt) return;
+      left = pt.x; top = pt.y;
+    } else {
+      const el = home === 'CEO' ? $('ceoBox') : document.querySelector('.dept[data-key="' + home + '"]');
+      if (!el) return;
+      const br = wrap.getBoundingClientRect(), er = el.getBoundingClientRect();
+      left = er.left - br.left + er.width / 2;
+      top = er.top - br.top - 6;
+    }
     b.querySelector('.bwho').textContent = who;
     b.querySelector('.btext').textContent = text.length > 140 ? text.slice(0, 137) + '…' : text;
-    const br = board.getBoundingClientRect(), er = el.getBoundingClientRect();
-    b.style.left = (er.left - br.left + er.width / 2) + 'px';
-    b.style.top = (er.top - br.top - 6) + 'px';
+    b.style.left = left + 'px';
+    b.style.top = top + 'px';
     b.hidden = false;
     clearTimeout(bubbleTimer);
     bubbleTimer = setTimeout(() => { b.hidden = true; }, Math.max(1200, 3400 / speed));
   }
 
   function igniteDept(key) {
+    if (board()) { board().fire(key); return; }
     const el = document.querySelector('.dept[data-key="' + key + '"]');
     if (!el) return;
     el.classList.add('onfire');
@@ -230,7 +245,8 @@
 
   // ------------------------------------------------------------- render
   function buildDepts() {
-    const wrap = $('depts'); wrap.innerHTML = '';
+    const wrap = $('depts'); if (!wrap) return;
+    wrap.innerHTML = '';
     DEPTS.forEach(d => {
       const el = document.createElement('div');
       el.className = 'dept'; el.dataset.key = d.key;
@@ -285,6 +301,12 @@
       : g.mode === 'E' ? g.quality * 100
       : g.learning;
     setMetric('extra', Math.round(extra), extra / 100, g.mode !== 'C' && extra < 40);
+
+    if (board()) {
+      board().render(g);
+      drawChart();
+      return;
+    }
 
     // paper pile
     const pile = $('pile');
