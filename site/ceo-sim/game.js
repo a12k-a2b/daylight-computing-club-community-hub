@@ -80,7 +80,9 @@
   const MODE_META = {
     A: { name: 'OPTION A — THE BOTTLENECK', motto: '“Every decision is my job.”', maxW: 110 },
     B: { name: 'OPTION B — THE GHOST', motto: '“You guys figure it out.”', maxW: 110 },
-    C: { name: 'OPTION C — THE BALANCE', motto: '“I take the one-way doors. You take the rest.”', maxW: 150 }
+    C: { name: 'OPTION C — THE BALANCE', motto: '“I take the one-way doors. You take the rest.”', maxW: 150 },
+    D: { name: 'OPTION A½ — THE FINAL SAY', motto: '“I delegate everything! …except what matters.”', maxW: 205 },
+    E: { name: 'OPTION B½ — THE CONDUCTOR', motto: '“The big calls are how people grow.”', maxW: 205 }
   };
   const WEEK_MS = 640;
 
@@ -96,17 +98,24 @@
   function saveProgress(p) { localStorage.setItem('dcc-ceosim-progress', JSON.stringify(p)); }
 
   // -------------------------------------------------------------- title
+  function sideDone(p) {
+    return { grip: !!(p.A || p.D), trust: !!(p.B || p.E) };
+  }
+
   function renderTitle() {
     const p = progress();
-    const mark = r => !r ? '' : (r.win ? '★ SURVIVED — 12 QUARTERS' : '☠ DIED, WEEK ' + r.week);
-    $('playedA').textContent = mark(p.A);
-    $('playedB').textContent = mark(p.B);
-    $('playedC').textContent = mark(p.C);
-    const unlocked = p.A && p.B;
+    const mark = (r, m) => !r ? '' :
+      r.win ? '★ SURVIVED — 12 QUARTERS' :
+      m === 'D' ? '▣ SOLD OFF, YEAR ' + Math.ceil(r.week / 48) :
+      m === 'E' ? '▣ WENT SIDEWAYS, YEAR ' + Math.ceil(r.week / 48) :
+      '☠ DIED, WEEK ' + r.week;
+    ['A', 'B', 'C', 'D', 'E'].forEach(m => { $('played' + m).textContent = mark(p[m], m); });
+    const s = sideDone(p);
+    const unlocked = s.grip && s.trust;
     $('btnC').disabled = !unlocked;
     $('descC').textContent = unlocked
       ? 'Sort every decision yourself: keep it or delegate it. The doors are labeled. Mostly.'
-      : '🔒 Locked. Die both deaths first — the balance only makes sense after the extremes.';
+      : '🔒 Locked. Fail once on each side of the dial first — the balance only means something after the ditches.';
   }
 
   // ---------------------------------------------------------------- sim
@@ -240,7 +249,9 @@
     ],
     A: { id: 'extra', label: 'YOUR SANITY', max: 100 },
     B: { id: 'extra', label: 'COHERENCE', max: 100 },
-    C: { id: 'extra', label: 'ORG JUDGMENT', max: 100 }
+    C: { id: 'extra', label: 'ORG JUDGMENT', max: 100 },
+    D: { id: 'extra', label: 'MARKET EDGE', max: 100 },
+    E: { id: 'extra', label: 'THE STANDARD', max: 100 }
   };
 
   function buildMetrics() {
@@ -269,7 +280,10 @@
     setMetric('speed', Math.round(g.speed * 100) + '%', g.speed / 1.35, g.speed < 0.5);
     setMetric('morale', Math.round(g.morale), g.morale / 100, g.morale < 35);
     setMetric('queue', Math.round(g.queue), g.queue / 80, g.queue > 25);
-    const extra = g.mode === 'A' ? g.sanity : g.mode === 'B' ? g.coherence : g.learning;
+    const extra = g.mode === 'A' ? g.sanity
+      : g.mode === 'B' || g.mode === 'D' ? g.coherence
+      : g.mode === 'E' ? g.quality * 100
+      : g.learning;
     setMetric('extra', Math.round(extra), extra / 100, g.mode !== 'C' && extra < 40);
 
     // paper pile
@@ -290,7 +304,8 @@
     if (!document.hidden && Math.random() < 0.5) {
       const dept = document.querySelectorAll('.dept')[Math.floor(Math.random() * 4)];
       if (g.mode === 'A') spawnPaper(dept, $('ceoBox'));
-      else if (g.mode === 'B') spawnPaper(dept, document.querySelectorAll('.dept')[Math.floor(Math.random() * 4)]);
+      else if (g.mode === 'B' || g.mode === 'E') spawnPaper(dept, document.querySelectorAll('.dept')[Math.floor(Math.random() * 4)]);
+      else if (g.mode === 'D') spawnPaper(dept, Math.random() < 0.35 ? $('ceoBox') : dept);
       else if (Math.random() < 0.25) spawnPaper(dept, $('ceoBox'));
       else spawnPaper(dept, dept);
     }
@@ -355,12 +370,26 @@
     $('cardChoices').hidden = false;
     const take = $('chooseTake'), del = $('chooseDel'), nb = $('cardNB');
     take.disabled = false; del.disabled = false;
+    const high = card.stakes === 'HIGH';
     if (game.mode === 'A') {
       del.disabled = true;
       nb.textContent = '(Delegate? And risk someone deciding... differently? Be serious.)';
     } else if (game.mode === 'B') {
       take.disabled = true;
       nb.textContent = '(You are on a silent retreat. The memo auto-delegates in the spirit of empowerment.)';
+    } else if (game.mode === 'D') {
+      if (high) {
+        del.disabled = true;
+        nb.textContent = '(Delegate THIS? No no — this one\'s critical. They\'re all critical, somehow.)';
+      } else {
+        take.disabled = true;
+        nb.textContent = '(Delegated before you finished reading! See? You delegate constantly. You\'re famous for it.)';
+      }
+    } else if (game.mode === 'E') {
+      take.disabled = true;
+      nb.textContent = high
+        ? '(Overruling them would stunt their growth. You schedule some encouraging feedback instead.)'
+        : '(Obviously them — you\'re a conductor, not a micromanager.)';
     } else {
       nb.textContent = 'Two questions, every time: how bad if wrong — and can we undo it?';
     }
@@ -384,10 +413,12 @@
     const g = game;
     const key = g.ended, end = S.ENDINGS[key];
     const p = progress();
-    const before = p.A && p.B;
+    const sBefore = sideDone(p);
     p[g.mode] = { week: g.week, win: key === 'C_WIN' };
     saveProgress(p);
-    const unlockedNow = !before && p.A && p.B;
+    const sAfter = sideDone(p);
+    const unlocked = sAfter.grip && sAfter.trust;
+    const unlockedNow = unlocked && !(sBefore.grip && sBefore.trust);
 
     $('fpPaper').textContent = end.paper;
     $('fpDate').textContent = 'WEEK ' + g.week + ' · YEAR ' + Math.max(1, Math.ceil(g.week / 48)) + ' · SUNBEAM SYSTEMS, INC.';
@@ -405,12 +436,22 @@
         g.doors.map(d => '◼ ' + d).join(' &nbsp; ') + '</p>'
       : '';
     $('fpLessonTitle').textContent = end.lessonTitle;
+    $('fpEssay').innerHTML = '';
+    if (end.essay) {
+      const h = document.createElement('h4');
+      h.textContent = 'THE POST-MORTEM, IN PROSE';
+      $('fpEssay').appendChild(h);
+      end.essay.forEach(t => {
+        const par = document.createElement('p'); par.textContent = t;
+        $('fpEssay').appendChild(par);
+      });
+    }
     const ls = $('fpLessons'); ls.innerHTML = '';
     end.lessons.forEach(t => {
       const li = document.createElement('li'); li.textContent = t; ls.appendChild(li);
     });
     $('fpUnlock').innerHTML = unlockedNow
-      ? '<span class="unlockstamp">🔓 OPTION C UNLOCKED — YOU HAVE NOW DIED BOTH DEATHS</span>' : '';
+      ? '<span class="unlockstamp">🔓 OPTION C UNLOCKED — YOU HAVE NOW FAILED IN BOTH DITCHES</span>' : '';
 
     const btns = $('fpButtons'); btns.innerHTML = '';
     const addBtn = (label, primary, fn) => {
@@ -418,10 +459,21 @@
       b.textContent = label; if (primary) b.className = 'primary';
       b.addEventListener('click', fn); btns.appendChild(b);
     };
-    if (g.mode === 'A' && !p.B) addBtn('Now die the other way ▸ THE GHOST', true, () => startScenario('B'));
-    if (g.mode === 'B' && !p.A) addBtn('Now die the other way ▸ THE BOTTLENECK', true, () => startScenario('A'));
-    if (p.A && p.B && g.mode !== 'C') addBtn('Find the balance ▸ OPTION C', true, () => startScenario('C'));
+    const NAMES = { A: 'THE BOTTLENECK', B: 'THE GHOST', D: 'THE FINAL SAY', E: 'THE CONDUCTOR' };
+    const nextUnplayed = ['A', 'B', 'D', 'E'].filter(m => !p[m]);
+    if (!unlocked && nextUnplayed.length) {
+      const n = nextUnplayed[0];
+      const label = (n === 'A' || n === 'B')
+        ? 'Now die the other way ▸ ' + NAMES[n]
+        : 'Now the version you\'d actually fall for ▸ ' + NAMES[n];
+      addBtn(label, true, () => startScenario(n));
+    }
+    if (unlocked && g.mode !== 'C') addBtn('Find the balance ▸ OPTION C', true, () => startScenario('C'));
     if (g.mode === 'C' && key === 'C_LOSE') addBtn('Try the balance again ▸', true, () => startScenario('C'));
+    if (unlocked && nextUnplayed.length) {
+      const n = nextUnplayed[0];
+      addBtn('A subtler death awaits ▸ ' + NAMES[n], false, () => startScenario(n));
+    }
     addBtn('Replay this scenario', false, () => startScenario(g.mode));
     addBtn('Front desk (menu)', false, backToTitle);
     $('endOverlay').hidden = false;
@@ -449,6 +501,8 @@
   $('btnA').addEventListener('click', () => startScenario('A'));
   $('btnB').addEventListener('click', () => startScenario('B'));
   $('btnC').addEventListener('click', () => startScenario('C'));
+  $('btnD').addEventListener('click', () => startScenario('D'));
+  $('btnE').addEventListener('click', () => startScenario('E'));
   $('btnQuit').addEventListener('click', backToTitle);
   $('btnPause').addEventListener('click', () => {
     paused = !paused;
