@@ -10,6 +10,7 @@
 <meta property="og:url" content="https://daylightcomputer.club/ceo-sim/iso.html">
 <meta property="og:image" content="https://daylightcomputer.club/ceo-sim/og.png">
 <meta name="twitter:card" content="summary_large_image">
+<link rel="manifest" href="manifest.webmanifest">
 <title>The Decider — isometric edition</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='28' height='28' fill='white' stroke='black' stroke-width='3'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' font-family='Georgia'%3E☂%3C/text%3E%3C/svg%3E">
 <style>
@@ -239,6 +240,9 @@ button.primary, button[aria-pressed="true"] { background: var(--ink); color: var
 .papermode *, .papermode *::before, .papermode *::after {
   animation: none !important; transition: none !important;
 }
+.scenario.suggested { outline: 3px solid var(--ink); outline-offset: 3px; }
+.scenario.suggested .played { font-weight: bold; }
+#visitLine { font-style: normal; font-size: 14px; letter-spacing: 1px; margin-top: 26px; margin-bottom: -18px; }
 </style>
 </head>
 <body>
@@ -303,6 +307,7 @@ button.primary, button[aria-pressed="true"] { background: var(--ink); color: var
         <span class="played mono" id="playedB"></span>
       </button>
     </div>
+    <p class="title-foot mono" id="visitLine" hidden></p>
     <p class="title-foot">
       Best with sound on 🔉 — there are ka-chings, alarms, and one very sad trombone.<br>
       Prefer the org-chart view? <a href="index.html">Classic edition</a> — same game, same save.<br>

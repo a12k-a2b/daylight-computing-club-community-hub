@@ -126,6 +126,80 @@
     return { grip: !!(p.A || p.D), trust: !!(p.B || p.E) };
   }
 
+  // ------------------------------------------------- shareable front page
+  // Draws the ending as a tall newspaper card (PNG) for texting around.
+  function wrapText(c, text, x, y, maxW, lineH) {
+    const words = String(text).split(' ');
+    let line = '';
+    for (const w of words) {
+      const probe = line ? line + ' ' + w : w;
+      if (c.measureText(probe).width > maxW && line) {
+        c.fillText(line, x, y); y += lineH; line = w;
+      } else line = probe;
+    }
+    if (line) { c.fillText(line, x, y); y += lineH; }
+    return y;
+  }
+
+  function buildEndCard() {
+    const g = game, end = S.ENDINGS[g.ended];
+    const cv = document.createElement('canvas');
+    cv.width = 1080; cv.height = 1350;
+    const c = cv.getContext('2d');
+    c.fillStyle = '#fff'; c.fillRect(0, 0, 1080, 1350);
+    c.fillStyle = '#000'; c.textAlign = 'center';
+    c.font = '64px Georgia, serif';
+    c.fillText('THE DAILY SLAB', 540, 96);
+    c.fillRect(60, 122, 960, 4); c.fillRect(60, 132, 960, 2);
+    c.font = '22px ui-monospace, monospace';
+    c.fillText('WEEK ' + g.week + ' · YEAR ' + Math.max(1, Math.ceil(g.week / 48)) +
+      ' · SUNBEAM SYSTEMS, INC. · PRICE: ONE DECISION', 540, 168);
+    c.textAlign = 'left';
+    c.font = 'bold 52px Georgia, serif';
+    let y = wrapText(c, end.headline, 70, 250, 940, 60);
+    c.font = 'italic 30px Georgia, serif';
+    y = wrapText(c, end.sub, 70, y + 24, 940, 40);
+    c.fillRect(70, y + 12, 940, 2);
+    c.font = 'bold 22px ui-monospace, monospace';
+    c.fillText('HOW IT HAPPENED', 70, y + 52);
+    y += 84;
+    c.font = '26px Georgia, serif';
+    for (const m of g.keyMoments.slice(-6)) {
+      c.font = 'bold 20px ui-monospace, monospace';
+      c.fillText('WK ' + m.w, 70, y);
+      c.font = '25px Georgia, serif';
+      y = wrapText(c, m.t, 160, y, 850, 32) + 14;
+      if (y > 1090) break;
+    }
+    c.strokeStyle = '#000'; c.lineWidth = 3;
+    c.strokeRect(60, 1120, 960, 150);
+    c.font = 'bold 22px ui-monospace, monospace';
+    c.fillText(end.lessonTitle.toUpperCase(), 84, 1156);
+    c.font = 'italic 25px Georgia, serif';
+    wrapText(c, end.lessons[0], 84, 1192, 912, 32);
+    c.font = '20px ui-monospace, monospace';
+    c.textAlign = 'center';
+    c.fillText('PLAY IT: daylightcomputer.club/ceo-sim · SCENARIO ' + g.mode + ' · SEED ' + g.seed, 540, 1316);
+    return cv;
+  }
+
+  function shareEndCard() {
+    const cv = buildEndCard();
+    cv.toBlob(blob => {
+      if (!blob) return;
+      const file = new File([blob], 'the-daily-slab.png', { type: 'image/png' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        navigator.share({ files: [file], title: 'The Daily Slab' }).catch(() => {});
+      } else {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'the-daily-slab.png';
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+      }
+    }, 'image/png');
+  }
+
   function renderTitle() {
     const p = progress();
     const mark = (r, m) => !r ? '' :
@@ -140,12 +214,37 @@
     $('descC').textContent = unlocked
       ? 'Sort every decision yourself: keep it or delegate it. The doors are labeled. Mostly.'
       : '🔒 Locked. Fail once on each side of the dial first — the balance only means something after the ditches.';
+    // cold-link guidance: a fresh visitor gets pointed at door number one
+    const fresh = !p.A && !p.B && !p.D && !p.E;
+    $('btnA').classList.toggle('suggested', fresh);
+    if (fresh) $('playedA').textContent = '☞ NEW HERE? START WITH THIS ONE.';
+  }
+
+  // -------------------------------------------------------- visit counter
+  // "N chief executives have walked in." Lives on anjan.app; fails silent
+  // (offline, adblock, private mode — the game never depends on it).
+  function visitCounter() {
+    const el = $('visitLine');
+    if (!el || !window.fetch) return;
+    if (!/daylightcomputer\.club|github\.io/.test(location.hostname)) return;   // no dev noise
+    const today = new Date().toISOString().slice(0, 10);
+    const bump = readStore('dcc-ceosim-visited') !== today;
+    fetch('https://anjan.app/api/decider-visits' + (bump ? '?bump=1' : ''))
+      .then(r => r.json())
+      .then(d => {
+        if (!d || !d.n) return;
+        store('dcc-ceosim-visited', today);
+        el.textContent = '☠ ' + d.n.toLocaleString() +
+          ' chief executive' + (d.n === 1 ? '' : 's') + ' have run Sunbeam. The company dies almost every time.';
+        el.hidden = false;
+      })
+      .catch(() => { /* the sign stays dark */ });
   }
 
   // ---------------------------------------------------------------- sim
-  function startScenario(mode) {
+  function startScenario(mode, seed) {
     FX.ensure();
-    game = S.makeGame(mode, Date.now() % 100000);
+    game = S.makeGame(mode, seed || parseInt(QS.get('seed'), 10) || (Date.now() % 100000));
     cardIdx = 0; nextCardWeek = S.CARD_WEEKS[mode]; currentCard = null;
     acc = 0; lastT = 0; paused = false; inCard = false; papersAlive = 0;
     setSpeed(1);
@@ -180,8 +279,8 @@
     evs.forEach(handleEvent);
     renderAll();
     if (game.over) { setTimeout(showEnd, 1600); return; }
-    if (game.week >= nextCardWeek && cardIdx < S.CARDS.length) {
-      openCard(S.CARDS[cardIdx++]);
+    if (game.week >= nextCardWeek && cardIdx < game.deck.length) {
+      openCard(game.deck[cardIdx++]);
       nextCardWeek = game.week + S.CARD_WEEKS[game.mode];
     }
   }
@@ -193,6 +292,7 @@
     if (e.who && e.who !== 'NARRATOR') showBubble(e.who, e.t);
     if (e.fire) igniteDept(e.fire);
     if (e.t && e.t.indexOf('FIRE:') === 0 && !e.fire) igniteDept(DEPTS[Math.floor(Math.random() * 4)].key);
+    if (board() && board().onEvent) board().onEvent(e);
     renderDoors();
   }
 
@@ -514,6 +614,7 @@
     }
     if (unlocked && g.mode !== 'C') addBtn('Find the balance ▸ OPTION C', true, () => startScenario('C'));
     if (g.mode === 'C' && key === 'C_LOSE') addBtn('Try the balance again ▸', true, () => startScenario('C'));
+    addBtn('📸 Keep this front page', false, shareEndCard);
     if (unlocked && nextUnplayed.length) {
       const n = nextUnplayed[0];
       addBtn('A subtler death awaits ▸ ' + NAMES[n], false, () => startScenario(n));
@@ -583,6 +684,11 @@
   renderMute();
   renderTitle();
   applyMotion();
+  visitCounter();
+  // offline: the club's service worker caches the whole game after one visit
+  try {
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js');
+  } catch (e) { /* not fatal anywhere */ }
 
   // Deep link: ?scenario=A[&week=N] jumps straight into a run mid-flight —
   // used by the DC-1 preview audit, tests, and shareable moments.
