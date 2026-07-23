@@ -345,6 +345,7 @@
   function makeGame(mode, seed) {
     const g = {
       mode: mode,
+      seed: (seed || 12345) >>> 0,
       rnd: lcg(seed || 12345),
       week: 0,
       over: false,
@@ -369,6 +370,13 @@
       history: { cash: [], morale: [], health: [] }
     };
     g.script = { A: SCRIPT_A, B: SCRIPT_B, C: SCRIPT_C, D: SCRIPT_D, E: SCRIPT_E }[mode];
+    // Seed-shuffled decision deck: same seed, same memos in the same order —
+    // so two players can run the same company and compare endings.
+    g.deck = CARDS.slice();
+    for (let i = g.deck.length - 1; i > 0; i--) {
+      const j = Math.floor(g.rnd() * (i + 1));
+      const tmp = g.deck[i]; g.deck[i] = g.deck[j]; g.deck[j] = tmp;
+    }
     return g;
   }
 

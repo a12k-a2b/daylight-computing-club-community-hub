@@ -28,6 +28,9 @@
   let workers = [];                 // {road, t, dir, speed}
   let doorsDrawn = 0;
   let raf = 0, lastSpawn = 0;
+  // civilization life
+  let lastFireWeek = 0, lastGrowthWeek = -99, prevHeadcount = 0;
+  let llamaHere = false, ferries = [];   // {t, riders}
 
   const iso = (gx, gy) => ({ x: OX + (gx - gy) * TW / 2, y: OY + (gx + gy) * TH / 2 });
 
@@ -78,7 +81,7 @@
 
   // A building: extruded box with hatched right face, floor lines, windows.
   // dark = the rival's house style: solid ink silhouette, white windows.
-  function building(gx, gy, floors, label, shakeX, dark) {
+  function building(gx, gy, floors, label, shakeX, dark, lit) {
     const h = floors * FLOOR;
     const sx = shakeX || 0;
     const base = tileDiamond(gx, gy, 1, 1).map(p => ({ x: p.x + sx, y: p.y }));
@@ -94,7 +97,9 @@
     // roof
     poly([tN, tE, tS, tW], dark ? '#000' : '#fff', dark ? '#fff' : '#000', dark ? 1.5 : 2);
     if (dark) poly([tN, tE, tS, tW], null, '#000', 1);
-    // floor lines + windows on the left face
+    // floor lines + windows on the left face; windows go dark as morale
+    // falls (lit = fraction of the building still burning the evening oil)
+    if (lit == null) lit = 1;
     ctx.strokeStyle = dark ? '#fff' : '#000'; ctx.lineWidth = 1;
     for (let f = 1; f < floors; f++) {
       const y = -f * FLOOR;
@@ -105,6 +110,7 @@
     for (let f = 0; f < floors; f++) {
       const y = -f * FLOOR - FLOOR * 0.45;
       for (let k = 1; k <= 2; k++) {
+        if (((f * 7 + k * 13 + floors * 3) % 10) / 10 >= lit) continue;   // gone home
         const t = k / 3;
         const x = bW.x + (bS.x - bW.x) * t, yy = bW.y + (bS.y - bW.y) * t + y;
         ctx.beginPath(); ctx.moveTo(x - 3, yy); ctx.lineTo(x + 3, yy); ctx.stroke();
@@ -112,7 +118,7 @@
     }
     // label plate under the base
     if (label) {
-      ctx.font = '10px ui-monospace, "Courier New", monospace';
+      ctx.font = '12px ui-monospace, "Courier New", monospace';
       ctx.textAlign = 'center'; ctx.fillStyle = '#000';
       ctx.fillText(label, bS.x, bS.y + 14);
     }
@@ -148,7 +154,7 @@
       ], '#fff', '#000', 1);
     }
     if (queue >= 1) {
-      ctx.font = '10px ui-monospace, "Courier New", monospace';
+      ctx.font = '12px ui-monospace, "Courier New", monospace';
       ctx.textAlign = 'center'; ctx.fillStyle = '#000';
       ctx.fillText('QUEUE ' + Math.round(queue), p0.x, p0.y + 13);
     }
@@ -183,9 +189,122 @@
       { x: p.x - 6, y: p.y }, { x: p.x + 6, y: p.y },
       { x: p.x + 6, y: p.y - 24 }, { x: p.x - 6, y: p.y - 24 }
     ], '#000', '#000');
-    ctx.font = '8px ui-monospace, "Courier New", monospace';
+    ctx.font = '10px ui-monospace, "Courier New", monospace';
     ctx.textAlign = 'center'; ctx.fillStyle = '#000';
     if (label) ctx.fillText(label.slice(0, 9), p.x, p.y + 9);
+  }
+
+  function fireSign(week, t) {
+    // the classic factory-floor sign, faithfully demoralizing
+    const p0 = iso(6.55, 0.75);
+    const p = { x: Math.min(p0.x, W - 66), y: p0.y };
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(p.x - 40, p.y); ctx.lineTo(p.x - 40, p.y - 32); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(p.x + 40, p.y); ctx.lineTo(p.x + 40, p.y - 32); ctx.stroke();
+    poly([
+      { x: p.x - 62, y: p.y - 32 }, { x: p.x + 62, y: p.y - 32 },
+      { x: p.x + 62, y: p.y - 62 }, { x: p.x - 62, y: p.y - 62 }
+    ], '#fff', '#000');
+    const days = Math.max(0, (week - lastFireWeek) * 7);
+    ctx.font = '10px ui-monospace, "Courier New", monospace';
+    ctx.textAlign = 'center'; ctx.fillStyle = '#000';
+    ctx.fillText('DAYS WITHOUT A FIRE', p.x, p.y - 50);
+    ctx.font = 'bold 13px ui-monospace, "Courier New", monospace';
+    ctx.fillText(String(days), p.x, p.y - 37);
+  }
+
+  function llama(gx, gy) {
+    // the contractual llama. nobody remembers signing for it.
+    const p = iso(gx, gy);
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5; ctx.fillStyle = '#fff';
+    // body
+    poly([
+      { x: p.x - 10, y: p.y - 10 }, { x: p.x + 8, y: p.y - 10 },
+      { x: p.x + 10, y: p.y - 16 }, { x: p.x - 12, y: p.y - 16 }
+    ], '#fff', '#000', 1.5);
+    // legs
+    [-8, -3, 3, 7].forEach(dx => {
+      ctx.beginPath(); ctx.moveTo(p.x + dx, p.y - 10); ctx.lineTo(p.x + dx, p.y - 2); ctx.stroke();
+    });
+    // neck + head + ears
+    ctx.beginPath(); ctx.moveTo(p.x + 9, p.y - 16); ctx.lineTo(p.x + 12, p.y - 30); ctx.stroke();
+    poly([
+      { x: p.x + 9, y: p.y - 34 }, { x: p.x + 17, y: p.y - 32 },
+      { x: p.x + 16, y: p.y - 28 }, { x: p.x + 10, y: p.y - 29 }
+    ], '#fff', '#000', 1.5);
+    ctx.beginPath(); ctx.moveTo(p.x + 10, p.y - 34); ctx.lineTo(p.x + 9, p.y - 38); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(p.x + 13, p.y - 34); ctx.lineTo(p.x + 13, p.y - 38); ctx.stroke();
+    ctx.font = '9px ui-monospace, "Courier New", monospace';
+    ctx.textAlign = 'center'; ctx.fillStyle = '#000';
+    ctx.fillText('THE LLAMA (CONTRACTUAL)', p.x, p.y + 9);
+  }
+
+  function ferryBoats(t, stride) {
+    // resignations sail to the competition. they wave. it stings.
+    const a = iso(-0.35, 5.3), b = iso(-1.05, 6.35);
+    for (let i = ferries.length - 1; i >= 0; i--) {
+      const f = ferries[i];
+      f.t += 0.006 * stride;
+      if (f.t >= 1) { ferries.splice(i, 1); continue; }
+      const x = a.x + (b.x - a.x) * f.t, y = a.y + (b.y - a.y) * f.t + Math.sin(t / 400 + i) * 1.5;
+      poly([
+        { x: x - 10, y: y }, { x: x + 10, y: y }, { x: x + 6, y: y + 5 }, { x: x - 6, y: y + 5 }
+      ], '#fff', '#000', 1.5);
+      ctx.fillStyle = '#000';
+      for (let r = 0; r < Math.min(3, f.riders); r++) {
+        ctx.beginPath(); ctx.arc(x - 4 + r * 4, y - 3, 2, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+  }
+
+  function crane(top) {
+    // hiring means construction. construction means a crane. rules are rules.
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(top.x + 10, top.y); ctx.lineTo(top.x + 10, top.y - 26); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(top.x - 14, top.y - 26); ctx.lineTo(top.x + 22, top.y - 26); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(top.x - 14, top.y - 26); ctx.lineTo(top.x - 14, top.y - 16); ctx.stroke();
+    poly([
+      { x: top.x - 17, y: top.y - 16 }, { x: top.x - 11, y: top.y - 16 },
+      { x: top.x - 11, y: top.y - 11 }, { x: top.x - 17, y: top.y - 11 }
+    ], '#fff', '#000', 1.2);
+    poly([
+      { x: top.x + 16, y: top.y - 26 }, { x: top.x + 22, y: top.y - 26 },
+      { x: top.x + 22, y: top.y - 22 }, { x: top.x + 16, y: top.y - 22 }
+    ], '#000', '#000', 1);
+  }
+
+  function pond(g, t) {
+    // the empowerment kayak (someone brought it. it's fine. it's probably fine.)
+    const p = iso(7.1, 2.4);
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.ellipse(p.x, p.y, 30, 12, 0, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff'; ctx.fill(); ctx.stroke();
+    if (g.morale > 62) {
+      const bob = Math.sin(t / 500) * 1.5, kx = p.x + Math.cos(t / 1400) * 10;
+      poly([
+        { x: kx - 8, y: p.y + bob }, { x: kx + 8, y: p.y + bob },
+        { x: kx + 4, y: p.y + 3 + bob }, { x: kx - 4, y: p.y + 3 + bob }
+      ], '#fff', '#000', 1.5);
+      ctx.fillStyle = '#000';
+      ctx.beginPath(); ctx.arc(kx, p.y - 3 + bob, 2.2, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(kx - 6, p.y - 4 + bob); ctx.lineTo(kx + 6, p.y + 1 + bob); ctx.stroke();
+      ctx.font = '9px ui-monospace, "Courier New", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('THE LAKE (MORALE KAYAK)', p.x, p.y + 24);
+    }
+  }
+
+  function birds(t) {
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 1.2;
+    for (let i = 0; i < 3; i++) {
+      const x = ((t / 60 + i * 130) % (W + 80)) - 40;
+      const y = 34 + i * 13 + Math.sin(t / 300 + i * 2) * 3;
+      ctx.beginPath();
+      ctx.moveTo(x - 4, y); ctx.quadraticCurveTo(x - 2, y - 3, x, y);
+      ctx.quadraticCurveTo(x + 2, y - 3, x + 4, y);
+      ctx.stroke();
+    }
   }
 
   function tree(gx, gy) {
@@ -240,7 +359,7 @@
     ctx.fillStyle = '#000'; ctx.fill();
     ctx.beginPath(); ctx.arc(ref.top.x + 7.5, ref.top.y - 19.5, 4.2, 0, Math.PI * 2);
     ctx.fillStyle = '#fff'; ctx.fill();
-    ctx.font = '9px ui-monospace, "Courier New", monospace';
+    ctx.font = '11px ui-monospace, "Courier New", monospace';
     ctx.textAlign = 'center'; ctx.fillStyle = '#000';
     ctx.fillText(rival > 55 ? 'THE COMPETITION (THRIVING)' : 'THE COMPETITION',
       Math.max(ref.base.x, 96), ref.base.y + 26);
@@ -260,8 +379,16 @@
   }
 
   // ---- the frame ---------------------------------------------------------
+  // LIVE mode runs drawScene at 60fps; PAPER mode (window.PAPER_MOTION, set
+  // by game.js — the DC-1 default) calls it once per simulated week instead:
+  // a time-lapse of stills, no continuous motion on the reflective panel.
   function frame(t) {
     raf = requestAnimationFrame(frame);
+    if (window.PAPER_MOTION) return;
+    drawScene(t);
+  }
+
+  function drawScene(t) {
     if (!cur || !ctx || document.hidden) return;
     sizeCanvas();
     const g = cur;
@@ -273,6 +400,8 @@
     // grounds furniture
     tree(0.2, 1.9); tree(5.3, 3.4); tree(2.1, 4.9); tree(4.9, 0.9);
     sun(g.morale, t);
+    if (g.morale > 75) birds(t);
+    if (g.mode === 'B' || g.mode === 'E') pond(g, t);
     if (showRival) moonbeam(g.rival || 6, t);
 
     // roads from each department to HQ
@@ -293,6 +422,7 @@
     // buildings, back to front; floors follow staff counts
     const per = Math.max(1, Math.round(g.headcount / 4));
     const tops = {};
+    const lit = Math.max(0.15, g.morale / 100);
     const order = Object.keys(SITES).sort((a, b) => (SITES[a].gx + SITES[a].gy) - (SITES[b].gx + SITES[b].gy));
     order.forEach(k => {
       const s = SITES[k];
@@ -301,7 +431,7 @@
       const floors = k === 'CEO'
         ? 5 + Math.min(3, Math.round(g.queue / 22))
         : Math.max(1, Math.min(7, Math.round(per / 2.2)));
-      const ref = building(s.gx, s.gy, floors, s.label, shake);
+      const ref = building(s.gx, s.gy, floors, s.label, shake, false, lit);
       tops[k] = ref;
       if (k === 'CEO') flag({ x: ref.top.x, y: ref.top.y }, g.morale);
       if (burning) {
@@ -311,14 +441,23 @@
       }
     });
 
+    // civilization life: cranes while hiring, the llama, departures by ferry
+    if (g.week - lastGrowthWeek < 4 && !g.over) {
+      crane(tops[DEPTS[Math.floor(g.week / 4) % 4]].top);
+    }
+    if (llamaHere) llama(6.6, 4.4);
+    fireSign(g.week, t);
+    ferryBoats(t, window.PAPER_MOTION ? 30 : 1);
+
     // one-way doors as monoliths on the front lawn (in front of the city)
     (g.doors || []).forEach((d, i) => monolith(i, d));
 
     // citizens commuting; speed follows ship speed
     ctx.fillStyle = '#000';
     ctx.strokeStyle = '#000'; ctx.lineWidth = 1;
+    const stride = window.PAPER_MOTION ? 40 : 1;   // paper: one visible step per week
     workers.forEach(wk => {
-      wk.t += wk.dir * wk.speed * (0.3 + g.speed);
+      wk.t += wk.dir * wk.speed * (0.3 + g.speed) * stride;
       if (wk.t > 1 || wk.t < 0) { wk.dir *= -1; wk.t = Math.max(0, Math.min(1, wk.t)); }
       const s = SITES[wk.road], a = iso(s.gx + 0.5, s.gy + 0.15);
       const x = a.x + (hqBase.x - a.x) * wk.t, y = a.y + (hqBase.y - a.y) * wk.t;
@@ -346,6 +485,8 @@
   window.BOARD = {
     reset(m) {
       mode = m; fires = {}; papers = []; doorsDrawn = 0;
+      lastFireWeek = 0; lastGrowthWeek = -99; prevHeadcount = 0;
+      llamaHere = false; ferries = [];
       cv = document.getElementById('isoCanvas');
       ctx = cv.getContext('2d');
       sizeCanvas();
@@ -371,6 +512,19 @@
     },
     render(g) {
       cur = g;
+      if (g.headcount > prevHeadcount && prevHeadcount > 0) lastGrowthWeek = g.week;
+      prevHeadcount = g.headcount;
+      // citizen count tracks headcount
+      const want = Math.max(8, Math.min(26, Math.round(g.headcount / 3.4)));
+      while (workers.length < want) {
+        workers.push({ road: DEPTS[workers.length % 4], t: Math.random(), dir: 1, speed: 0.002 + Math.random() * 0.004 });
+      }
+      while (workers.length > want) workers.pop();
+      if (window.PAPER_MOTION) {
+        papers.length = 0;                 // memos-in-flight need live motion
+        drawScene(g.week * 300);
+        return;
+      }
       // one memo per tick, routed by the philosophy being played
       const now = performance.now();
       if (now - lastSpawn > 220 && papers.length < 9) {
@@ -382,15 +536,20 @@
         else if (g.mode === 'C') to = Math.random() < 0.25 ? 'CEO' : from;
         if (to !== from) papers.push({ from, to, t: 0, dur: 950, spin: Math.random() * 6 - 3 });
       }
-      // citizen count tracks headcount
-      const want = Math.max(8, Math.min(26, Math.round(g.headcount / 3.4)));
-      while (workers.length < want) {
-        workers.push({ road: DEPTS[workers.length % 4], t: Math.random(), dir: 1, speed: 0.002 + Math.random() * 0.004 });
-      }
-      while (workers.length > want) workers.pop();
     },
     fire(key) {
       fires[key] = performance.now() + 6000;
+      if (cur) lastFireWeek = cur.week;
+      if (window.PAPER_MOTION && cur) drawScene(cur.week * 300 + 60);
+    },
+    onEvent(e) {
+      if (!e || !e.t) return;
+      if (/llama/i.test(e.t)) llamaHere = true;
+      if (/quits|resignation|leave for Moonbeam/i.test(e.t)) {
+        const riders = /three best/i.test(e.t) ? 3 : /Two more/i.test(e.t) ? 2 : 1;
+        ferries.push({ t: 0, riders });
+        if (window.PAPER_MOTION && cur) drawScene(cur.week * 300 + 30);
+      }
     },
     anchor(key) {
       // bubble anchor in #orgboard coordinates: above the building
