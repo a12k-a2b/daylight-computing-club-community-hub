@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Decider — a time-lapse tragedy in four acts (and one escape)</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='28' height='28' fill='white' stroke='black' stroke-width='3'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' font-family='Georgia'%3E☂%3C/text%3E%3C/svg%3E">
+<style>
+/* The Decider — pure grayscale, real borders, paper motion only.
+   Same rules of the road as the rest of the club site. */
+:root {
+  --ink: #000;
+  --paper: #fff;
+  --mid: #555;
+  --faint: #999;
+  --ghost: #e4e4e4;
+  --rule: 2px solid var(--ink);
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; touch-action: manipulation; }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 18px;
+  line-height: 1.45;
+}
+button {
+  font-family: inherit;
+  font-size: 17px;
+  background: var(--paper);
+  color: var(--ink);
+  border: var(--rule);
+  padding: 10px 16px;
+  min-height: 48px;
+  cursor: pointer;
+}
+button:disabled { color: var(--faint); border-color: var(--faint); cursor: not-allowed; }
+button.primary, button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.mono { font-family: ui-monospace, 'Courier New', monospace; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 18px 16px 60px; }
+[hidden] { display: none !important; }
+
+/* ---------------- title screen ---------------- */
+#titleScreen .masthead {
+  border-bottom: 6px double var(--ink);
+  padding-bottom: 14px; margin-bottom: 6px; text-align: center;
+}
+#titleScreen .masthead h1 {
+  margin: 6px 0 2px; font-size: clamp(40px, 7vw, 72px);
+  letter-spacing: 2px; font-weight: normal;
+}
+#titleScreen .masthead .kicker {
+  font-family: ui-monospace, 'Courier New', monospace;
+  font-size: 13px; letter-spacing: 3px; text-transform: uppercase; color: var(--mid);
+}
+#titleScreen .masthead .sub { font-style: italic; font-size: 19px; margin: 4px 0 0; }
+.deck {
+  max-width: 720px; margin: 18px auto 26px; font-size: 18px; text-align: center;
+}
+.spectrum-axis {
+  text-align: center; font-family: ui-monospace, 'Courier New', monospace;
+  font-size: 12px; letter-spacing: 2px; color: var(--mid); margin: 0 0 10px;
+}
+.scenarios { display: grid; grid-template-columns: repeat(auto-fit, minmax(196px, 1fr)); gap: 14px; }
+.scenario .trap { font-size: 10px; letter-spacing: 2px; color: var(--mid); }
+.scenario {
+  border: var(--rule); padding: 18px; text-align: left; background: var(--paper);
+  display: flex; flex-direction: column; gap: 8px; min-height: 220px;
+}
+.scenario:hover:not(:disabled) { outline: 2px solid var(--ink); outline-offset: 2px; }
+.scenario .opt { font-family: ui-monospace, 'Courier New', monospace; font-size: 13px; letter-spacing: 2px; border: 1px solid var(--ink); align-self: flex-start; padding: 2px 8px; }
+.scenario:disabled .opt { border-color: var(--faint); }
+.scenario h2 { margin: 2px 0 0; font-size: 26px; font-weight: normal; }
+.scenario .motto { font-style: italic; color: var(--mid); margin: 0; }
+.scenario .desc { font-size: 16px; margin: 0; }
+.scenario .played { font-family: ui-monospace, 'Courier New', monospace; font-size: 13px; letter-spacing: 1px; margin-top: auto; }
+.title-foot { text-align: center; color: var(--mid); font-size: 15px; margin-top: 30px; font-style: italic; }
+.title-foot a { color: var(--ink); }
+
+/* ---------------- sim screen ---------------- */
+#topbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+  border-bottom: var(--rule); padding-bottom: 10px; margin-bottom: 12px;
+}
+#topbar .spacer { flex: 1; }
+#scenarioLabel { font-size: 20px; }
+#scenarioLabel .motto { color: var(--mid); font-style: italic; font-size: 16px; }
+#clock { font-family: ui-monospace, 'Courier New', monospace; font-size: 16px; letter-spacing: 1px; border: 1px solid var(--ink); padding: 6px 10px; }
+.speedbtn { min-width: 52px; padding: 8px 10px; font-family: ui-monospace, 'Courier New', monospace; }
+
+#metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.metric { border: var(--rule); padding: 8px 10px; }
+.metric .label { font-family: ui-monospace, 'Courier New', monospace; font-size: 11px; letter-spacing: 2px; color: var(--mid); }
+.metric .value { font-size: 22px; line-height: 1.2; font-family: ui-monospace, 'Courier New', monospace; }
+.metric .bar { height: 8px; border: 1px solid var(--ink); margin-top: 6px; }
+.metric .bar i { display: block; height: 100%; background: var(--ink); transition: width 0.5s ease; }
+.metric.hot .value { animation: metricshake 0.4s; }
+@keyframes metricshake { 25% { transform: translateX(-2px);} 75% { transform: translateX(2px);} }
+
+#main { display: grid; grid-template-columns: 3fr 2fr; gap: 14px; align-items: stretch; }
+@media (max-width: 800px) { #main { grid-template-columns: 1fr; } }
+
+/* org board */
+#orgboard { border: var(--rule); padding: 14px; position: relative; min-height: 360px; display: flex; flex-direction: column; gap: 18px; }
+.boardtitle { font-family: ui-monospace, 'Courier New', monospace; font-size: 11px; letter-spacing: 2px; color: var(--mid); }
+#ceoRow { display: flex; justify-content: center; align-items: flex-end; gap: 14px; min-height: 110px; }
+#ceoBox {
+  border: var(--rule); padding: 10px 22px; text-align: center; position: relative; background: var(--paper);
+}
+#ceoBox .who { font-size: 20px; }
+#ceoBox .role { font-family: ui-monospace, 'Courier New', monospace; font-size: 11px; letter-spacing: 2px; color: var(--mid); }
+#pile { display: flex; flex-direction: column-reverse; align-items: center; width: 64px; min-height: 8px; }
+#pile .sheet { width: 54px; height: 5px; border: 1px solid var(--ink); background: var(--paper); margin-top: -1px; }
+#pile.toppling { transform: rotate(7deg); transform-origin: bottom center; transition: transform 0.6s ease; }
+#pileLabel { font-family: ui-monospace, 'Courier New', monospace; font-size: 11px; letter-spacing: 1px; text-align: center; }
+#depts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.dept { border: var(--rule); padding: 8px; text-align: center; position: relative; min-height: 84px; }
+.dept .dname { font-family: ui-monospace, 'Courier New', monospace; font-size: 12px; letter-spacing: 2px; }
+.dept .dots { font-size: 15px; letter-spacing: 3px; line-height: 1.1; word-break: break-all; min-height: 34px; color: var(--ink); }
+.dept.onfire { animation: burnshake 0.35s ease 0s 3; }
+.firebadge {
+  position: absolute; top: -12px; right: -6px; background: var(--ink); color: var(--paper);
+  font-family: ui-monospace, 'Courier New', monospace; font-size: 11px; letter-spacing: 1px; padding: 2px 6px;
+}
+@keyframes burnshake { 25% { transform: translate(-2px, 1px) rotate(-1deg);} 75% { transform: translate(2px, -1px) rotate(1deg);} }
+#doorsRow { display: flex; flex-wrap: wrap; gap: 8px; min-height: 30px; align-items: center; }
+.doorchip {
+  font-family: ui-monospace, 'Courier New', monospace; font-size: 11px; letter-spacing: 1px;
+  background: var(--ink); color: var(--paper); padding: 4px 8px;
+}
+.doorchip::before { content: "◼ "; }
+#doorsHint { font-family: ui-monospace, 'Courier New', monospace; font-size: 11px; color: var(--faint); letter-spacing: 1px; }
+
+/* speech bubble */
+#bubble {
+  position: absolute; z-index: 4; max-width: 260px; background: var(--paper);
+  border: var(--rule); padding: 8px 12px; font-size: 15px;
+  transform: translate(-50%, -100%); transition: opacity 0.25s;
+}
+#bubble .bwho { font-family: ui-monospace, 'Courier New', monospace; font-size: 11px; letter-spacing: 2px; }
+#bubble::after {
+  content: ""; position: absolute; left: 50%; bottom: -10px; width: 10px; height: 10px;
+  background: var(--paper); border-right: var(--rule); border-bottom: var(--rule);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+/* flying paper */
+.flypaper {
+  position: fixed; z-index: 3; width: 16px; height: 20px; background: var(--paper);
+  border: 1.5px solid var(--ink); pointer-events: none;
+  transition: transform 0.9s ease-in, opacity 0.9s;
+}
+
+/* ticker */
+#tickerWrap { border: var(--rule); display: flex; flex-direction: column; min-height: 360px; max-height: 480px; }
+#tickerWrap .boardtitle { padding: 10px 12px 0; }
+#ticker { overflow-y: auto; padding: 6px 12px 12px; flex: 1; }
+.tick { border-bottom: 1px solid var(--ghost); padding: 7px 0; font-size: 15.5px; animation: settle 0.35s ease; }
+.tick .tw { font-family: ui-monospace, 'Courier New', monospace; font-size: 12px; color: var(--mid); letter-spacing: 1px; }
+.tick.major { font-weight: bold; }
+.tick.fire { background: var(--ink); color: var(--paper); padding-left: 8px; padding-right: 8px; }
+.tick.fire .tw { color: var(--ghost); }
+@keyframes settle { from { transform: translateY(-6px); opacity: 0; } to { transform: none; opacity: 1; } }
+
+/* chart */
+#chartWrap { border: var(--rule); margin-top: 14px; padding: 10px 12px 6px; }
+#chart { width: 100%; height: 140px; display: block; }
+#chartLegend { font-family: ui-monospace, 'Courier New', monospace; font-size: 11px; letter-spacing: 1px; color: var(--mid); padding: 4px 0 6px; }
+
+/* ---------------- overlays ---------------- */
+.overlay {
+  position: fixed; inset: 0; background: rgba(255,255,255,0.92);
+  display: flex; align-items: center; justify-content: center; padding: 18px; z-index: 10;
+  overflow-y: auto;
+}
+.memo {
+  background: var(--paper); border: var(--rule); max-width: 560px; width: 100%; padding: 22px;
+  animation: settle 0.3s ease;
+}
+.memo .memohead { font-family: ui-monospace, 'Courier New', monospace; font-size: 12px; letter-spacing: 2px; border-bottom: var(--rule); padding-bottom: 8px; margin-bottom: 12px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; }
+.memo h3 { margin: 0 0 8px; font-size: 24px; font-weight: normal; }
+.memo .body { font-size: 16.5px; }
+.stamps { display: flex; gap: 8px; margin: 14px 0; flex-wrap: wrap; }
+.stamp { font-family: ui-monospace, 'Courier New', monospace; font-size: 12px; letter-spacing: 2px; border: 2px solid var(--ink); padding: 4px 10px; transform: rotate(-2deg); }
+.stamp.dark { background: var(--ink); color: var(--paper); transform: rotate(1.5deg); }
+.memo .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+@media (max-width: 520px) { .memo .choices { grid-template-columns: 1fr; } }
+.memo .choices button { min-height: 60px; }
+.memo .nb { font-size: 13.5px; color: var(--mid); font-style: italic; margin: 8px 0 0; }
+#cardOutcome { border-top: 1px solid var(--ink); margin-top: 16px; padding-top: 12px; font-size: 16.5px; }
+#cardOutcome .verdict { font-family: ui-monospace, 'Courier New', monospace; font-size: 12px; letter-spacing: 2px; }
+
+/* newspaper ending */
+.frontpage {
+  background: var(--paper); border: var(--rule); max-width: 760px; width: 100%; padding: 26px;
+  animation: settle 0.45s ease; margin: auto;
+}
+.frontpage .papername { text-align: center; font-size: clamp(28px, 5vw, 44px); letter-spacing: 3px; border-bottom: 6px double var(--ink); padding-bottom: 8px; }
+.frontpage .dateline { display: flex; justify-content: space-between; font-family: ui-monospace, 'Courier New', monospace; font-size: 12px; letter-spacing: 1px; border-bottom: 1px solid var(--ink); padding: 6px 0; margin-bottom: 14px; }
+.frontpage h2.headline { font-size: clamp(26px, 4.6vw, 40px); line-height: 1.12; margin: 0 0 8px; font-weight: bold; }
+.frontpage .subhead { font-style: italic; font-size: 18px; margin: 0 0 16px; }
+.frontpage .cols { column-count: 2; column-gap: 22px; column-rule: 1px solid var(--ghost); font-size: 15.5px; }
+@media (max-width: 640px) { .frontpage .cols { column-count: 1; } }
+.frontpage h4 { font-family: ui-monospace, 'Courier New', monospace; font-size: 12px; letter-spacing: 2px; margin: 0 0 8px; }
+.frontpage .moments { margin: 0 0 14px; padding: 0; list-style: none; }
+.frontpage .moments li { padding: 4px 0; border-bottom: 1px solid var(--ghost); break-inside: avoid; }
+.frontpage .moments .tw { font-family: ui-monospace, 'Courier New', monospace; font-size: 11.5px; color: var(--mid); }
+#fpEssay p { font-size: 15.5px; margin: 0 0 12px; text-indent: 1.4em; }
+#fpEssay p:first-of-type { text-indent: 0; }
+#fpEssay p:first-of-type::first-letter { font-size: 2.1em; float: left; line-height: 0.85; padding-right: 5px; }
+.lessons { border: var(--rule); padding: 14px 16px; margin-top: 16px; break-inside: avoid; }
+.lessons ol { margin: 8px 0 0; padding-left: 20px; }
+.lessons li { margin-bottom: 8px; font-size: 15.5px; }
+.endbtns { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+.unlockstamp {
+  font-family: ui-monospace, 'Courier New', monospace; letter-spacing: 2px; font-size: 14px;
+  border: 3px solid var(--ink); padding: 8px 14px; transform: rotate(-3deg);
+  display: inline-block; margin-top: 14px;
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ TITLE ============ -->
+  <section id="titleScreen">
+    <header class="masthead">
+      <div class="kicker">Daylight Computer Club · Management Simulator №1</div>
+      <h1>THE DECIDER</h1>
+      <p class="sub">A time-lapse tragedy in four acts — and one narrow escape.</p>
+    </header>
+    <p class="deck">
+      You run <b>Sunbeam Systems</b>, maker of the Slab™ — a paper-like tablet with a loyal
+      following and 40 employees who all need decisions made. The only question that matters:
+      <i>which decisions are yours?</i> Pick a philosophy and watch years happen in minutes.
+      The cartoon extremes die fast and loud. The subtle versions — the ones most founders
+      actually fall into — feel fine for years, because nothing burns, nobody complains,
+      and you can always point at the evidence that you're doing it right.
+    </p>
+    <div class="spectrum-axis mono">◀ TOTAL GRIP · · · · · · · · · · · · TOTAL TRUST ▶</div>
+    <div class="scenarios">
+      <button class="scenario" id="btnA">
+        <span class="opt">OPTION A</span>
+        <span class="trap mono">THE CARTOON EXTREME</span>
+        <h2>The Bottleneck</h2>
+        <p class="motto">“I'm the best decision-maker here. So I'll make the decisions. All of them.”</p>
+        <p class="desc">Every call routed to the corner office. Quality: superb. Throughput: one human.</p>
+        <span class="played mono" id="playedA"></span>
+      </button>
+      <button class="scenario" id="btnD">
+        <span class="opt">OPTION A½</span>
+        <span class="trap mono">THE COMMON TRAP</span>
+        <h2>The Final Say</h2>
+        <p class="motto">“I delegate everything! …except the handful of things that actually matter.”</p>
+        <p class="desc">94% of decisions delegated, 6% of the leverage. No fires, no feedback, no growth.</p>
+        <span class="played mono" id="playedD"></span>
+      </button>
+      <button class="scenario" id="btnC">
+        <span class="opt">OPTION C</span>
+        <span class="trap mono">THE NARROW PATH</span>
+        <h2>The Balance</h2>
+        <p class="motto">“I make the few decisions only I can make. You make the rest — out loud.”</p>
+        <p class="desc" id="descC">Sort every decision yourself: keep it or delegate it. The doors are labeled. Mostly.</p>
+        <span class="played mono" id="playedC"></span>
+      </button>
+      <button class="scenario" id="btnE">
+        <span class="opt">OPTION B½</span>
+        <span class="trap mono">THE COMMON TRAP</span>
+        <h2>The Conductor</h2>
+        <p class="motto">“Great leaders grow people. So I gave them the big calls too.”</p>
+        <p class="desc">Wonderful culture, real empowerment, and a standard slipping 30% per critical call.</p>
+        <span class="played mono" id="playedE"></span>
+      </button>
+      <button class="scenario" id="btnB">
+        <span class="opt">OPTION B</span>
+        <span class="trap mono">THE CARTOON EXTREME</span>
+        <h2>The Ghost</h2>
+        <p class="motto">“I hire great people and get out of the way. Way, way out of the way.”</p>
+        <p class="desc">Everyone empowered, everything shipping, nobody steering. What could compound?</p>
+        <span class="played mono" id="playedB"></span>
+      </button>
+    </div>
+    <p class="title-foot">
+      Best with sound on 🔉 — there are ka-chings, alarms, and one very sad trombone.<br>
+      Brought to potluck by the <a href="../index.html">Daylight Computer Club</a>.
+    </p>
+  </section>
+
+  <!-- ============ SIM ============ -->
+  <section id="simScreen" hidden>
+    <div id="topbar">
+      <button id="btnQuit" title="Back to menu">←</button>
+      <div id="scenarioLabel"><b id="slName"></b><br><span class="motto" id="slMotto"></span></div>
+      <div class="spacer"></div>
+      <div id="clock" aria-live="off">W1 · Q1</div>
+      <button class="speedbtn" id="btnPause" title="Pause">⏸</button>
+      <button class="speedbtn" data-speed="1">1×</button>
+      <button class="speedbtn" data-speed="2">2×</button>
+      <button class="speedbtn" data-speed="4">4×</button>
+      <button class="speedbtn" data-speed="8">8×</button>
+      <button id="btnMute" title="Sound">🔉</button>
+    </div>
+
+    <div id="metrics"></div>
+
+    <div id="main">
+      <div id="orgboard">
+        <div class="boardtitle">SUNBEAM SYSTEMS — LIVE ORGANISM VIEW</div>
+        <div id="ceoRow">
+          <div>
+            <div id="pile"></div>
+            <div id="pileLabel">queue: 0</div>
+          </div>
+          <div id="ceoBox"><div class="who">YOU</div><div class="role">CHIEF EVERYTHING OFFICER</div></div>
+        </div>
+        <div id="depts"></div>
+        <div id="doorsRow"><span id="doorsHint">ONE-WAY DOORS WALKED THROUGH APPEAR HERE ▸</span></div>
+        <div id="bubble" hidden><div class="bwho"></div><div class="btext"></div></div>
+      </div>
+      <div id="tickerWrap">
+        <div class="boardtitle">THE WIRE — LIVE FROM THE BUILDING</div>
+        <div id="ticker" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <div id="chartWrap">
+      <canvas id="chart"></canvas>
+      <div id="chartLegend">━━ CASH ($k) &nbsp;&nbsp; ┄┄ MORALE &nbsp;&nbsp; │ quarter marks</div>
+    </div>
+  </section>
+
+  <!-- ============ DECISION CARD ============ -->
+  <div class="overlay" id="cardOverlay" hidden>
+    <div class="memo" role="dialog" aria-modal="true" aria-labelledby="cardTitle">
+      <div class="memohead"><span>INTER-OFFICE MEMO</span><span id="cardNo"></span></div>
+      <h3 id="cardTitle"></h3>
+      <div class="body" id="cardDesc"></div>
+      <div class="stamps">
+        <span class="stamp" id="stampStakes"></span>
+        <span class="stamp dark" id="stampDoor"></span>
+      </div>
+      <div class="choices" id="cardChoices">
+        <button id="chooseTake">🖋 I'll decide this myself</button>
+        <button id="chooseDel">📤 Delegate it</button>
+      </div>
+      <p class="nb" id="cardNB"></p>
+      <div id="cardOutcome" hidden>
+        <div class="verdict" id="cardVerdict"></div>
+        <p id="cardResult"></p>
+        <button id="cardContinue" class="primary">Continue the time-lapse ▸</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ENDING ============ -->
+  <div class="overlay" id="endOverlay" hidden>
+    <div class="frontpage">
+      <div class="papername" id="fpPaper">THE DAILY SLAB</div>
+      <div class="dateline"><span id="fpDate"></span><span>PRICE: ONE DECISION</span></div>
+      <h2 class="headline" id="fpHeadline"></h2>
+      <p class="subhead" id="fpSub"></p>
+      <div class="cols">
+        <h4>HOW IT HAPPENED — A TIMELINE OF FINE DECISIONS</h4>
+        <ul class="moments" id="fpMoments"></ul>
+        <div id="fpDoors"></div>
+        <div id="fpEssay"></div>
+        <div class="lessons">
+          <h4 id="fpLessonTitle"></h4>
+          <ol id="fpLessons"></ol>
+        </div>
+      </div>
+      <div id="fpUnlock"></div>
+      <div class="endbtns" id="fpButtons"></div>
+    </div>
+  </div>
+
+</div>
+<script src="model.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
