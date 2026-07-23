@@ -35,7 +35,7 @@
     if (cv.width !== w * dpr) { cv.width = w * dpr; cv.height = h * dpr; }
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     W = w; H = h;
-    OX = W / 2 + 8;
+    OX = W / 2 + 30;
     OY = 78;
   }
 
@@ -209,6 +209,37 @@
     }
   }
 
+  function moonbeam(rival, t) {
+    // the competition, on its own islet across the water off the front-left
+    // shore — every week your engine underperforms, their tower gains height
+    poly(tileDiamond(-1.7, 5.9, 1.9, 1.6), '#fff', '#000');
+    // water between the islands
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 1;
+    for (let i = 0; i < 3; i++) {
+      const p = iso(-0.55 + i * 0.12, 5.45 + i * 0.4);
+      ctx.beginPath();
+      for (let s = 0; s <= 4; s++) {
+        const x = p.x + s * 8, y = p.y + Math.sin(s * Math.PI + t / 700 + i) * 2;
+        s ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      }
+      ctx.stroke();
+    }
+    const floors = Math.max(1, Math.min(12, Math.round(1 + rival / 9)));
+    const ref = building(-1.25, 6.2, floors, 'MOONBEAM');
+    if (rival > 60) building(-0.5, 6.55, Math.max(1, floors - 4), null);
+    // their crescent flag, always crisp
+    ctx.strokeStyle = '#000'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(ref.top.x, ref.top.y); ctx.lineTo(ref.top.x, ref.top.y - 16); ctx.stroke();
+    ctx.beginPath(); ctx.arc(ref.top.x + 5, ref.top.y - 18, 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#000'; ctx.fill();
+    ctx.beginPath(); ctx.arc(ref.top.x + 7.5, ref.top.y - 19.5, 4.2, 0, Math.PI * 2);
+    ctx.fillStyle = '#fff'; ctx.fill();
+    ctx.font = '9px ui-monospace, "Courier New", monospace';
+    ctx.textAlign = 'center'; ctx.fillStyle = '#000';
+    ctx.fillText(rival > 55 ? 'THE COMPETITION (THRIVING)' : 'THE COMPETITION',
+      Math.max(ref.base.x, 96), ref.base.y + 26);
+  }
+
   function cracks() {
     ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5;
     [[0.4, 2.2], [2.6, 3.1], [3.8, 1.4]].forEach((c, i) => {
@@ -236,6 +267,7 @@
     // grounds furniture
     tree(0.2, 1.9); tree(5.3, 3.4); tree(2.1, 4.9); tree(4.9, 0.9);
     sun(g.morale, t);
+    moonbeam(g.rival || 6, t);
 
     // roads from each department to HQ
     const hqBase = iso(SITES.CEO.gx + 0.5, SITES.CEO.gy + 0.9);
