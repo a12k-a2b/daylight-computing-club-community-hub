@@ -6,12 +6,33 @@
   // Alternate skins (iso.html) define window.BOARD before this file loads;
   // it takes over drawing the org view: {reset, render, fire, anchor}.
   const board = () => window.BOARD;
+  // Safari private mode can throw on localStorage — never let a save break play.
+  const store = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* private mode */ } };
+  const readStore = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  const QS = new URLSearchParams(location.search);
+
+  // Motion mode. LIVE animates continuously; PAPER redraws once per simulated
+  // week — a time-lapse of stills, the right idiom for the DC-1's reflective
+  // panel (and for anyone who prefers reduced motion).
+  let paperMotion = QS.get('motion') ? QS.get('motion') === 'paper'
+    : readStore('dcc-ceosim-motion') ? readStore('dcc-ceosim-motion') === 'paper'
+    : !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  function applyMotion() {
+    window.PAPER_MOTION = paperMotion;
+    document.body.classList.toggle('papermode', paperMotion);
+    const b = $('btnMotion');
+    if (b) {
+      b.textContent = paperMotion ? 'PAPER' : 'LIVE';
+      b.setAttribute('aria-pressed', String(paperMotion));
+    }
+    if (board() && window.SIM && SIM.state()) board().render(SIM.state());
+  }
 
   // ------------------------------------------------------------- audio
   // Tiny synth: everything is beeps, thuds, paper, and one sad trombone.
   const FX = {
     ctx: null,
-    muted: localStorage.getItem('dcc-ceosim-mute') === '1',
+    muted: readStore('dcc-ceosim-mute') === '1',
     ensure() {
       if (!this.ctx) {
         const AC = window.AudioContext || window.webkitAudioContext;
@@ -95,10 +116,10 @@
   let bubbleTimer = 0, papersAlive = 0;
 
   function progress() {
-    try { return JSON.parse(localStorage.getItem('dcc-ceosim-progress') || '{}'); }
+    try { return JSON.parse(readStore('dcc-ceosim-progress') || '{}'); }
     catch (e) { return {}; }
   }
-  function saveProgress(p) { localStorage.setItem('dcc-ceosim-progress', JSON.stringify(p)); }
+  function saveProgress(p) { store('dcc-ceosim-progress', JSON.stringify(p)); }
 
   // -------------------------------------------------------------- title
   function sideDone(p) {
@@ -228,6 +249,7 @@
   }
 
   function spawnPaper(fromEl, toEl) {
+    if (paperMotion) return;
     if (papersAlive > 8 || speed >= 8 || document.hidden || !fromEl || !toEl) return;
     const f = fromEl.getBoundingClientRect(), to = toEl.getBoundingClientRect();
     const p = document.createElement('div');
@@ -536,8 +558,14 @@
   function renderMute() { $('btnMute').textContent = FX.muted ? '🔇' : '🔉'; }
   $('btnMute').addEventListener('click', () => {
     FX.muted = !FX.muted;
-    localStorage.setItem('dcc-ceosim-mute', FX.muted ? '1' : '0');
+    store('dcc-ceosim-mute', FX.muted ? '1' : '0');
     renderMute(); if (!FX.muted) FX.play('blip');
+  });
+  const bm = $('btnMotion');
+  if (bm) bm.addEventListener('click', () => {
+    paperMotion = !paperMotion;
+    store('dcc-ceosim-motion', paperMotion ? 'paper' : 'live');
+    applyMotion();
   });
   $('chooseTake').addEventListener('click', () => choose(true));
   $('chooseDel').addEventListener('click', () => choose(false));
@@ -554,4 +582,24 @@
 
   renderMute();
   renderTitle();
+  applyMotion();
+
+  // Deep link: ?scenario=A[&week=N] jumps straight into a run mid-flight —
+  // used by the DC-1 preview audit, tests, and shareable moments.
+  const dlMode = (QS.get('scenario') || '').toUpperCase();
+  if (MODE_META[dlMode] && (dlMode !== 'C' || progress().A)) {
+    startScenario(dlMode);
+    const targetWk = parseInt(QS.get('week'), 10) || 0;
+    while (game && !game.over && game.week < targetWk) {
+      step();
+      if (inCard && currentCard) {
+        const keep = game.mode === 'A' ? true
+          : game.mode === 'D' ? currentCard.stakes === 'HIGH'
+          : game.mode === 'C' ? (currentCard.oneWay && currentCard.stakes === 'HIGH')
+          : false;
+        choose(keep);
+        $('cardOverlay').hidden = true; inCard = false; currentCard = null;
+      }
+    }
+  }
 })();

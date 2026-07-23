@@ -112,7 +112,7 @@
     }
     // label plate under the base
     if (label) {
-      ctx.font = '10px ui-monospace, "Courier New", monospace';
+      ctx.font = '12px ui-monospace, "Courier New", monospace';
       ctx.textAlign = 'center'; ctx.fillStyle = '#000';
       ctx.fillText(label, bS.x, bS.y + 14);
     }
@@ -148,7 +148,7 @@
       ], '#fff', '#000', 1);
     }
     if (queue >= 1) {
-      ctx.font = '10px ui-monospace, "Courier New", monospace';
+      ctx.font = '12px ui-monospace, "Courier New", monospace';
       ctx.textAlign = 'center'; ctx.fillStyle = '#000';
       ctx.fillText('QUEUE ' + Math.round(queue), p0.x, p0.y + 13);
     }
@@ -183,7 +183,7 @@
       { x: p.x - 6, y: p.y }, { x: p.x + 6, y: p.y },
       { x: p.x + 6, y: p.y - 24 }, { x: p.x - 6, y: p.y - 24 }
     ], '#000', '#000');
-    ctx.font = '8px ui-monospace, "Courier New", monospace';
+    ctx.font = '10px ui-monospace, "Courier New", monospace';
     ctx.textAlign = 'center'; ctx.fillStyle = '#000';
     if (label) ctx.fillText(label.slice(0, 9), p.x, p.y + 9);
   }
@@ -240,7 +240,7 @@
     ctx.fillStyle = '#000'; ctx.fill();
     ctx.beginPath(); ctx.arc(ref.top.x + 7.5, ref.top.y - 19.5, 4.2, 0, Math.PI * 2);
     ctx.fillStyle = '#fff'; ctx.fill();
-    ctx.font = '9px ui-monospace, "Courier New", monospace';
+    ctx.font = '11px ui-monospace, "Courier New", monospace';
     ctx.textAlign = 'center'; ctx.fillStyle = '#000';
     ctx.fillText(rival > 55 ? 'THE COMPETITION (THRIVING)' : 'THE COMPETITION',
       Math.max(ref.base.x, 96), ref.base.y + 26);
@@ -260,8 +260,16 @@
   }
 
   // ---- the frame ---------------------------------------------------------
+  // LIVE mode runs drawScene at 60fps; PAPER mode (window.PAPER_MOTION, set
+  // by game.js — the DC-1 default) calls it once per simulated week instead:
+  // a time-lapse of stills, no continuous motion on the reflective panel.
   function frame(t) {
     raf = requestAnimationFrame(frame);
+    if (window.PAPER_MOTION) return;
+    drawScene(t);
+  }
+
+  function drawScene(t) {
     if (!cur || !ctx || document.hidden) return;
     sizeCanvas();
     const g = cur;
@@ -317,8 +325,9 @@
     // citizens commuting; speed follows ship speed
     ctx.fillStyle = '#000';
     ctx.strokeStyle = '#000'; ctx.lineWidth = 1;
+    const stride = window.PAPER_MOTION ? 40 : 1;   // paper: one visible step per week
     workers.forEach(wk => {
-      wk.t += wk.dir * wk.speed * (0.3 + g.speed);
+      wk.t += wk.dir * wk.speed * (0.3 + g.speed) * stride;
       if (wk.t > 1 || wk.t < 0) { wk.dir *= -1; wk.t = Math.max(0, Math.min(1, wk.t)); }
       const s = SITES[wk.road], a = iso(s.gx + 0.5, s.gy + 0.15);
       const x = a.x + (hqBase.x - a.x) * wk.t, y = a.y + (hqBase.y - a.y) * wk.t;
@@ -371,6 +380,17 @@
     },
     render(g) {
       cur = g;
+      // citizen count tracks headcount
+      const want = Math.max(8, Math.min(26, Math.round(g.headcount / 3.4)));
+      while (workers.length < want) {
+        workers.push({ road: DEPTS[workers.length % 4], t: Math.random(), dir: 1, speed: 0.002 + Math.random() * 0.004 });
+      }
+      while (workers.length > want) workers.pop();
+      if (window.PAPER_MOTION) {
+        papers.length = 0;                 // memos-in-flight need live motion
+        drawScene(g.week * 300);
+        return;
+      }
       // one memo per tick, routed by the philosophy being played
       const now = performance.now();
       if (now - lastSpawn > 220 && papers.length < 9) {
@@ -382,15 +402,10 @@
         else if (g.mode === 'C') to = Math.random() < 0.25 ? 'CEO' : from;
         if (to !== from) papers.push({ from, to, t: 0, dur: 950, spin: Math.random() * 6 - 3 });
       }
-      // citizen count tracks headcount
-      const want = Math.max(8, Math.min(26, Math.round(g.headcount / 3.4)));
-      while (workers.length < want) {
-        workers.push({ road: DEPTS[workers.length % 4], t: Math.random(), dir: 1, speed: 0.002 + Math.random() * 0.004 });
-      }
-      while (workers.length > want) workers.pop();
     },
     fire(key) {
       fires[key] = performance.now() + 6000;
+      if (window.PAPER_MOTION && cur) drawScene(cur.week * 300 + 60);
     },
     anchor(key) {
       // bubble anchor in #orgboard coordinates: above the building
