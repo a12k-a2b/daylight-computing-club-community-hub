@@ -19,6 +19,9 @@
 
   let cv, ctx, W, H, OX, OY;
   let cur = null;                   // latest game state from render()
+  // rival visibility toggle — some people find the skyline clearer without it
+  const readStore = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  let showRival = readStore('dcc-ceosim-rival') !== '0';
   let mode = 'A';
   let fires = {};                   // dept -> until-timestamp
   let papers = [];                  // {from,to,t,dur,spin}
@@ -74,22 +77,25 @@
   }
 
   // A building: extruded box with hatched right face, floor lines, windows.
-  function building(gx, gy, floors, label, shakeX) {
+  // dark = the rival's house style: solid ink silhouette, white windows.
+  function building(gx, gy, floors, label, shakeX, dark) {
     const h = floors * FLOOR;
     const sx = shakeX || 0;
     const base = tileDiamond(gx, gy, 1, 1).map(p => ({ x: p.x + sx, y: p.y }));
     const top = base.map(p => ({ x: p.x, y: p.y - h }));
     const [tN, tE, tS, tW] = top;
     const [bN, bE, bS, bW] = base;
+    const face = dark ? '#000' : '#fff';
     // left (SW) face
-    poly([tW, tS, bS, bW], '#fff', '#000');
-    // right (SE) face, hatched
-    poly([tS, tE, bE, bS], '#fff', '#000');
-    hatch([tS, tE, bE, bS], 5);
+    poly([tW, tS, bS, bW], face, '#000');
+    // right (SE) face, hatched when light
+    poly([tS, tE, bE, bS], face, '#000');
+    if (!dark) hatch([tS, tE, bE, bS], 5);
     // roof
-    poly([tN, tE, tS, tW], '#fff', '#000');
+    poly([tN, tE, tS, tW], dark ? '#000' : '#fff', dark ? '#fff' : '#000', dark ? 1.5 : 2);
+    if (dark) poly([tN, tE, tS, tW], null, '#000', 1);
     // floor lines + windows on the left face
-    ctx.strokeStyle = '#000'; ctx.lineWidth = 1;
+    ctx.strokeStyle = dark ? '#fff' : '#000'; ctx.lineWidth = 1;
     for (let f = 1; f < floors; f++) {
       const y = -f * FLOOR;
       ctx.beginPath();
@@ -225,8 +231,8 @@
       ctx.stroke();
     }
     const floors = Math.max(1, Math.min(12, Math.round(1 + rival / 9)));
-    const ref = building(-1.25, 6.2, floors, 'MOONBEAM');
-    if (rival > 60) building(-0.5, 6.55, Math.max(1, floors - 4), null);
+    const ref = building(-1.25, 6.2, floors, 'MOONBEAM', 0, true);
+    if (rival > 60) building(-0.5, 6.55, Math.max(1, floors - 4), null, 0, true);
     // their crescent flag, always crisp
     ctx.strokeStyle = '#000'; ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(ref.top.x, ref.top.y); ctx.lineTo(ref.top.x, ref.top.y - 16); ctx.stroke();
@@ -267,7 +273,7 @@
     // grounds furniture
     tree(0.2, 1.9); tree(5.3, 3.4); tree(2.1, 4.9); tree(4.9, 0.9);
     sun(g.morale, t);
-    moonbeam(g.rival || 6, t);
+    if (showRival) moonbeam(g.rival || 6, t);
 
     // roads from each department to HQ
     const hqBase = iso(SITES.CEO.gx + 0.5, SITES.CEO.gy + 0.9);
@@ -350,6 +356,15 @@
           t: (i * 0.37) % 1,
           dir: i % 2 ? 1 : -1,
           speed: 0.002 + (i % 5) * 0.0009
+        });
+      }
+      const box = document.getElementById('showRival');
+      if (box && !box.dataset.wired) {
+        box.dataset.wired = '1';
+        box.checked = showRival;
+        box.addEventListener('change', () => {
+          showRival = box.checked;
+          try { localStorage.setItem('dcc-ceosim-rival', showRival ? '1' : '0'); } catch (e) { /* private mode */ }
         });
       }
       if (!raf) raf = requestAnimationFrame(frame);
