@@ -365,6 +365,7 @@
       doors: [],            // one-way doors walked through (mode B/C)
       pendingDisasters: [], // mode C: {week, ...disaster}
       cGood: 0, cBad: 0,    // mode C scorecard
+      rival: 6,             // Moonbeam's stature — feeds on your growth deficit
       history: { cash: [], morale: [], health: [] }
     };
     g.script = { A: SCRIPT_A, B: SCRIPT_B, C: SCRIPT_C, D: SCRIPT_D, E: SCRIPT_E }[mode];
@@ -458,6 +459,9 @@
     // ---- money ----
     const growthDrive = g.speed * g.quality * Math.sqrt(g.coherence / 100);
     g.revW *= 1 + 0.010 * (growthDrive - 0.62);
+    // Moonbeam compounds on every week your engine underperforms; they never
+    // quite stand still, but a healthy Sunbeam keeps them small.
+    g.rival = clamp(g.rival + Math.max(0.04, 0.9 * (1.0 - growthDrive)), 6, 100);
     const burnW = 8 + g.headcount * 0.95;
     g.cash += g.revW - burnW;
 
