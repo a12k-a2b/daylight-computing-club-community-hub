@@ -82,7 +82,49 @@
       disaster: { delay: 22, cash: 450, door: 'DATA', text: 'FIRE: The breach found nine years of data nobody decided to keep. The fine is per record. There are many records.' } },
     { id: 'logo', t: 'Approve the new logo tweak', d: 'The sun in the logo is being rotated 4 degrees. There are strong feelings.', stakes: 'LOW', oneWay: false,
       take: 'You request three more angles. The sun has now been rotated more than the actual sun.',
-      del: 'Design ships it. Zero customers notice. The sun rises anyway.' }
+      del: 'Design ships it. Zero customers notice. The sun rises anyway.' },
+
+    // The tricky ones — in Balance mode the stamps are hidden, and these
+    // read as the opposite of what they are. Judgment, not rule-following.
+    { id: 'apirename', t: 'Tidy up: rename the v1 API endpoints', d: 'The old names are ugly and inconsistent; the new ones are much nicer. Three hundred external developers have built against the old ones.', stakes: 'HIGH', oneWay: true, tricky: true,
+      take: 'You ask one question — "who depends on this?" — and the tidy-up becomes a versioned migration with a two-year sunset. Boring. Correct.',
+      del: 'The names are much nicer now. Somewhere, three hundred integrations quietly stop working.',
+      disaster: { delay: 16, cash: 300, door: 'API BREAK', text: 'FIRE: The API tidy-up broke every partner integration at once. The partners have opinions. The opinions have lawyers.' } },
+    { id: 'bigco', t: 'The "strategic partnership" with OmniCorp', d: 'A breathless deck, an enormous logo, a co-marketing plan — and, down in clause 14, a mutual 30-day exit for either side, no penalty.', stakes: 'LOW', oneWay: false, tricky: true,
+      take: 'You spend three weeks personally negotiating a contract either side can leave in a month. The logo was doing all of the work.',
+      del: 'Chad runs it. If it sours, clause 14 is the door out — and it swings both ways, cheaply.' },
+    { id: 'freetier', t: 'Growth hack: 10x the free tier', d: 'A quick lever to juice signups before the conference. Nobody in recorded history has successfully shrunk a free tier back down.', stakes: 'HIGH', oneWay: true, tricky: true,
+      take: 'You keep the tier and ship a 30-day trial instead — generosity with an expiry date. Signups still jump.',
+      del: 'Signups jump! The tier is now a load-bearing public expectation. Entitlements ratchet one way.',
+      disaster: { delay: 20, cash: 250, door: 'FREE TIER', text: 'FIRE: The 10x free tier is now the whole product for 80% of users. Shrinking it makes the internet extremely loud.' } },
+    { id: 'contractor', t: 'Contractors for the holiday rush', d: 'Support is drowning. A staffing agency can have five people started Monday, on 90-day terms.', stakes: 'LOW', oneWay: false, tricky: true,
+      take: 'You interview all five personally. It is December. The support queue watches you do this.',
+      del: 'Ops signs the 90-day terms. If it doesn\'t work, it un-happens in March all by itself.' },
+    { id: 'selfhost', t: 'Let the big customer self-host "just this once"', d: 'A seven-figure deal if they can run it on their own servers. A second copy of the product would then exist, forever, aging separately.', stakes: 'HIGH', oneWay: true, tricky: true,
+      take: 'You say no to the fork and yes to a dedicated instance. The deal shrinks a little; the codebase stays one thing.',
+      del: 'The deal closes! There are now two products. One of them is invisible, distant, and slowly diverging.',
+      disaster: { delay: 22, cash: 350, door: 'THE FORK', text: 'FIRE: The self-hosted fork needs a security patch you cannot ship, on servers you cannot see, for a customer you cannot lose.' } },
+    { id: 'lease', t: 'The office lease renewal', d: 'Facilities calls it paperwork. The renewal on the table is five years, personally guaranteed. Month-to-month costs 15% more.', stakes: 'HIGH', oneWay: true, tricky: true,
+      take: 'You pay the 15% for month-to-month. Optionality has a price — you check it against the five-year price of being wrong, and it\'s cheap.',
+      del: '"It\'s just paperwork." The company now lives here until 2031, whatever size it turns out to be.',
+      disaster: { delay: 24, cash: 280, door: 'THE LEASE', text: 'FIRE: The office fits sixty. You are thirty, shrinking, and personally guaranteed until 2031.' } }
+  ];
+
+  // The 60-second sorting test — before your first run and after beating
+  // the Balance, sort six decisions. The delta is the game's report card.
+  const SORT_TEST = [
+    { t: 'Approve every blog post before it publishes', ceo: false,
+      why: 'Reversible, low stakes, high frequency — the definition of a queue-builder. Set the voice once, review after.' },
+    { t: 'Choose between two acquisition offers for the company', ceo: true,
+      why: 'Bet-the-company and permanently irreversible. This is one of the handful of decisions that is actually the job.' },
+    { t: 'Set the refund policy for last week\'s launch glitch', ceo: false,
+      why: 'Bounded cost, fully reversible next week, and support has more context than you do.' },
+    { t: 'Pick the company\'s second product line', ceo: true,
+      why: 'Years of compounding lock-in — talent, brand, capital. A one-way door wearing a roadmap costume.' },
+    { t: 'Approve a mid-level engineer\'s promotion', ceo: false,
+      why: 'Their manager has the context; a wrong call is correctable next cycle. Calibrate the bar, not each case.' },
+    { t: 'Decide whether to keep user analytics data forever', ceo: true,
+      why: 'Quiet, technical-looking, and irreversible — what you keep, you can leak, and liability compounds silently.' }
   ];
 
   // -------------------------------------------------------------- scripts
@@ -219,6 +261,31 @@
     { w: 192, t: 'Q: "What would you do differently?" A, after a long pause: "Fewer growth opportunities. More decisions."', major: true }
   ];
 
+  const SCRIPT_F = [
+    OPENING,
+    { w: 2, who: 'YOU', t: '"No philosophy this time. Just a dial, six instruments, and my attention. The dial says how much of this company crosses my desk."', major: true },
+    { w: 6, t: 'Twelve people knew the plan by lunch. At this size your taste IS the product — the dial belongs high, for now. "For now" is the whole game.' },
+    { w: 14, who: 'KEVIN', t: '"The CEO reviewed my landing page personally. Fixed the headline in nine minutes. Honestly? It\'s better. Weird little company."' },
+    { w: 26, t: 'Headcount is climbing. Somewhere around here the math quietly changes, and nobody sends a memo when it does.', major: true },
+    { w: 40, who: 'MARGARET', t: '"We hired nine people this month. Three of them asked me who approves things. I just said \'yes\' and walked away confidently."' },
+    { w: 55, t: 'FIRE: A bad battery batch in the field. A recall is not a delegation exercise — for exactly as long as the fire burns, and not one week longer.', sfx: 'alarm', major: true, fire: 'OPS' },
+    { w: 70, t: 'The recall is winding down. Quiet question from the back: the dial you turned up for the crisis — did you remember to turn it back?', major: true },
+    { w: 85, who: 'DOUG', t: '"Fun fact: your calendar is simultaneously the company\'s scarcest resource and its most popular meeting room."' },
+    { w: 100, t: 'Headcount 90. You can no longer read every PR, meet every customer, taste every batch. The org you have is the instrument you fly.', major: true },
+    { w: 118, who: 'PRIYA', t: '"The teams you trusted first are the ones you trust most now. Funny how that compounds. Almost like a lesson."' },
+    { w: 140, t: 'FIRE: A rival poaches a key exec overnight. How much this hurts is exactly how much the org learned before today.', sfx: 'alarm', major: true, fire: 'PRODUCT' },
+    { w: 160, t: 'Nobody has asked you to settle an argument in a month. Either the org has matured, or it has given up asking. The difference is everything — check which.', major: true },
+    { w: 178, who: 'CHAD', t: '"Closed the year\'s biggest deal without you even knowing it was in play. You\'re welcome. Also: sorry? Unclear. You\'re welcome."' },
+    { w: 189, t: 'You make about six calls a quarter now. Each one deserves all of you. The other nine hundred happen near the facts, the way water finds a drain.', major: true }
+  ];
+
+  const F_DRIFT_FIRES = [
+    'FIRE (drift): Two teams just discovered each other\'s identical project at the demo. Which way is the dial wrong?',
+    'FIRE (drift): A "quick pricing experiment" shipped to everyone, permanently. Nobody remembers deciding it.',
+    'FIRE (drift): The new hire\'s first week produced a press release. Legal found out from the press.',
+    'FIRE (drift): Three roadmaps, all plausible, all incompatible, all funded. The dial has been too loose for a while.'
+  ];
+
   const SCRIPT_C = [
     OPENING,
     { w: 2, who: 'YOU', t: '"New rule. I make the few decisions only I can make — the one-way doors. Everyone else decides everything else: fast, out loud, and on the record."', major: true },
@@ -235,6 +302,7 @@
     { w: 105, t: 'You realize you have made six decisions this quarter. You sweated every one. The other nine hundred happened near the facts.', major: true },
     { w: 117, who: 'PRIYA', t: '"The junior engineers now write \'is this a one-way door?\' in their design docs, unprompted. The virus is airborne."' },
     { w: 129, t: 'The board meeting is forty minutes long. Nobody has ever been this bored, this profitably.', major: true },
+    { w: 137, t: 'You take two weeks off. Nothing breaks. Nobody calls. This is what winning quietly sounds like.', sfx: 'ding', major: true },
     { w: 141, t: 'Someone asks what you actually do all day. You say "almost nothing, extremely carefully." It is the truth.', major: true }
   ];
 
@@ -328,6 +396,54 @@
         'Beware metrics that only measure comfort. A 4.9 culture score with flat growth means the feedback loop has been sedated, not that the org is healthy.'
       ]
     },
+    F_WIN: {
+      paper: 'THE DAILY SLAB',
+      headline: 'SUNBEAM BECOMES THE COMPANY OTHERS BENCHMARK; FOUNDER CREDITS "A DIAL AND A HABIT"',
+      sub: '"I was never on the right setting," says CEO. "I was just never wrong for long."',
+      lessonTitle: 'THE DIAL — the meta-lesson',
+      essay: [
+        'Here is the thing the four dead timelines were trying to tell you: there is no right setting. Anyone who gives you the correct percentage of decisions a CEO should make is selling a framework. The correct setting moved eleven times in this run alone — down as your people compounded, up hard when the batteries failed, down again the week the recall ended. A fixed philosophy — any fixed philosophy, including a wise one — is just a slower way to drift.',
+        'And drift is silent, which is the actual danger. Both failure modes feel like virtue from the inside: gripping feels like diligence, releasing feels like leadership. The first-order effects of each arrive immediately and they are genuinely good — better calls, faster shipping — while the second-order bill arrives quarters later, addressed to someone you used to be. You cannot feel drift. You can only instrument for it.',
+        'So the job is not "find the balance point." The job is: build the gauges, glance at them weekly, and correct early and small. Your queue is the grip gauge — if it grows, your bar for "critical" is too low. Your surprise rate is the trust gauge — if the company keeps startling you, it\'s too high. Write your principles down until people can predict your call; review after instead of before; recount the "critical" list every quarter, because it should shrink as your people grow and spike when the building is on fire. You will always be a little wrong. Winners are just wrong in a direction they\'re watching, briefly.'
+      ],
+      lessons: [
+        'The dial is steered, not set. Company size, org maturity, and crisis all move the correct setting — on their schedule, not yours.',
+        'Instrument for drift: queue length and decision latency catch over-grip; surprise rate and duplicate work catch over-trust.',
+        'Correct early and small. A five-point turn this quarter beats a fifty-point reorg next year.',
+        'Crisis centralizes, then you must give it back. The ratchet only sticks if you let it.',
+        'Both ditches feel like virtue from inside the car. The gauges don\'t flatter; that\'s what they\'re for.'
+      ]
+    },
+    F_DRIFT: {
+      paper: 'THE DAILY SLAB',
+      headline: 'SUNBEAM SURVIVES FOUR YEARS OF WEATHER; CAPTAIN STILL LEARNING THE INSTRUMENTS',
+      sub: 'Below: the dial you set, and the dial the company needed. Mind the gap.',
+      lessonTitle: 'THE DIAL — what the chart is saying',
+      essay: [
+        'You lived — congratulations, sincerely; most timelines don\'t. But look at the two lines below. The dotted one is what the company needed, and it moved every time the company changed: down as people grew, sharply up in the crisis, down again after. The solid line is you. Every gap between them was paid for — in queue-weeks when you were above it, in quiet incoherence when you were below.',
+        'The lesson isn\'t that you chose badly; it\'s that you corrected late. Drift is silent because its first-order effects feel great and its second-order effects arrive with the wrong postmark. The fix is boring and it works: watch the queue (grip gauge), watch your surprise rate (trust gauge), and move the dial five points the week the gauges twitch — not the quarter after the fire.'
+      ],
+      lessons: [
+        'Surviving is not the same as steering. The gap between the lines below is the tuition you paid.',
+        'Late small corrections become forced large ones. The reorg you eventually did was the dial-turn you skipped, with interest.',
+        'The setting that saved you in the crisis was wrong a month later. Re-check the dial whenever the weather changes.'
+      ]
+    },
+    F_LOSE: {
+      paper: 'THE DAILY SLAB',
+      headline: 'SUNBEAM FOUND ON THE ROCKS; DIAL SET CONFIDENTLY THE ENTIRE WAY DOWN',
+      sub: 'Investigators note the instruments were working. The looking was not.',
+      lessonTitle: 'THE DIAL — read this before re-running',
+      essay: [
+        'The company didn\'t die of a bad setting; it died of a fixed one. The needs moved — headcount tripled, a crisis came and went — and the dial mostly didn\'t. Whichever ditch you favored, the mechanism was identical: the good news arrived immediately, the bill arrived later, and by the time it was undeniable the correction had to be huge.',
+        'Run it again, and this time fly the gauges, not the philosophy: queue creeping up means loosen your definition of critical; getting surprised by your own company means tighten it. Five points at a time. The dial is steered, not set.'
+      ],
+      lessons: [
+        'A fixed dial in a moving company is drift by definition.',
+        'Watch queue and latency for over-grip; watch surprises and duplicates for over-trust.',
+        'The gauges twitch quarters before the fires start. That lag is your entire margin.'
+      ]
+    },
     C_LOSE: {
       paper: 'THE DAILY SLAB',
       headline: 'SUNBEAM DISCOVERS EXCITING THIRD FAILURE MODE: RANDOM',
@@ -366,10 +482,15 @@
       doors: [],            // one-way doors walked through (mode B/C)
       pendingDisasters: [], // mode C: {week, ...disaster}
       cGood: 0, cBad: 0,    // mode C scorecard
+      cHoard: 0, cGhost: 0, // ...split by which ditch each miss leaned toward
+      cMemoTax: 0,
+      dial: 0.5,            // mode F: fraction of decisions that reach your desk
+      devSum: 0, driftDebt: 0, driftIdx: 0,
       rival: 6,             // Moonbeam's stature — feeds on your growth deficit
-      history: { cash: [], morale: [], health: [] }
+      history: { cash: [], morale: [], health: [], dial: [], tstar: [] }
     };
-    g.script = { A: SCRIPT_A, B: SCRIPT_B, C: SCRIPT_C, D: SCRIPT_D, E: SCRIPT_E }[mode];
+    if (mode === 'F') g.morale = 72;
+    g.script = { A: SCRIPT_A, B: SCRIPT_B, C: SCRIPT_C, D: SCRIPT_D, E: SCRIPT_E, F: SCRIPT_F }[mode];
     // Seed-shuffled decision deck: same seed, same memos in the same order —
     // so two players can run the same company and compare endings.
     g.deck = CARDS.slice();
@@ -378,6 +499,20 @@
       const tmp = g.deck[i]; g.deck[i] = g.deck[j]; g.deck[j] = tmp;
     }
     return g;
+  }
+
+  // Mode F: the setting the company actually needs, week by week. Falls as
+  // the org matures, spikes for the crisis, falls again. The player never
+  // sees it — until the ending chart.
+  const TSTAR = [[0, 0.55], [40, 0.35], [52, 0.38], [58, 0.62], [76, 0.55], [100, 0.28], [130, 0.18], [192, 0.10]];
+  function targetDial(w) {
+    for (let i = 1; i < TSTAR.length; i++) {
+      if (w <= TSTAR[i][0]) {
+        const w0 = TSTAR[i - 1][0], v0 = TSTAR[i - 1][1], w1 = TSTAR[i][0], v1 = TSTAR[i][1];
+        return v0 + (v1 - v0) * (w - w0) / (w1 - w0);
+      }
+    }
+    return 0.10;
   }
 
   function health(g) {
@@ -440,6 +575,43 @@
       g.morale = clamp(g.morale + 0.02, 5, 100);          // the anesthetic
       g.sanity = clamp(g.sanity - 0.01, 60, 100);
       if (g.week % 3 === 0 && g.headcount < 95) g.headcount++;
+    } else if (g.mode === 'F') {
+      // Your Company: the dial is the player's; the target is the weather's.
+      const Ts = targetDial(g.week);
+      const dev = g.dial - Ts;
+      g.devSum += Math.abs(dev);
+      g.history.dial.push(g.dial); g.history.tstar.push(Ts);
+      const arrive = 2 + g.headcount * 0.16;
+      const cap = 7.5 * Math.max(0.35, g.sanity / 100);
+      g.queue = Math.max(0, g.queue + arrive * g.dial - cap);
+      const latency = g.queue / cap;
+      g.sanity = clamp(100 - g.queue * 1.4, 25, 100);
+      const under = Math.max(0, -dev), over = Math.max(0, dev);
+      g.coherence = clamp(g.coherence + 0.35 - under * 5.5, 25, 100);
+      g.learning = clamp(g.learning + 0.15 + (1 - g.dial) * 0.25 - over * 0.3, 0, 100);
+      g.quality = clamp(0.95 - under * 0.5, 0.6, 0.95);
+      g.speed = clamp(1.2 - latency * 0.12 - over * 0.25, 0.2, 1.2);
+      g.morale = clamp(g.morale + (latency > 2 ? -0.35 : 0.06) - under * 0.15, 2, 100);
+      if (g.morale > 58 && g.week % 3 === 0 && g.headcount < 110) g.headcount++;
+      // silent ghost-side debt: pays out as drift fires
+      g.driftDebt += Math.max(0, under - 0.04);
+      if (g.driftDebt > 4) {
+        g.driftDebt = 0;
+        g.cash -= 130;
+        g.coherence = clamp(g.coherence - 4, 25, 100);
+        push({ t: F_DRIFT_FIRES[g.driftIdx++ % F_DRIFT_FIRES.length], sfx: 'alarm', major: true, fire: 'PRODUCT' });
+      }
+      // the crises: centralization saves the first; a taught org absorbs the second
+      if (g.week === 58) {
+        const hit = Math.max(60, 380 - 500 * Math.min(g.dial, 0.6));
+        g.cash -= hit;
+        push({ t: 'Recall bill: $' + fmtK(Math.round(hit)) + '. ' + (g.dial >= 0.45 ? 'You were on the bridge — it was contained.' : 'It ran wild for weeks before it reached your desk.'), sfx: 'thud', major: true });
+      }
+      if (g.week === 140) {
+        const hit = Math.max(60, 300 - 2.5 * g.learning);
+        g.cash -= hit;
+        push({ t: 'The poaching costs $' + fmtK(Math.round(hit)) + '. ' + (g.learning > 60 ? 'The bench was deep; the org barely flinched.' : 'Nobody below them could catch what they dropped.'), sfx: 'thud', major: true });
+      }
     } else { // C — trajectory driven by the player's sorting record
       const balance = clamp(0.75 + 0.06 * g.cGood - 0.12 * g.cBad, 0.25, 1.25);
       g.queue = Math.max(0, g.queue - 1.5);
@@ -503,7 +675,7 @@
     g.history.morale.push(g.morale);
     g.history.health.push(health(g));
 
-    if (g.mode !== 'C' || g.cBad >= 3) {
+    if ((g.mode !== 'C' && g.mode !== 'F') || (g.mode === 'C' && g.cBad >= 3)) {
       const deadline = { A: 93, B: 105, D: 201, E: 201 }[g.mode] || 999;
       if (g.cash <= 0 || g.morale <= 3 || g.week >= deadline) {
         g.over = true;
@@ -520,39 +692,75 @@
         g.over = true; g.ended = 'C_LOSE';
         push({ t: 'The lights go out — figuratively, then contractually.', sfx: 'trombone', major: true });
       } else if (g.week >= 144) {
-        g.over = true; g.ended = 'C_WIN';
-        push({ t: 'Twelve quarters. Still here. Still boring. Still compounding.', sfx: 'ding', major: true });
+        g.over = true;
+        g.ended = g.cash > 400 ? 'C_WIN' : 'C_LOSE';
+        push({ t: g.ended === 'C_WIN'
+          ? 'Twelve quarters. Still here. Still boring. Still compounding.'
+          : 'Twelve quarters, technically. The company survives you the way a ship survives a reef.', sfx: g.ended === 'C_WIN' ? 'ding' : 'trombone', major: true });
+      }
+    }
+    if (g.mode === 'F' && !g.over) {
+      if (g.cash <= 0 || g.morale <= 3) {
+        g.over = true; g.ended = 'F_LOSE';
+        push({ t: 'The company runs aground. The dial was set. The dial stayed set. The water moved.', sfx: 'trombone', major: true });
+      } else if (g.week >= 192) {
+        g.over = true;
+        g.ended = (g.devSum / g.week) < 0.085 ? 'F_WIN' : 'F_DRIFT';
+        push({ t: g.ended === 'F_WIN'
+          ? 'Sixteen quarters of small corrections. From outside it looked like calm. It was steering.'
+          : 'Sixteen quarters, survived. Now look at the chart — the dial you set, and the dial it needed.', sfx: g.ended === 'F_WIN' ? 'ding' : 'page', major: true });
       }
     }
     return ev;
   }
 
-  // Apply a decision-card choice. keep=true means the CEO takes it.
-  // Returns {text, good, sfx} for the UI.
-  function applyCard(g, card, keep) {
+  // Apply a decision-card choice: 'take' | 'del' | 'memo' | 'auto'
+  // (booleans accepted for back-compat: true=take). Returns
+  // {text, good, sfx, reveal} — reveal carries the card's true stamps,
+  // shown after the choice in Balance mode where stamps are hidden.
+  function applyCard(g, card, choice) {
+    if (typeof choice === 'boolean') choice = choice ? 'take' : 'del';
     const critical = card.oneWay && card.stakes === 'HIGH';
+    const reveal = { stakes: card.stakes, oneWay: card.oneWay };
     if (g.mode !== 'C') {
-      // A/B: the choice is forced; consequences are already in the script.
-      return { text: keep ? card.take : card.del, good: null, sfx: keep ? 'paper' : 'whoosh' };
+      // forced-philosophy modes: consequences are already in the script.
+      return { text: choice === 'take' ? card.take : card.del, good: null, sfx: choice === 'take' ? 'paper' : 'whoosh', reveal };
     }
-    if (keep && critical) {
-      g.cGood++; g.queue += 1;
-      return { text: card.take, good: true, sfx: 'ding' };
-    }
-    if (!keep && !critical) {
+    if (choice === 'auto') {
+      // the successor arc: the org sorted it the way you would have
       g.cGood++; g.learning = clamp(g.learning + 4, 0, 100);
-      return { text: card.del, good: true, sfx: 'ding' };
+      return { text: card.take, good: true, sfx: 'ding', reveal };
     }
-    if (keep && !critical) {
-      g.cBad++; g.queue += 10;
+    if (choice === 'memo') {
+      if (critical) {
+        g.cGood++; g.learning = clamp(g.learning + 6, 0, 100);
+        if (g.learning >= 46) {
+          return { text: 'You ask for the two-pager. It arrives with a recommendation and a dissent attached. You add one sentence and sign. This is the machine, working.', good: true, sfx: 'ding', reveal };
+        }
+        g.cash -= 80;
+        return { text: 'The memo misses a clause — it costs $80k and teaches a cohort more than a year of approvals would have. Tuition, but cheap tuition.', good: true, sfx: 'paper', reveal };
+      }
+      g.cMemoTax++; g.queue += 3;
+      return { text: 'A reversible decision now has an executive summary, three appendices, and a billable hour. Process is also a tax.', good: false, sfx: 'thud', reveal };
+    }
+    if (choice === 'take' && critical) {
+      g.cGood++; g.queue += 1;
+      return { text: card.take, good: true, sfx: 'ding', reveal };
+    }
+    if (choice === 'del' && !critical) {
+      g.cGood++; g.learning = clamp(g.learning + 4, 0, 100);
+      return { text: card.del, good: true, sfx: 'ding', reveal };
+    }
+    if (choice === 'take') {
+      g.cBad++; g.cHoard++; g.queue += 10;
       g.sanity = clamp(g.sanity - 6, 20, 100);
-      return { text: card.take + ' (Reversible. This did not need you — but now everything waits behind it.)', good: false, sfx: 'thud' };
+      return { text: card.take + ' (It was reversible. It did not need you — and now everything waits behind it.)', good: false, sfx: 'thud', reveal };
     }
     // delegated a one-way door: second-order bill arrives later
-    g.cBad++;
+    g.cBad++; g.cGhost++;
     const d = card.disaster || { delay: 20, cash: 300, door: 'DOOR', text: 'FIRE: a one-way door you never looked at has slammed shut with the company inside.' };
     g.pendingDisasters.push(Object.assign({ week: g.week + d.delay }, d));
-    return { text: card.del + ' (Irreversible. Nothing happens... yet.)', good: false, sfx: 'whoosh' };
+    return { text: card.del + ' (It was a one-way door. Nothing happens... yet.)', good: false, sfx: 'whoosh', reveal };
   }
 
   function fmtK(k) {
@@ -560,7 +768,7 @@
   }
 
   root.CEOSIM = {
-    CARDS, ENDINGS, makeGame, tick, applyCard, health, fmtK,
-    CARD_WEEKS: { A: 10, B: 10, C: 8, D: 10, E: 10 }   // a card every N weeks
+    CARDS, ENDINGS, SORT_TEST, makeGame, tick, applyCard, health, fmtK, targetDial,
+    CARD_WEEKS: { A: 10, B: 10, C: 8, D: 10, E: 10 }   // a card every N weeks; F has the dial instead
   };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="The Field Guide to The Decider — every lesson in the game, the instruments for noticing drift, and the meta-lesson behind them all.">
+<title>The Field Guide — The Decider's lessons, without the dying</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='2' y='2' width='28' height='28' fill='white' stroke='black' stroke-width='3'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' font-family='Georgia'%3E☂%3C/text%3E%3C/svg%3E">
+<style>
+:root { --ink: #000; --paper: #fff; --mid: #555; --ghost: #e4e4e4; --rule: 2px solid var(--ink); }
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--paper); color: var(--ink);
+  font-family: Georgia, 'Times New Roman', serif; font-size: 18px; line-height: 1.55;
+}
+.wrap { max-width: 760px; margin: 0 auto; padding: 22px 18px 80px; }
+.mono { font-family: ui-monospace, 'Courier New', monospace; }
+header { border-bottom: 6px double var(--ink); padding-bottom: 14px; margin-bottom: 8px; text-align: center; }
+header .kicker { font-family: ui-monospace, 'Courier New', monospace; font-size: 13px; letter-spacing: 3px; color: var(--mid); text-transform: uppercase; }
+header h1 { font-size: clamp(34px, 6vw, 54px); margin: 8px 0 2px; font-weight: normal; letter-spacing: 1px; }
+header .sub { font-style: italic; font-size: 19px; margin: 4px 0 0; }
+nav.toc { text-align: center; font-size: 16px; margin: 14px 0 26px; color: var(--mid); }
+nav.toc a { color: var(--ink); }
+h2 { font-size: 27px; font-weight: normal; border-bottom: var(--rule); padding-bottom: 6px; margin: 42px 0 14px; }
+h3 { font-size: 21px; font-weight: normal; font-style: italic; margin: 26px 0 8px; }
+.tag { font-family: ui-monospace, 'Courier New', monospace; font-size: 12px; letter-spacing: 2px; border: 1px solid var(--ink); padding: 2px 8px; display: inline-block; margin-bottom: 6px; }
+ul.lessons { padding-left: 22px; }
+ul.lessons li { margin-bottom: 10px; }
+.meta { border: 3px solid var(--ink); padding: 20px 22px; margin: 20px 0; }
+.meta p { margin: 0 0 14px; }
+.meta p:first-of-type::first-letter { font-size: 2.2em; float: left; line-height: 0.85; padding-right: 6px; }
+table.gauges { width: 100%; border-collapse: collapse; font-size: 16.5px; margin: 14px 0; }
+table.gauges th, table.gauges td { border: 1px solid var(--ink); padding: 9px 12px; text-align: left; vertical-align: top; }
+table.gauges th { font-family: ui-monospace, 'Courier New', monospace; font-size: 13px; letter-spacing: 2px; }
+.template { border: var(--rule); padding: 20px 22px; margin: 16px 0; }
+.template h4 { font-family: ui-monospace, 'Courier New', monospace; font-size: 13px; letter-spacing: 2px; margin: 0 0 10px; }
+.template .blank { border-bottom: 1px solid var(--ink); display: inline-block; min-width: 180px; }
+.template ol { margin: 6px 0 14px; padding-left: 22px; }
+.template li { margin-bottom: 6px; }
+.smallprint { color: var(--mid); font-size: 15px; font-style: italic; }
+.backrow { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 34px; }
+.backrow a {
+  border: var(--rule); color: var(--ink); text-decoration: none; padding: 12px 18px;
+  min-height: 48px; display: inline-flex; align-items: center; font-size: 17px;
+}
+blockquote { margin: 14px 0 14px 0; padding-left: 16px; border-left: 3px solid var(--ink); font-style: italic; }
+@media print {
+  nav.toc, .backrow, .noprint { display: none !important; }
+  body { font-size: 12pt; }
+  h2 { page-break-after: avoid; }
+  .template, .meta { page-break-inside: avoid; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="kicker">Daylight Computer Club · The Decider · Companion</div>
+    <h1>THE FIELD GUIDE</h1>
+    <p class="sub">Every lesson in the game — and the one behind them all. No dying required.</p>
+  </header>
+
+  <nav class="toc">
+    <a href="#question">The question</a> · <a href="#deaths">The two deaths</a> ·
+    <a href="#traps">The two traps</a> · <a href="#balance">The balance</a> ·
+    <a href="#meta">The meta-lesson</a> · <a href="#gauges">The instruments</a> ·
+    <a href="#memo">The decision memo</a> · <a href="#reading">Further reading</a>
+  </nav>
+
+  <h2 id="question">The question</h2>
+  <p>
+    Every founder eventually meets one governing question, usually without noticing:
+    <i>of all the decisions this company makes, which ones are mine?</i>
+    Answer it too greedily and you become the company's rate-limiting step. Answer it too
+    generously and the company quietly loses its keel. The game lets you die both ways in
+    an afternoon — this page is the map of what you died of.
+  </p>
+
+  <h2 id="deaths">The two cartoon deaths</h2>
+  <p class="smallprint">Fast, loud, and rare in the wild — but they make the mechanisms visible.</p>
+
+  <h3><span class="tag">OPTION A</span> The Bottleneck — “every decision is my job”</h3>
+  <ul class="lessons">
+    <li>First order, you win: your decisions really are better. Second order, everyone else's decisions stop existing — and a company is mostly everyone else.</li>
+    <li>A queue compounds like debt. Every late decision delays ten downstream ones, and the interest is paid in missed markets.</li>
+    <li>People who love deciding leave; people who stay learn helplessness. You didn't hire a passive org — you selected for one.</li>
+    <li>Overload makes you worse precisely when it matters: the bottleneck's quality collapses exactly at peak load. You become the rate-limiting enzyme of the whole organism.</li>
+    <li>You don't end up making the best decisions. You end up making all of them — briefly the same thing, then the opposite.</li>
+  </ul>
+
+  <h3><span class="tag">OPTION B</span> The Ghost — “you guys figure it out”</h3>
+  <ul class="lessons">
+    <li>First order, you win: real speed, real morale, real shipping. Second order, incoherence compounds silently — four local optimums, zero global one.</li>
+    <li>One-way doors get walked through casually: pricing, data, decade-long ink. Reversible mistakes wash out; irreversible ones accumulate like sediment, then like concrete.</li>
+    <li>Principal–agent, live on stage: every lieutenant optimizes their kingdom honestly and locally. Nobody owns the whole, so the whole belongs to no one.</li>
+    <li>Without an arbiter, disagreements don't resolve — they metastasize into politics, and politics eats the calendar that used to build things.</li>
+    <li>Empower everyone to steer and the ship gets eight rudders and no keel.</li>
+  </ul>
+
+  <h2 id="traps">The two common traps</h2>
+  <p class="smallprint">
+    Slow, quiet, and where most founders actually live — because each one comes with
+    evidence that you're doing it right, and neither produces the feedback that would
+    correct it. Nothing burns. That's the mechanism.
+  </p>
+
+  <h3><span class="tag">OPTION A½</span> The Final Say — “I delegate everything! …except what matters”</h3>
+  <ul class="lessons">
+    <li>Count leverage, not decisions. Delegating 94% by number and 6% by weight is hoarding with better paperwork.</li>
+    <li>Every “critical” is a claim on your bandwidth. If the critical list never shrinks as your people grow, the list is measuring your anxiety, not the stakes.</li>
+    <li>A review that adds two weeks and 4% is negative-sum. Some calls need your standard; most need your speed — or your absence.</li>
+    <li>The insidious failures give no feedback: no fires, no exits, no crisis. Just a pond. If everything is calm and nothing compounds, that <i>is</i> the alarm.</li>
+    <li>The heavy calls cost emotional energy — which is exactly why you keep them, and exactly why releasing a few buys the most leverage per unit of trust.</li>
+  </ul>
+
+  <h3><span class="tag">OPTION B½</span> The Conductor — “the big calls are how people grow”</h3>
+  <ul class="lessons">
+    <li>Delegation is a bet, and the odds are set by context, incentive, and experience — not by how much you believe in someone. Believe in people; bet like an actuary.</li>
+    <li>A critical decision is not a training ground. Grow people on reversible calls with real stakes, not on the ones that set the company's ceiling.</li>
+    <li>Consensus averages; markets don't. The midpoint of three opinions is usually nobody's right answer.</li>
+    <li>The hard calls — killing the beloved thing, moving on the beloved person — can only be made centrally. If they're “everyone's,” they're no one's, and they appreciate with interest.</li>
+    <li>Beware metrics that only measure comfort. A 4.9 culture score with flat growth means the feedback loop has been sedated, not that the org is healthy.</li>
+  </ul>
+
+  <h2 id="balance">The narrow path</h2>
+  <p class="smallprint">What Option C is drilling into your hands.</p>
+  <ul class="lessons">
+    <li>Sort every decision with two questions: <b>how bad if wrong?</b> and <b>can we undo it?</b> Irreversible-and-important comes to you. Everything else goes to whoever is closest to the facts.</li>
+    <li>Beware the costumes: the “tidy-up” that breaks three hundred partners is a one-way door; the enormous strategic partnership with a 30-day exit clause is a revolving one. Stakes and reversibility live in the details, not the title.</li>
+    <li>Delegate outcomes, not tasks — and review after, not before. Feedback compounds into judgment; approval compounds into a queue.</li>
+    <li>The middle move exists: <i>delegate it, memo first, review after.</i> On heavy calls it grows your org at a discount; on trivial ones it's just process tax. Match the ceremony to the weight.</li>
+    <li>Write your principles down until people can predict your call. The endgame is decisions arriving at your desk already sorted — then you take a vacation and nothing breaks.</li>
+  </ul>
+
+  <h2 id="meta">The meta-lesson</h2>
+  <div class="meta">
+    <p>
+      There is no right place on the dial. That is the lesson under all the other lessons,
+      and it's the one worth paying for: anyone who tells you the correct percentage of
+      decisions a CEO should make is selling a framework, and the framework will be wrong
+      by Christmas. The correct setting moves — down as your people compound, up hard the
+      week the batteries catch fire, down again the week the recall ends, down for good as
+      your principles start making your calls without you in the room. A fixed philosophy,
+      <i>including a wise one</i>, is just a slower way to drift.
+    </p>
+    <p>
+      Drift is the real enemy, and drift is silent — that's what makes it dangerous. Both
+      failure directions feel like virtue from the inside: gripping feels like diligence,
+      releasing feels like leadership. Each pays its first-order dividend immediately —
+      better calls, faster shipping — and mails the second-order bill quarters later,
+      addressed to someone you used to be. You cannot <i>feel</i> drift. By the time you
+      can feel it, it's a reorg. You can only instrument for it.
+    </p>
+    <p>
+      So the skill — the actual, learnable, compounding skill of governing a company —
+      is not finding the balance point. It is: <b>build the gauges, glance at them weekly,
+      and correct early and small.</b> Your queue is the grip gauge: if it grows, your bar
+      for “critical” is too low. Your surprise rate is the trust gauge: if your own company
+      keeps startling you, the bar is too high. Recount the “critical” list every quarter —
+      it should shrink as people grow, spike in crisis, and never, ever be static. You will
+      always be a little wrong; that's the terrain, not a failure. The CEOs who compound are
+      simply wrong in a direction they're watching, briefly, with a hand already on the dial.
+    </p>
+  </div>
+
+  <h2 id="gauges">The instruments</h2>
+  <p>Drift can't be felt, only measured. Two gauge clusters, one glance a week:</p>
+  <table class="gauges">
+    <tr><th>GRIP GAUGES — “am I the bottleneck?”</th><th>TRUST GAUGES — “have I let go of the keel?”</th></tr>
+    <tr>
+      <td>Your decision queue: length, and the age of the oldest item.</td>
+      <td>Your surprise rate: how often the company does something you'd have vetoed.</td>
+    </tr>
+    <tr>
+      <td>Latency: how long a team waits between asking and shipping.</td>
+      <td>Duplicate work discovered at demos; incompatible roadmaps, all funded.</td>
+    </tr>
+    <tr>
+      <td>Proposals written in your voice — approval-seeking dressed as thinking.</td>
+      <td>Decisions landing on the midpoint of three opinions.</td>
+    </tr>
+    <tr>
+      <td>Your calendar: how many meetings exist to extract a yes from you.</td>
+      <td>The hard call everyone knows about that nobody has made for two quarters.</td>
+    </tr>
+    <tr>
+      <td><b>Needle moving? Your “critical” bar is too low. Loosen five points.</b></td>
+      <td><b>Needle moving? Your “critical” bar is too high. Tighten five points.</b></td>
+    </tr>
+  </table>
+
+  <h2 id="memo">The decision memo <span class="smallprint noprint">(print this page — this box is the takeaway)</span></h2>
+  <div class="template">
+    <h4>SUNBEAM-STYLE DECISION MEMO — ADAPT AND POST WHERE EVERYONE CAN SEE IT</h4>
+    <p><b>Comes to me</b> (aim for a single-digit count per quarter — recount quarterly):</p>
+    <ol>
+      <li>One-way doors: choices we can't cheaply undo — pricing structure, platform bets, data policy, decade-long ink, anything personally guaranteed.</li>
+      <li>Bet-the-company allocations: the second product, the acquisition, the round.</li>
+      <li>Culture-setting hires and exits — the people who will hire the next forty.</li>
+      <li>Cross-team ties nobody else can break (I break them fast; slow ties are my failure).</li>
+      <li>Whatever this quarter's crisis centralizes — <i>with a written trigger for giving it back.</i></li>
+    </ol>
+    <p><b>Never comes to me</b> (everything else, and out loud):</p>
+    <ol>
+      <li>Anything reversible for less than it costs to ask me. Decide it near the facts; tell me after, if it's interesting.</li>
+      <li>The middle weight: decide it, but write the two-pager first — recommendation plus one honest dissent — and give me 24 hours to read it. I'll rarely use them.</li>
+      <li>My review happens <i>after</i> shipping, in writing, on a weekly rhythm. Feedback, not approval.</li>
+    </ol>
+    <p><b>My gauges, checked weekly:</b> queue length <span class="blank"></span> · oldest item <span class="blank"></span> · surprises this week <span class="blank"></span> · duplicates found <span class="blank"></span></p>
+    <p><b>This quarter's reflection</b> (three lines, honestly):
+      Which “critical” item was actually reversible? <span class="blank"></span><br>
+      What surprised me that shouldn't have? <span class="blank"></span><br>
+      Which decision should someone else make next quarter? <span class="blank"></span></p>
+  </div>
+
+  <h2 id="reading">Further reading</h2>
+  <ul class="lessons">
+    <li><b>Jeff Bezos, Amazon shareholder letters (1997 &amp; 2015)</b> — the origin of Type 1 / Type 2 decisions: one-way doors deserve process; two-way doors deserve speed and forgiveness.</li>
+    <li><b>Andy Grove, <i>High Output Management</i></b> — decisions belong at the lowest level with the competence to make them; the manager's job is to raise that level.</li>
+    <li><b>Jensen &amp; Meckling, “Theory of the Firm” (1976)</b> — the principal–agent problem in its natural habitat: why honest, capable people optimizing locally still drift the whole.</li>
+    <li><b>Sull &amp; Eisenhardt, <i>Simple Rules</i></b> — how a few written principles let many people make one person's decisions, faster and eventually better.</li>
+  </ul>
+
+  <div class="backrow noprint">
+    <a href="iso.html">◂ Back to the game (isometric)</a>
+    <a href="index.html">◂ Classic edition</a>
+    <a href="../index.html">The Daylight Computer Club</a>
+  </div>
+</div>
+</body>
+</html>

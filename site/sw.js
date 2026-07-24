@@ -10,6 +10,7 @@ const SHELL = [
   './',
   'index.html',
   'ceo-sim/index.html',
+  'ceo-sim/lessons.html',
   'ceo-sim/iso.html',
   'ceo-sim/model.js',
   'ceo-sim/game.js',
