@@ -43,6 +43,14 @@
       for you.</p>
       <p><em>Texture</em> adds a faint vinyl crackle and tape wobble, for
       warmth. Also optional.</p>
+      <p>The numbered chips under some scenes are <strong>takes</strong>:
+      1 is always the instrument (generated, offline, endless); the rest
+      are <strong>real field recordings</strong> — hover with the pen to
+      see what each one is. A recording heard once keeps working offline.
+      With thanks to: the National Park Service &amp; Yellowstone's sound
+      library (public domain — dawn chorus, stream, wind, thunderstorm,
+      forest fire), and Félix Blume and OwlStorm on Freesound (CC0 — Amazon
+      roof rain, Chilean waves, night crickets).</p>
       <p><a href="../">← back to the Daylight Computer Club shelf</a></p>
     </div>
   </details>
@@ -67,6 +75,27 @@
       <input type="range" id="vol" min="0" max="100" value="70">
     </label>
     <button id="timer" class="knob" aria-label="Sleep timer">timer&nbsp;off</button>
+    <div id="timer-panel" class="timer-panel" hidden>
+      <p class="tp-title">stop the music &mdash;</p>
+      <div class="tp-row">
+        <button class="tp-btn" data-mins="15">in 15m</button>
+        <button class="tp-btn" data-mins="30">30m</button>
+        <button class="tp-btn" data-mins="45">45m</button>
+        <button class="tp-btn" data-mins="60">60m</button>
+        <button class="tp-btn" data-mins="90">90m</button>
+      </div>
+      <div class="tp-row">
+        <button class="tp-btn" data-mins="22">after one side</button>
+        <button class="tp-btn" data-mins="44">two sides</button>
+        <button class="tp-btn" data-mins="66">three sides</button>
+      </div>
+      <div class="tp-row">
+        <button class="tp-btn tp-wide" id="tp-side-now">when this side ends</button>
+        <button class="tp-btn" id="tp-off">never (off)</button>
+      </div>
+      <p class="tp-note">a side of a record is about 22 minutes; the sound
+      steps down slowly, like a hand easing the volume away</p>
+    </div>
     <button id="binaural" class="knob on" aria-label="Binaural undertone">undertone&nbsp;on</button>
     <button id="texture" class="knob on" aria-label="Lo-fi texture">texture&nbsp;on</button>
   </div>
