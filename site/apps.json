@@ -148,6 +148,42 @@
       ],
       "source": "https://github.com/a12k-a2b/dcc-companion",
       "fixture": true
+    },
+    {
+      "id": "quickback",
+      "name": "QuickBack",
+      "tagline": "Alt+Tab, but friendlier for a Daylight with a hardware keyboard.",
+      "author": "Matt",
+      "type": "apk",
+      "version": "1.0",
+      "updated": "2026-07-22",
+      "apk": {
+        "file": "apps/quickback/quickback.apk",
+        "size": "49 KB",
+        "package": "com.example.quickback"
+      },
+      "uses": [
+        "hardware-keyboard",
+        "accessibility",
+        "app-switching"
+      ],
+      "description": "QuickBack is a tiny app switcher for Daylight tablets with a hardware keyboard. Tap Alt+Tab to jump back to the previous app, or hold Alt+Tab to open a compact bottom tray where you can choose from recent apps with Tab or the arrow keys.",
+      "permissions": [
+        "watch keyboard shortcuts through its accessibility service",
+        "close background apps when you tap an X in the switcher",
+        "optionally change secure keyboard settings to hide Android's keyboard bar"
+      ],
+      "inspected": [
+        "signed with Matt's local Android key",
+        "permissions read straight from the app file",
+        "built from Matt's recovered QuickBack source"
+      ],
+      "afterInstall": [
+        "Open QuickBack from your home screen.",
+        "Tap the button to open Accessibility settings, find QuickBack, and switch it on. Android shows a warning because this is what lets QuickBack listen for Alt+Tab.",
+        "Connect a hardware keyboard. Tap Alt+Tab to jump back to your previous app, or hold Alt+Tab to open the bottom app switcher.",
+        "The keyboard-bar hiding option is optional. If Android still shows its keyboard bar, you can ignore it; QuickBack still switches apps."
+      ]
     }
   ]
 }
