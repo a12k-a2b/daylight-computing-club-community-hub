@@ -11,9 +11,10 @@
   const readStore = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   const QS = new URLSearchParams(location.search);
 
-  // Motion mode. LIVE animates continuously; PAPER redraws once per simulated
-  // week — a time-lapse of stills, the right idiom for the DC-1's reflective
-  // panel (and for anyone who prefers reduced motion).
+  // Motion mode. LIVE animates continuously — and the DC-1's LivePaper is a
+  // fast 60–120fps RLCD, so motion genuinely looks good there. PAPER redraws
+  // once per simulated week: a calm time-lapse of stills, kinder to the
+  // battery, and the respectful default under prefers-reduced-motion.
   let paperMotion = QS.get('motion') ? QS.get('motion') === 'paper'
     : readStore('dcc-ceosim-motion') ? readStore('dcc-ceosim-motion') === 'paper'
     : !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
