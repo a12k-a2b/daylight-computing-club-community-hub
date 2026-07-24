@@ -321,6 +321,21 @@
     renderTitle();
   }
 
+  // ------------------------------------------------------- rotate hint
+  // On a portrait tablet the cockpit stacks (fine, but scrollier). Say so
+  // once, gently, and get out of the way — never block, never nag.
+  function updateRotateHint() {
+    const el = $('rotateHint');
+    if (!el) return;
+    const portraitTablet = window.innerHeight > window.innerWidth && window.innerWidth >= 700;
+    el.hidden = !(portraitTablet && game && !readStore('dcc-ceosim-rotate-hint'));
+  }
+  window.addEventListener('resize', updateRotateHint);
+  if ($('rotateDismiss')) $('rotateDismiss').addEventListener('click', () => {
+    store('dcc-ceosim-rotate-hint', '1');
+    $('rotateHint').hidden = true;
+  });
+
   // -------------------------------------------------------- visit counter
   // "N chief executives have walked in." Lives on anjan.app; fails silent
   // (offline, adblock, private mode — the game never depends on it).
@@ -360,6 +375,7 @@
     successorFlip = false; debriefDone = {};
     const dr = $('dialRow');
     if (dr) { dr.hidden = mode !== 'F'; renderDial(); }
+    updateRotateHint();
     buildMetrics(); buildDepts();
     if (board()) board().reset(mode);
     renderAll();

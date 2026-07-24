@@ -108,7 +108,7 @@ button.primary, button[aria-pressed="true"] { background: var(--ink); color: var
 @keyframes metricshake { 25% { transform: translateX(-2px);} 75% { transform: translateX(2px);} }
 
 #main { display: grid; grid-template-columns: 3fr 2fr; gap: 14px; align-items: stretch; }
-@media (max-width: 800px) { #main { grid-template-columns: 1fr; } }
+@media (max-width: 1000px) { #main { grid-template-columns: 1fr; } }
 
 /* org board */
 #orgboard { border: var(--rule); padding: 14px; position: relative; min-height: 360px; display: flex; flex-direction: column; gap: 18px; }
@@ -250,6 +250,12 @@ button.primary, button[aria-pressed="true"] { background: var(--ink); color: var
 .testrow.wrong .tq { text-decoration: underline; text-decoration-style: wavy; }
 #fpDialWrap { border: var(--rule); padding: 10px 12px; margin: 0 0 14px; break-inside: avoid; }
 #fpDialChart { width: 100%; height: 150px; display: block; }
+#rotateHint {
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  border: var(--rule); padding: 8px 8px 8px 14px; margin-bottom: 12px; font-size: 16px;
+}
+#rotateHint span { flex: 1; min-width: 200px; }
+#rotateHint button { min-height: 44px; padding: 6px 14px; }
 </style>
 </head>
 <body>
@@ -350,6 +356,11 @@ button.primary, button[aria-pressed="true"] { background: var(--ink); color: var
       <button class="speedbtn" data-speed="8">8×</button>
       <button class="speedbtn" id="btnMotion" title="LIVE animates continuously — the DC-1's 60–120fps LivePaper screen renders motion beautifully. PAPER redraws once per simulated week: a calmer time-lapse of stills, easier on the battery.">LIVE</button>
       <button id="btnMute" title="Sound">🔉</button>
+    </div>
+
+    <div id="rotateHint" hidden>
+      <span>🔄 Tip: this cockpit fits best in <b>landscape</b> — turn the tablet sideways. Portrait works too, just scrollier.</span>
+      <button id="rotateDismiss">Got it</button>
     </div>
 
     <div id="metrics"></div>
