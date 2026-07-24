@@ -66,10 +66,11 @@ class WetInk extends SurfaceView implements SurfaceHolder.Callback {
     /** Keeps wet ink from painting over the toolbar while the pen crosses it. */
     void setClipBottom(int px) { clipBottom = px; }
 
-    void begin(float baseWidthPx, int strokeKind) {
+    void begin(float baseWidthPx, int strokeKind, int inkColor) {
         n = 0;
         baseWidth = baseWidthPx;
         kind = strokeKind;
+        paint.setColor(inkColor);
     }
 
     void addPoint(float x, float y, float p, long tMs) {

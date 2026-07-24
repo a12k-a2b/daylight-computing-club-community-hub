@@ -54,6 +54,11 @@ public class PadService extends AccessibilityService {
     private static final String SOLOS_LONG = "com.daylightcomputer.solosserver.ACTION_BUTTON_LONG_PRESS";
     private static final long LONG_PRESS_MS = 500;
     private static final long DEBOUNCE_MS = 600;
+    // The DC-1's top button chatters: one physical press arrives as a train
+    // of F12 DOWN/UP pairs (seen on Anjan's unit, 2026-07-11 — ~13 pairs per
+    // press), so the pad flickered open-shut. Edges inside this window of the
+    // previous edge are electrical noise, not presses.
+    private static final long KEY_BOUNCE_MS = 300;
 
     static volatile PadService instance;
 
@@ -70,6 +75,8 @@ public class PadService extends AccessibilityService {
 
     private boolean shown, peeking, longFired, snipMode;
     private long lastKeyHandled;
+    private long lastToggleEdge;         // last toggle-key edge, real or chatter
+    private boolean toggleDownAccepted;  // this press-group's DOWN was real
 
     private SnipVeil veil;
     private View panel;                 // notebooks / new-notebook card
@@ -79,6 +86,7 @@ public class PadService extends AccessibilityService {
     private long armedBookAt;
 
     private TextView pageBtn, penBtn, hiBtn, eraseBtn, pickBtn, undoBtn, redoBtn, bookBtn;
+    private SeekBar glassSeek;
 
     private final Runnable longPress = () -> {
         longFired = true;
@@ -158,21 +166,33 @@ public class PadService extends AccessibilityService {
                             .putLong(Prefs.K_CALIBRATE_UNTIL, 0).apply();
                     sendBroadcast(new Intent(Prefs.CALIBRATED_ACTION).setPackage(getPackageName()));
                     toast("Pad button set to " + keyName(e.getKeyCode()));
+                    // swallow this press's trailing chatter in the toggle branch
+                    lastToggleEdge = SystemClock.uptimeMillis();
                 }
                 return true;
             }
         }
 
         if (e.getKeyCode() == prefs.getInt(Prefs.K_TOGGLE, Prefs.DEFAULT_TOGGLE)) {
-            lastKeyHandled = SystemClock.uptimeMillis();
+            long now = SystemClock.uptimeMillis();
+            lastKeyHandled = now;
             if (e.getAction() == KeyEvent.ACTION_DOWN) {
-                if (e.getRepeatCount() == 0) {
+                boolean chatter = now - lastToggleEdge < KEY_BOUNCE_MS;
+                lastToggleEdge = now; // sliding window: chatter keeps it closed
+                if (!chatter && e.getRepeatCount() == 0) {
+                    toggleDownAccepted = true;
                     longFired = false;
                     handler.postDelayed(longPress, LONG_PRESS_MS);
                 }
             } else if (e.getAction() == KeyEvent.ACTION_UP) {
-                handler.removeCallbacks(longPress);
-                if (!longFired) shortPress();
+                lastToggleEdge = now;
+                // Only the UP that completes a real DOWN acts — a long hold's
+                // release stays valid no matter how much chatter came between.
+                if (toggleDownAccepted) {
+                    toggleDownAccepted = false;
+                    handler.removeCallbacks(longPress);
+                    if (!longFired) shortPress();
+                }
             }
             return true;
         }
@@ -210,6 +230,7 @@ public class PadService extends AccessibilityService {
     private void showPad() {
         if (shown) return;
         if (root == null) buildUi();
+        pad.ensureBitmaps(); // rebuilt after the memory handed back on close
         pad.setPenOnly(prefs.getBoolean(Prefs.K_PEN_ONLY, false));
         pad.setBetaFlick(prefs.getBoolean(Prefs.K_BETA_FLICK, false));
         rootLp.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
@@ -217,39 +238,68 @@ public class PadService extends AccessibilityService {
                 | WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON;
         try {
             wm.addView(root, rootLp);
+        } catch (IllegalStateException alreadyAdded) {
+            // a too-quick toggle raced the old window's teardown — reset and retry
+            try {
+                wm.removeViewImmediate(root);
+                wm.addView(root, rootLp);
+            } catch (Exception e) {
+                toast("Couldn't open the pad");
+                return;
+            }
         } catch (Exception e) {
             toast("Couldn't open the pad");
             return;
         }
         shown = true;
         peeking = false;
-        // the notebook slides down over the page — a layer, not a place-change.
-        // 160ms on open only; closing stays instant so going back costs nothing.
+        // No entrance animation — the slide didn't feel right on the real
+        // panel (Anjan, 2026-07-11), so the pad appears the way it leaves:
+        // instantly.
         root.animate().cancel();
-        root.setTranslationY(-getResources().getDisplayMetrics().heightPixels);
-        root.animate().translationY(0).setDuration(160)
-                .setInterpolator(new android.view.animation.DecelerateInterpolator(1.5f))
-                .start();
+        root.setTranslationY(0);
         maybeShowHint();
         refreshBar();
     }
 
-    /** Once, the first time the glass appears: teach the mental model. */
+    private static final String[][] WALKTHROUGH = {
+            {"THIS IS TRACING PAPER", "A layer over your page — you never left it. Write with "
+                    + "the pen (its other end erases); press the top button and you're right "
+                    + "back where you were, place kept."},
+            {"THE GLASS SLIDER", "It sets how much of the world shows through: 0% is clear "
+                    + "glass for tracing, 100% is opaque paper. You're at 80% — enough paper "
+                    + "to write on, enough world to remember where you are. Each notebook "
+                    + "remembers its own setting."},
+            {"REACH THROUGH", "PEEK lets you scroll the page beneath while your ink stays "
+                    + "put. SNIP cuts a piece of it onto the glass — drag, resize, tilt it. "
+                    + "And the Annotate the World betas in the app let flicks and taps pass "
+                    + "through the glass entirely."}};
+
+    private int hintStep;
+
+    /** Once, the first time the glass appears: teach the mental model in three breaths. */
     private void maybeShowHint() {
         if (prefs.getInt(Prefs.K_HINTS, 0) != 0 || hintCard != null) return;
-        LinearLayout card = card("THIS IS TRACING PAPER");
+        hintStep = 0;
+        showHintStep();
+    }
+
+    private void showHintStep() {
+        if (hintCard != null) { root.removeView(hintCard); hintCard = null; }
+        if (hintStep >= WALKTHROUGH.length) {
+            prefs.edit().putInt(Prefs.K_HINTS, 1).apply();
+            return;
+        }
+        LinearLayout card = card(WALKTHROUGH[hintStep][0]
+                + "  ·  " + (hintStep + 1) + "/" + WALKTHROUGH.length);
         TextView t = new TextView(this);
-        t.setText("It lays over your page — you never left. The GLASS slider sets how much "
-                + "of the world shows through (you're at "
-                + pad.getOpacity() + "%). Write with the pen; press the top button and "
-                + "you're right back where you were. PEEK lets you scroll the page "
-                + "underneath; SNIP clips a piece of it onto the glass.");
+        t.setText(WALKTHROUGH[hintStep][1]);
         t.setTextColor(Color.BLACK);
         t.setTextSize(16);
         card.addView(t, rowLp());
-        card.addView(button("GOT IT", v -> {
-            prefs.edit().putInt(Prefs.K_HINTS, 1).apply();
-            if (hintCard != null) { root.removeView(hintCard); hintCard = null; }
+        card.addView(button(hintStep < WALKTHROUGH.length - 1 ? "NEXT →" : "GOT IT", v -> {
+            hintStep++;
+            showHintStep();
         }), rowLp());
         FrameLayout.LayoutParams lp = new FrameLayout.LayoutParams(
                 dp(380), FrameLayout.LayoutParams.WRAP_CONTENT);
@@ -270,8 +320,13 @@ public class PadService extends AccessibilityService {
         if (peeking) exitPeek();
         pad.flushSave();
         maybeAutoBackup();
-        try { wm.removeView(root); } catch (Exception ignored) {}
+        // Immediate, not lazy: the pad reuses this same view for its next
+        // show, and an async teardown can null the view's parent AFTER a
+        // quick re-show has attached it — the wet-ink SurfaceView then
+        // crashes the attach traversal (requestTransparentRegion on null).
+        try { wm.removeViewImmediate(root); } catch (Exception ignored) {}
         shown = false;
+        pad.releaseBitmaps(); // the pad away = its memory handed back
     }
 
     /** Once a day, on pad close: the whole library into Download, quietly. */
@@ -284,7 +339,7 @@ public class PadService extends AccessibilityService {
                 Backup.writeBackup(this, snap);
                 prefs.edit().putLong(Prefs.K_LAST_BACKUP, System.currentTimeMillis()).apply();
                 toast("Notebooks backed up to Download/Tracing Paper/Backups");
-            } catch (Exception ignored) {
+            } catch (Throwable ignored) {
                 // never let a failed backup interrupt putting the glass away
             }
         }).start();
@@ -306,7 +361,7 @@ public class PadService extends AccessibilityService {
         if (chip != null) { try { wm.removeView(chip); } catch (Exception ignored) {} chip = null; }
         if (shown && root != null) {
             if (pad != null) pad.flushSave();
-            try { wm.removeView(root); } catch (Exception ignored) {}
+            try { wm.removeViewImmediate(root); } catch (Exception ignored) {}
         }
         shown = false;
         peeking = false;
@@ -318,6 +373,7 @@ public class PadService extends AccessibilityService {
         if (!shown || peeking || snipMode) return;
         closePanel();
         closeToolPopup();
+        pad.resetZoom();
         peeking = true;
         rootLp.flags |= WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE;
         wm.updateViewLayout(root, rootLp);
@@ -357,6 +413,7 @@ public class PadService extends AccessibilityService {
         if (hintCard != null) { root.removeView(hintCard); hintCard = null; }
         if (peeking) exitPeek();
         snipMode = true;
+        pad.resetZoom(); // snips are cut from the page at true size
         pad.setVisibility(View.INVISIBLE);
         barShell.setVisibility(View.INVISIBLE);
         veil = new SnipVeil(this, this::finishSnip, this::cancelSnip);
@@ -424,25 +481,43 @@ public class PadService extends AccessibilityService {
     private void replayFlick(float[] xs, float[] ys, long[] ts, int n) {
         if (!shown || peeking || snipMode || n < 2) return;
         android.graphics.Path p = new android.graphics.Path();
-        p.moveTo(xs[0], ys[0]);
+        p.moveTo(clampX(xs[0]), clampY(ys[0]));
         int step = Math.max(1, n / 20);
-        for (int i = step; i < n; i += step) p.lineTo(xs[i], ys[i]);
-        p.lineTo(xs[n - 1], ys[n - 1]);
+        for (int i = step; i < n; i += step) p.lineTo(clampX(xs[i]), clampY(ys[i]));
+        p.lineTo(clampX(xs[n - 1]), clampY(ys[n - 1]));
         long dur = Math.max(80, Math.min(ts[n - 1] - ts[0], 400));
-        inject(new android.accessibilityservice.GestureDescription.Builder()
-                .addStroke(new android.accessibilityservice.GestureDescription
-                        .StrokeDescription(p, 0, dur))
-                .build(), dur + 300);
+        try {
+            inject(new android.accessibilityservice.GestureDescription.Builder()
+                    .addStroke(new android.accessibilityservice.GestureDescription
+                            .StrokeDescription(p, 0, dur))
+                    .build(), dur + 300);
+        } catch (IllegalArgumentException ignored) {
+            // an unreplayable gesture is a skipped page-turn, not a crash
+        }
     }
 
     private void replayTap(float x, float y) {
         if (!shown || peeking || snipMode) return;
         android.graphics.Path p = new android.graphics.Path();
-        p.moveTo(x, y);
-        inject(new android.accessibilityservice.GestureDescription.Builder()
-                .addStroke(new android.accessibilityservice.GestureDescription
-                        .StrokeDescription(p, 0, 60))
-                .build(), 360);
+        p.moveTo(clampX(x), clampY(y));
+        try {
+            inject(new android.accessibilityservice.GestureDescription.Builder()
+                    .addStroke(new android.accessibilityservice.GestureDescription
+                            .StrokeDescription(p, 0, 60))
+                    .build(), 360);
+        } catch (IllegalArgumentException ignored) {
+        }
+    }
+
+    // A finger can roll past the screen's edge mid-flick (the digitizer reports
+    // slightly negative coordinates); GestureDescription refuses paths outside
+    // the display, so replayed points are pinned to it.
+    private float clampX(float x) {
+        return Math.max(0, Math.min(x, getResources().getDisplayMetrics().widthPixels - 1));
+    }
+
+    private float clampY(float y) {
+        return Math.max(0, Math.min(y, getResources().getDisplayMetrics().heightPixels - 1));
     }
 
     private void inject(android.accessibilityservice.GestureDescription g, long safetyMs) {
@@ -528,6 +603,9 @@ public class PadService extends AccessibilityService {
     private LinearLayout card(String title) {
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);
+        // Cards float above the pad; claim the whole gesture or a touch on
+        // the card's text falls through and inks the page beneath it.
+        col.setClickable(true);
         int p = dp(16);
         col.setPadding(p, p, p, p);
         GradientDrawable g = new GradientDrawable();
@@ -586,14 +664,49 @@ public class PadService extends AccessibilityService {
                 }
                 return true;
             });
+            TextView renameBtn = button("✎", v -> showRenameBook(idx));
+            LinearLayout line = new LinearLayout(this);
+            line.setOrientation(LinearLayout.HORIZONTAL);
+            LinearLayout.LayoutParams rowLpIn = new LinearLayout.LayoutParams(0, dp(52), 1f);
+            line.addView(row, rowLpIn);
+            LinearLayout.LayoutParams penLp = new LinearLayout.LayoutParams(dp(52), dp(52));
+            penLp.setMarginStart(dp(8));
+            line.addView(renameBtn, penLp);
             LinearLayout.LayoutParams rlp = new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, dp(52));
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
             rlp.bottomMargin = dp(8);
-            col.addView(row, rlp);
+            col.addView(line, rlp);
         }
         col.addView(button("+ NEW NOTEBOOK", v -> showNewBook()), rowLp());
         col.addView(button("CLOSE", v -> closePanel()), rowLp());
         addPanel(col);
+    }
+
+    private void showRenameBook(int idx) {
+        closePanel();
+        LinearLayout col = card("RENAME NOTEBOOK");
+        EditText name = new EditText(this);
+        name.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+        name.setText(pad.getBooks().get(idx).name);
+        name.setSelectAllOnFocus(true);
+        name.setTextColor(Color.BLACK);
+        name.setTextSize(18);
+        GradientDrawable g = new GradientDrawable();
+        g.setColor(Color.WHITE);
+        g.setStroke(dp(2), Color.BLACK);
+        name.setBackground(g);
+        int p8 = dp(8);
+        name.setPadding(p8 * 2, p8, p8 * 2, p8);
+        col.addView(name, rowLp());
+        col.addView(button("SAVE", v -> {
+            pad.renameBook(idx, name.getText().toString());
+            closePanel();
+            showBooks();
+            refreshBar();
+        }), rowLp());
+        col.addView(button("CANCEL", v -> { closePanel(); showBooks(); }), rowLp());
+        addPanel(col);
+        setWindowFocusable(true); // so the name field can take the keyboard
     }
 
     private void showNewBook() {
@@ -777,13 +890,18 @@ public class PadService extends AccessibilityService {
         sb.setProgressBackgroundTintList(ColorStateList.valueOf(0xFF888888));
         sb.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override public void onProgressChanged(SeekBar s, int v, boolean fromUser) {
-                if (fromUser) pad.setOpacity(v);
+                if (!fromUser) return;
+                // a soft detent at the sweet spot: near 80 means 80
+                int vv = Math.abs(v - 80) <= 3 ? 80 : v;
+                if (vv != v) s.setProgress(vv);
+                pad.setOpacity(vv);
             }
             @Override public void onStartTrackingTouch(SeekBar s) {
                 s.getParent().requestDisallowInterceptTouchEvent(true);
             }
             @Override public void onStopTrackingTouch(SeekBar s) {}
         });
+        glassSeek = sb;
         LinearLayout.LayoutParams slp = new LinearLayout.LayoutParams(0, dp(48), 1f);
         slp.setMarginStart(p8);
         box.addView(sb, slp);
@@ -824,6 +942,26 @@ public class PadService extends AccessibilityService {
             sizes.addView(tiles[i - 1], tlp);
         }
         col.addView(sizes, rowLp());
+
+        if (tool == GlassPadView.TOOL_PEN) {
+            LinearLayout shades = new LinearLayout(this);
+            shades.setOrientation(LinearLayout.HORIZONTAL);
+            final TextView[] sts = new TextView[GlassPadView.SHADE_NAMES.length];
+            int curShade = prefs.getInt(Prefs.K_PEN_SHADE, 0);
+            for (int i = 0; i < sts.length; i++) {
+                final int shade = i;
+                sts[i] = button(GlassPadView.SHADE_NAMES[i], v -> {
+                    prefs.edit().putInt(Prefs.K_PEN_SHADE, shade).apply();
+                    for (int k = 0; k < sts.length; k++) style(sts[k], k == shade);
+                });
+                sts[i].setTextSize(13);
+                style(sts[i], i == curShade);
+                LinearLayout.LayoutParams slp2 = new LinearLayout.LayoutParams(0, dp(48), 1f);
+                if (i > 0) slp2.setMarginStart(dp(8));
+                shades.addView(sts[i], slp2);
+            }
+            col.addView(shades, rowLp());
+        }
 
         if (tool == GlassPadView.TOOL_ERASE) {
             LinearLayout modes = new LinearLayout(this);
@@ -874,6 +1012,9 @@ public class PadService extends AccessibilityService {
         String n = pad.bookName();
         if (n.length() > 10) n = n.substring(0, 9) + "…";
         bookBtn.setText(n.toUpperCase(java.util.Locale.US) + " ▾");
+        // each notebook remembers its own GLASS — keep the slider honest
+        if (glassSeek != null && glassSeek.getProgress() != pad.getOpacity())
+            glassSeek.setProgress(pad.getOpacity());
     }
 
     private void exportPdf() {
@@ -885,7 +1026,9 @@ public class PadService extends AccessibilityService {
             try {
                 String name = Exporter.exportPdf(this, snap, aspect);
                 handler.post(() -> toast("Saved " + name + " in Download"));
-            } catch (Exception e) {
+            } catch (Throwable e) {
+                // Throwable on purpose: a giant library should fail with a
+                // toast, not take the process (and the pad) down with it
                 handler.post(() -> toast("PDF export failed"));
             }
         }).start();

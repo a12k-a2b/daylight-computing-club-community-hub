@@ -44,10 +44,13 @@ for i in $(seq 1 15); do
   adb shell input swipe 400 900 400 200 80
 done
 
-# --- then the monkey, unthrottled
+# --- then the monkey, unthrottled. --ignore-crashes keeps it pounding past
+# any crash (a bystander's, or even ours — the app restarts and the hunt gets
+# extra save/load/recovery cycles); fatals are billed per-process from logcat.
 adb shell monkey -p "$PKG" --throttle 0 --ignore-security-exceptions --ignore-timeouts \
+  --ignore-crashes --ignore-native-crashes \
   --pct-syskeys 0 -v "$EVENTS" > monkey.log 2>&1
-if [ $? -eq 0 ]; then report "MONKEY=survived"; else report "MONKEY=crashed"; fi
+if [ $? -eq 0 ]; then report "MONKEY=survived"; else report "MONKEY=aborted"; fi
 
 # --- close the pad (flush), then read the aftermath
 adb shell input keyevent 142
@@ -55,6 +58,13 @@ sleep 4
 adb logcat -d > logcat.txt
 FATALS=$(grep -A1 "FATAL EXCEPTION" logcat.txt | grep -c "Process: $PKG")
 report "FATALS=$FATALS"
+report "ANRS=$(grep -c "ActivityManager: ANR in $PKG" logcat.txt)"
+if [ "$FATALS" -gt 0 ]; then
+  echo "=== crash stack (logcat, this app only) ==="
+  grep -B2 -A40 "FATAL EXCEPTION" logcat.txt | grep -B3 -A39 "Process: $PKG" | head -90
+  echo "=== crash block (monkey) ==="
+  grep -B2 -A40 "// CRASH: $PKG" monkey.log | head -60
+fi
 MEM=$(adb shell dumpsys meminfo "$PKG" 2>/dev/null | grep -m1 "TOTAL PSS:" | grep -o '[0-9]*' | head -1)
 [ -n "$MEM" ] && report "MEM_MB=$((MEM / 1024))" || report "MEM_MB="
 

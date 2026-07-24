@@ -127,7 +127,10 @@ public class MainActivity extends Activity {
                 + "too, so old notebooks can move in.\n\n"
                 + "On the glass: PEN, HILITE and ERASE to switch nibs (the pen's other end "
                 + "erases too) — tap the tool you're already holding for its size card; the "
-                + "eraser also picks STROKE (graze lines, lift to erase) or PIXEL. HILITE is "
+                + "pen's card also picks its shade (black, dark gray, light gray) and the "
+                + "eraser picks STROKE (graze lines, lift to erase) or PIXEL. Notebooks "
+                + "rename with the ✎ next to each one, and each remembers its own GLASS "
+                + "setting. HILITE is "
                 + "a light-gray marker with a thin black ring so it still stands out on this "
                 + "screen. The pad opens at 80% opacity — paper enough to write on, world "
                 + "enough to remember where you are. Pages scroll past in one motion — drag "
@@ -190,7 +193,7 @@ public class MainActivity extends Activity {
                 runOnUiThread(() -> Toast.makeText(this,
                         "Saved " + name + " in Download/Tracing Paper/Backups",
                         Toast.LENGTH_LONG).show());
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 runOnUiThread(() -> Toast.makeText(this, "Backup failed",
                         Toast.LENGTH_SHORT).show());
             }
@@ -234,7 +237,7 @@ public class MainActivity extends Activity {
                 final String msg = "Restored " + restored.size() + " notebook(s), "
                         + pages + " page(s) — open the pad and tap the ▾ button";
                 runOnUiThread(() -> Toast.makeText(this, msg, Toast.LENGTH_LONG).show());
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 runOnUiThread(() -> Toast.makeText(this,
                         "Couldn't read that file as a backup", Toast.LENGTH_LONG).show());
             }
@@ -250,7 +253,7 @@ public class MainActivity extends Activity {
                 String name = Exporter.exportPdf(this, new NoteStore(this).load().books, aspect);
                 runOnUiThread(() -> Toast.makeText(this,
                         "Saved " + name + " in Download", Toast.LENGTH_LONG).show());
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 runOnUiThread(() -> Toast.makeText(this,
                         "PDF export failed", Toast.LENGTH_SHORT).show());
             }
