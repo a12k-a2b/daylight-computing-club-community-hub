@@ -379,9 +379,10 @@
   }
 
   // ---- the frame ---------------------------------------------------------
-  // LIVE mode runs drawScene at 60fps; PAPER mode (window.PAPER_MOTION, set
-  // by game.js — the DC-1 default) calls it once per simulated week instead:
-  // a time-lapse of stills, no continuous motion on the reflective panel.
+  // LIVE mode runs drawScene at 60fps (the DC-1's LivePaper handles this
+  // beautifully — it's a fast RLCD, not e-ink). PAPER mode (window.PAPER_MOTION,
+  // set by game.js) calls it once per simulated week instead: a time-lapse of
+  // stills for anyone who prefers calm, or battery.
   function frame(t) {
     raf = requestAnimationFrame(frame);
     if (window.PAPER_MOTION) return;
