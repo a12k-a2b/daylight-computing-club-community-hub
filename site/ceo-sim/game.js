@@ -88,6 +88,13 @@
             break;
           }
           case 'page': this.noise(t, 0.22, 0.05, 1400); break;
+          case 'fanfare': {
+            // I – IV – V – I, small bells; the only tune the company knows
+            const chords = [[523, 659, 784], [698, 880, 1047], [784, 988, 1175], [1047, 1319, 1568]];
+            chords.forEach((ch, i) =>
+              ch.forEach(f => this.tone(f, t + i * 0.22, i === 3 ? 0.7 : 0.2, 'sine', 0.045)));
+            break;
+          }
         }
       } catch (e) { /* sound is garnish, never the meal */ }
     }
@@ -106,18 +113,24 @@
     B: { name: 'OPTION B — THE GHOST', motto: '“You guys figure it out.”', maxW: 110 },
     C: { name: 'OPTION C — THE BALANCE', motto: '“I take the one-way doors. You take the rest.”', maxW: 150 },
     D: { name: 'OPTION A½ — THE FINAL SAY', motto: '“I delegate everything! …except what matters.”', maxW: 205 },
-    E: { name: 'OPTION B½ — THE CONDUCTOR', motto: '“The big calls are how people grow.”', maxW: 205 }
+    E: { name: 'OPTION B½ — THE CONDUCTOR', motto: '“The big calls are how people grow.”', maxW: 205 },
+    F: { name: 'THE CAPSTONE — YOUR COMPANY', motto: '“No philosophy. A dial, six instruments, and my attention.”', maxW: 195 }
   };
   const WEEK_MS = 640;
 
   let game = null, raf = 0, acc = 0, lastT = 0;
   let speed = 1, paused = false, inCard = false;
   let cardIdx = 0, nextCardWeek = 0, currentCard = null;
-  let bubbleTimer = 0, papersAlive = 0;
+  let bubbleTimer = 0, papersAlive = 0, successorFlip = false;
+  let debriefDone = {};
+  const DEBRIEF = QS.get('debrief') === '1';
 
   function progress() {
     try { return JSON.parse(readStore('dcc-ceosim-progress') || '{}'); }
     catch (e) { return {}; }
+  }
+  function readJSON(k) {
+    try { return JSON.parse(readStore(k) || 'null'); } catch (e) { return null; }
   }
   function saveProgress(p) { store('dcc-ceosim-progress', JSON.stringify(p)); }
 
@@ -203,11 +216,32 @@
   function renderTitle() {
     const p = progress();
     const mark = (r, m) => !r ? '' :
+      m === 'F' ? (r.win ? '★ STEERED — 16 QUARTERS' : r.drift ? '≈ SURVIVED, DRIFTING' : '☠ RAN AGROUND, WEEK ' + r.week) :
       r.win ? '★ SURVIVED — 12 QUARTERS' :
       m === 'D' ? '▣ SOLD OFF, YEAR ' + Math.ceil(r.week / 48) :
       m === 'E' ? '▣ WENT SIDEWAYS, YEAR ' + Math.ceil(r.week / 48) :
       '☠ DIED, WEEK ' + r.week;
-    ['A', 'B', 'C', 'D', 'E'].forEach(m => { $('played' + m).textContent = mark(p[m], m); });
+    ['A', 'B', 'C', 'D', 'E', 'F'].forEach(m => { const el = $('played' + m); if (el) el.textContent = mark(p[m], m); });
+    // the capstone opens once you've walked the narrow path at least once
+    const bf = $('btnF');
+    if (bf) {
+      bf.disabled = !p.C;
+      $('descF').textContent = p.C
+        ? 'A dial you can turn any week: how much of the company reaches your desk. The right setting moves. Watch the gauges; notice the drift.'
+        : '🔒 Locked. Play The Balance first — the dial only means something once you\'ve sorted by hand.';
+    }
+    // sorting test scoreboard
+    const pre = readJSON('dcc-ceosim-test-pre'), post = readJSON('dcc-ceosim-test-post');
+    const td = $('testDelta');
+    if (td) {
+      td.textContent = pre && post ? 'BEFORE: ' + pre.score + '/6 · AFTER: ' + post.score + '/6'
+        : pre ? 'BASELINE: ' + pre.score + '/6 — beat The Balance to unlock the re-test'
+        : '';
+    }
+    const bt = $('btnTest');
+    if (bt) bt.textContent = !pre ? '🧪 The 60-second sorting test (take it before you play)'
+      : (p.C && p.C.win && !post) ? '🧪 Re-take the sorting test — see what the game did'
+      : '🧪 The sorting test';
     const s = sideDone(p);
     const unlocked = s.grip && s.trust;
     $('btnC').disabled = !unlocked;
@@ -218,6 +252,72 @@
     const fresh = !p.A && !p.B && !p.D && !p.E;
     $('btnA').classList.toggle('suggested', fresh);
     if (fresh) $('playedA').textContent = '☞ NEW HERE? START WITH THIS ONE.';
+  }
+
+  // ------------------------------------------------- the 60-second test
+  // Six decisions, two buttons each. Taken cold it's the baseline; after
+  // beating The Balance it's the report card.
+  let testAnswers = [];
+  function openTest() {
+    FX.ensure();
+    testAnswers = new Array(S.SORT_TEST.length).fill(null);
+    const wrap = $('testRows'); wrap.innerHTML = '';
+    S.SORT_TEST.forEach((q, i) => {
+      const row = document.createElement('div');
+      row.className = 'testrow';
+      const label = document.createElement('div');
+      label.className = 'tq'; label.textContent = (i + 1) + '. ' + q.t;
+      row.appendChild(label);
+      const btns = document.createElement('div'); btns.className = 'tbtns';
+      [['🖋 ME', true], ['📤 THEM', false]].forEach(([txt, val]) => {
+        const b = document.createElement('button');
+        b.textContent = txt;
+        b.addEventListener('click', () => {
+          testAnswers[i] = val;
+          btns.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', 'false'));
+          b.setAttribute('aria-pressed', 'true');
+          $('testSubmit').disabled = testAnswers.some(a => a === null);
+        });
+        btns.appendChild(b);
+      });
+      row.appendChild(btns);
+      const why = document.createElement('p');
+      why.className = 'twhy'; why.hidden = true;
+      row.appendChild(why);
+      wrap.appendChild(row);
+    });
+    $('testSubmit').disabled = true;
+    $('testResult').hidden = true;
+    $('testSubmit').hidden = false;
+    $('testOverlay').hidden = false;
+  }
+
+  function gradeTest() {
+    let score = 0;
+    const rows = $('testRows').children;
+    S.SORT_TEST.forEach((q, i) => {
+      const right = testAnswers[i] === q.ceo;
+      if (right) score++;
+      const why = rows[i].querySelector('.twhy');
+      why.hidden = false;
+      why.textContent = (right ? '✓ ' : '✗ ') + (q.ceo ? 'The CEO\'s. ' : 'Theirs. ') + q.why;
+      rows[i].classList.toggle('wrong', !right);
+    });
+    const p = progress();
+    const key = readJSON('dcc-ceosim-test-pre') && p.C && p.C.win ? 'dcc-ceosim-test-post' : 'dcc-ceosim-test-pre';
+    store(key, JSON.stringify({ score, total: S.SORT_TEST.length, at: Date.now() }));
+    const pre = readJSON('dcc-ceosim-test-pre'), post = readJSON('dcc-ceosim-test-post');
+    $('testScoreLine').textContent = 'SCORE: ' + score + '/' + S.SORT_TEST.length +
+      (post && pre && key === 'dcc-ceosim-test-post'
+        ? ' — before the game you scored ' + pre.score + '/' + pre.total + '. That delta is the point.'
+        : key === 'dcc-ceosim-test-pre'
+          ? ' — baseline saved. Play through to The Balance, then re-take it.'
+          : '');
+    $('testSubmit').hidden = true;
+    $('testScoreLine').hidden = false;
+    $('testResult').hidden = false;
+    FX.play(score >= 5 ? 'fanfare' : 'ding');
+    renderTitle();
   }
 
   // -------------------------------------------------------- visit counter
@@ -256,6 +356,9 @@
     $('ticker').innerHTML = '';
     $('doorsRow').innerHTML = '<span id="doorsHint">ONE-WAY DOORS WALKED THROUGH APPEAR HERE ▸</span>';
     $('bubble').hidden = true;
+    successorFlip = false; debriefDone = {};
+    const dr = $('dialRow');
+    if (dr) { dr.hidden = mode !== 'F'; renderDial(); }
     buildMetrics(); buildDepts();
     if (board()) board().reset(mode);
     renderAll();
@@ -274,14 +377,74 @@
     while (acc >= WEEK_MS && steps < 10) { acc -= WEEK_MS; steps++; step(); if (game.over || inCard) break; }
   }
 
+  // ------------------------------------------------------- the dial (F)
+  function renderDial() {
+    if (!game || !$('dialValue')) return;
+    $('dialValue').textContent = Math.round(game.dial * 100) + '%';
+  }
+  function turnDial(delta) {
+    if (!game || game.mode !== 'F' || game.over) return;
+    const before = game.dial;
+    game.dial = Math.min(0.95, Math.max(0.05, Math.round((game.dial + delta) * 100) / 100));
+    if (game.dial === before) return;
+    renderDial();
+    FX.play('blip');
+    logLine({ t: 'You turn the dial: ' + Math.round(game.dial * 100) + '% of decisions now reach your desk.' });
+  }
+
+  // -------------------------------------------------- debrief mode (?debrief=1)
+  const DEBRIEF_QS = {
+    A: { 24: 'Nothing has gone visibly wrong yet. What single number would you watch to catch this failure a year early?',
+         48: 'Who in this company has learned to decide anything this year? What is the queue teaching them instead?',
+         96: 'When did the QUALITY of the CEO\'s decisions start falling — and what caused it?' },
+    B: { 24: 'The speed is real. What invisible quantity is being spent to buy it?',
+         48: 'List the decisions made so far that cannot be unmade. Who examined them before they happened?',
+         96: 'Whose job was coherence? What happens to a question that is everyone\'s?' },
+    D: { 24: 'The delegation dashboard reads 91%. What would a LEVERAGE dashboard read?',
+         48: 'Each review adds two weeks and 4%. Price that trade for one big decision, then for all of them.',
+         96: 'No fires, no growth. Why does this failure produce no feedback — and what replaces the missing alarm?' },
+    E: { 24: 'Morale is outstanding. Under what conditions is that the alarm, not the good news?',
+         48: 'A big call was just handed over as a "growth opportunity." Estimate the discount. Who says it out loud?',
+         96: 'Which hard call has consensus quietly declined to make? What is it costing per quarter?' },
+    C: { 24: 'Which memo so far was hardest to classify, and what made it hard?',
+         48: 'What information would change one of your keep/delegate calls? Who already has it?',
+         96: 'The org is starting to pre-sort decisions your way. What did you do that caused that?' },
+    F: { 24: 'Which way are you drifting right now — and what told you?',
+         48: 'The crisis is coming (they always are). What will you centralize, and what is your trigger to give it back?',
+         96: 'Your company halved its need for you in a year. Did your dial keep up? What is your re-check cadence?' }
+  };
+  function maybeDebrief() {
+    if (!DEBRIEF || !game || game.over) return false;
+    const brk = [24, 48, 96].find(w => game.week >= w && !debriefDone[w]);
+    if (!brk) return false;
+    debriefDone[brk] = true;
+    const q = (DEBRIEF_QS[game.mode] || DEBRIEF_QS.C)[brk];
+    $('debriefQ').textContent = q;
+    $('debriefWk').textContent = 'DISCUSSION BREAK · WK ' + game.week + ' · Q' + Math.ceil(game.week / 12);
+    $('debriefOverlay').hidden = false;
+    inCard = true;   // pauses the loop the same way a memo does
+    FX.play('page');
+    return true;
+  }
+
   function step() {
     const evs = S.tick(game);
     evs.forEach(handleEvent);
     renderAll();
+    if (game.mode === 'F') renderDial();
     if (game.over) { setTimeout(showEnd, 1600); return; }
-    if (game.week >= nextCardWeek && cardIdx < game.deck.length) {
-      openCard(game.deck[cardIdx++]);
+    if (maybeDebrief()) return;
+    if (S.CARD_WEEKS[game.mode] && game.week >= nextCardWeek && cardIdx < game.deck.length) {
+      const card = game.deck[cardIdx++];
       nextCardWeek = game.week + S.CARD_WEEKS[game.mode];
+      const critical = card.oneWay && card.stakes === 'HIGH';
+      if (game.mode === 'C' && critical && game.learning >= 60 && (successorFlip = !successorFlip)) {
+        // the successor arc: the org brings it to you already sorted
+        S.applyCard(game, card, 'auto');
+        handleEvent({ who: 'PRIYA', t: 'brings you "' + card.t + '" already sorted: two pages, a recommendation, a dissent attached. You add one sentence. The org decides like you now.', sfx: 'ding', major: false });
+      } else {
+        openCard(card);
+      }
     }
   }
 
@@ -389,7 +552,8 @@
     B: { id: 'extra', label: 'COHERENCE', max: 100 },
     C: { id: 'extra', label: 'ORG JUDGMENT', max: 100 },
     D: { id: 'extra', label: 'MARKET EDGE', max: 100 },
-    E: { id: 'extra', label: 'THE STANDARD', max: 100 }
+    E: { id: 'extra', label: 'THE STANDARD', max: 100 },
+    F: { id: 'extra', label: 'ORG JUDGMENT', max: 100 }
   };
 
   function buildMetrics() {
@@ -508,8 +672,16 @@
     $('cardNo').textContent = 'DECISION #' + (cardIdx) + ' · WK ' + game.week;
     $('cardTitle').textContent = card.t;
     $('cardDesc').textContent = card.d;
-    $('stampStakes').textContent = 'STAKES: ' + card.stakes;
-    $('stampDoor').textContent = card.oneWay ? 'ONE-WAY DOOR' : 'REVERSIBLE';
+    if (game.mode === 'C') {
+      // no training wheels in the corner office: classify it yourself
+      $('stampStakes').textContent = 'STAKES: ?';
+      $('stampDoor').textContent = 'DOOR: ?';
+    } else {
+      $('stampStakes').textContent = 'STAKES: ' + card.stakes;
+      $('stampDoor').textContent = card.oneWay ? 'ONE-WAY DOOR' : 'REVERSIBLE';
+    }
+    const memo = $('chooseMemo');
+    if (memo) memo.hidden = !(game.mode === 'C' && game.learning >= 25);
     $('cardOutcome').hidden = true;
     $('cardChoices').hidden = false;
     const take = $('chooseTake'), del = $('chooseDel'), nb = $('cardNB');
@@ -535,17 +707,24 @@
         ? '(Overruling them would stunt their growth. You schedule some encouraging feedback instead.)'
         : '(Obviously them — you\'re a conductor, not a micromanager.)';
     } else {
-      nb.textContent = 'Two questions, every time: how bad if wrong — and can we undo it?';
+      nb.textContent = 'No stamps on your desk. Two questions, every time: how bad if wrong — and can we undo it?';
     }
     $('cardOverlay').hidden = false;
   }
 
-  function choose(keep) {
-    const r = S.applyCard(game, currentCard, keep);
+  function choose(choice) {
+    if (typeof choice === 'boolean') choice = choice ? 'take' : 'del';
+    const card = currentCard;
+    const r = S.applyCard(game, card, choice);
     FX.play(r.sfx || 'blip');
     $('cardChoices').hidden = true;
+    if (game.mode === 'C' && r.reveal) {
+      // the reveal: what the stamps would have said
+      $('stampStakes').textContent = 'STAKES: ' + r.reveal.stakes;
+      $('stampDoor').textContent = r.reveal.oneWay ? 'ONE-WAY DOOR' : 'REVERSIBLE';
+    }
     $('cardVerdict').textContent =
-      game.mode !== 'C' ? (keep ? 'SO ORDERED.' : 'SO DELEGATED.')
+      game.mode !== 'C' ? (choice === 'take' ? 'SO ORDERED.' : 'SO DELEGATED.')
         : r.good ? '✓ FILED CORRECTLY.' : '✗ FILED... CREATIVELY.';
     $('cardResult').textContent = r.text;
     $('cardOutcome').hidden = false;
@@ -558,7 +737,7 @@
     const key = g.ended, end = S.ENDINGS[key];
     const p = progress();
     const sBefore = sideDone(p);
-    p[g.mode] = { week: g.week, win: key === 'C_WIN' };
+    p[g.mode] = { week: g.week, win: key === 'C_WIN' || key === 'F_WIN', drift: key === 'F_DRIFT' };
     saveProgress(p);
     const sAfter = sideDone(p);
     const unlocked = sAfter.grip && sAfter.trust;
@@ -581,6 +760,50 @@
       : '';
     $('fpLessonTitle').textContent = end.lessonTitle;
     $('fpEssay').innerHTML = '';
+    // Balance mode: your calibration, mirrored back
+    if (g.mode === 'C' && (g.cHoard || g.cGhost || g.cMemoTax || g.cGood)) {
+      const h = document.createElement('h4');
+      h.textContent = 'YOUR CALIBRATION';
+      $('fpEssay').appendChild(h);
+      const par = document.createElement('p');
+      const bits = [];
+      bits.push('You sorted ' + g.cGood + ' correctly.');
+      if (g.cHoard) bits.push('You kept ' + g.cHoard + ' reversible call' + (g.cHoard > 1 ? 's' : '') + ' that never needed you — that\'s your inner Bottleneck, and everything queued behind it.');
+      if (g.cGhost) bits.push('You waved through ' + g.cGhost + ' one-way door' + (g.cGhost > 1 ? 's' : '') + ' — your inner Ghost; note how long the bill took to arrive.');
+      if (g.cMemoTax) bits.push('You asked for ' + g.cMemoTax + ' memo' + (g.cMemoTax > 1 ? 's' : '') + ' on things a shrug could have settled — process is also a tax.');
+      if (!g.cHoard && !g.cGhost) bits.push('Neither ditch pulled you in. The stamps were hidden; your judgment supplied them. That is the skill.');
+      else bits.push(g.cHoard > g.cGhost
+        ? 'Your lean is grip. When you drift, you\'ll drift toward the queue — watch it like a vital sign.'
+        : g.cGhost > g.cHoard
+          ? 'Your lean is trust. When you drift, you\'ll drift toward the quiet detonations — watch your surprise rate.'
+          : 'You miss in both directions equally — rare, and honestly harder to instrument. Watch queue AND surprises.');
+      par.textContent = bits.join(' ');
+      $('fpEssay').appendChild(par);
+    }
+    // Capstone: the reveal — the dial you set vs the dial it needed
+    const dialWrap = $('fpDialWrap');
+    if (dialWrap) {
+      dialWrap.hidden = g.mode !== 'F';
+      if (g.mode === 'F' && g.history.dial.length > 1) {
+        const cv = $('fpDialChart'), dpr = window.devicePixelRatio || 1;
+        const w = Math.min(660, dialWrap.clientWidth || 660), h = 150;
+        cv.style.width = w + 'px'; cv.style.height = h + 'px';
+        cv.width = w * dpr; cv.height = h * dpr;
+        const c = cv.getContext('2d');
+        c.setTransform(dpr, 0, 0, dpr, 0, 0);
+        c.clearRect(0, 0, w, h);
+        const N = g.history.dial.length;
+        const X = i => 4 + (w - 8) * i / (N - 1), Y = v => h - 8 - (h - 20) * v;
+        const line = (arr, dash) => {
+          c.beginPath(); c.setLineDash(dash || []);
+          c.strokeStyle = dash ? '#777' : '#000'; c.lineWidth = 2;
+          arr.forEach((v, i) => i ? c.lineTo(X(i), Y(v)) : c.moveTo(X(i), Y(v)));
+          c.stroke(); c.setLineDash([]);
+        };
+        line(g.history.tstar, [5, 4]);
+        line(g.history.dial);
+      }
+    }
     if (end.essay) {
       const h = document.createElement('h4');
       h.textContent = 'THE POST-MORTEM, IN PROSE';
@@ -612,9 +835,12 @@
         : 'Now the version you\'d actually fall for ▸ ' + NAMES[n];
       addBtn(label, true, () => startScenario(n));
     }
-    if (unlocked && g.mode !== 'C') addBtn('Find the balance ▸ OPTION C', true, () => startScenario('C'));
+    if (unlocked && g.mode !== 'C' && !p.C) addBtn('Find the balance ▸ OPTION C', true, () => startScenario('C'));
     if (g.mode === 'C' && key === 'C_LOSE') addBtn('Try the balance again ▸', true, () => startScenario('C'));
+    if (g.mode === 'C' && key === 'C_WIN' && !p.F) addBtn('Now the real thing ▸ YOUR COMPANY', true, () => startScenario('F'));
+    if (g.mode === 'F' && key !== 'F_WIN') addBtn('Steer it again ▸', true, () => startScenario('F'));
     addBtn('📸 Keep this front page', false, shareEndCard);
+    addBtn('📖 The field guide', false, () => { location.href = 'lessons.html'; });
     if (unlocked && nextUnplayed.length) {
       const n = nextUnplayed[0];
       addBtn('A subtler death awaits ▸ ' + NAMES[n], false, () => startScenario(n));
@@ -622,7 +848,8 @@
     addBtn('Replay this scenario', false, () => startScenario(g.mode));
     addBtn('Front desk (menu)', false, backToTitle);
     $('endOverlay').hidden = false;
-    if (key === 'C_WIN') FX.play('kaching');
+    if (key === 'C_WIN' || key === 'F_WIN') FX.play('fanfare');
+    renderTitle();   // refresh unlocks behind the overlay
   }
 
   function backToTitle() {
@@ -648,6 +875,15 @@
   $('btnC').addEventListener('click', () => startScenario('C'));
   $('btnD').addEventListener('click', () => startScenario('D'));
   $('btnE').addEventListener('click', () => startScenario('E'));
+  if ($('btnF')) $('btnF').addEventListener('click', () => startScenario('F'));
+  if ($('dialDown')) $('dialDown').addEventListener('click', () => turnDial(-0.05));
+  if ($('dialUp')) $('dialUp').addEventListener('click', () => turnDial(0.05));
+  if ($('btnTest')) $('btnTest').addEventListener('click', openTest);
+  if ($('testSubmit')) $('testSubmit').addEventListener('click', gradeTest);
+  if ($('testClose')) $('testClose').addEventListener('click', () => { $('testOverlay').hidden = true; });
+  if ($('debriefResume')) $('debriefResume').addEventListener('click', () => {
+    $('debriefOverlay').hidden = true; inCard = false;
+  });
   $('btnQuit').addEventListener('click', backToTitle);
   $('btnPause').addEventListener('click', () => {
     paused = !paused;
@@ -668,8 +904,9 @@
     store('dcc-ceosim-motion', paperMotion ? 'paper' : 'live');
     applyMotion();
   });
-  $('chooseTake').addEventListener('click', () => choose(true));
-  $('chooseDel').addEventListener('click', () => choose(false));
+  $('chooseTake').addEventListener('click', () => choose('take'));
+  $('chooseDel').addEventListener('click', () => choose('del'));
+  if ($('chooseMemo')) $('chooseMemo').addEventListener('click', () => choose('memo'));
   $('cardContinue').addEventListener('click', () => {
     $('cardOverlay').hidden = true; inCard = false; currentCard = null;
   });
@@ -677,6 +914,7 @@
   // debug/testing hook (used by the club's Playwright smoke test)
   window.SIM = {
     start: startScenario, state: () => game, setSpeed,
+    card: () => currentCard, dial: turnDial,
     step: n => { for (let i = 0; i < (n || 1) && game && !game.over && !inCard; i++) step(); },
     choose, model: S
   };
@@ -697,7 +935,11 @@
     startScenario(dlMode);
     const targetWk = parseInt(QS.get('week'), 10) || 0;
     while (game && !game.over && game.week < targetWk) {
+      if (game.mode === 'F') game.dial = S.targetDial(game.week);
       step();
+      if (inCard && $('debriefOverlay') && !$('debriefOverlay').hidden) {
+        $('debriefOverlay').hidden = true; inCard = false; continue;
+      }
       if (inCard && currentCard) {
         const keep = game.mode === 'A' ? true
           : game.mode === 'D' ? currentCard.stakes === 'HIGH'

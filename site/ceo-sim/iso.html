@@ -243,6 +243,23 @@ button.primary, button[aria-pressed="true"] { background: var(--ink); color: var
 .scenario.suggested { outline: 3px solid var(--ink); outline-offset: 3px; }
 .scenario.suggested .played { font-weight: bold; }
 #visitLine { font-style: normal; font-size: 14px; letter-spacing: 1px; margin-top: 26px; margin-bottom: -18px; }
+.scenario.capstone { margin-top: 14px; width: 100%; min-height: 150px; border-width: 3px; }
+.testline { text-align: center; margin-top: 18px; display: flex; gap: 14px; align-items: center; justify-content: center; flex-wrap: wrap; }
+.testline .mono { font-size: 13px; letter-spacing: 1px; color: var(--mid); }
+#dialRow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; border: 3px solid var(--ink); padding: 8px 14px; margin-bottom: 12px; }
+#dialRow .dial-label { font-size: 12px; letter-spacing: 2px; }
+#dialRow button { min-width: 56px; font-size: 24px; padding: 4px 10px; }
+#dialValue { font-size: 26px; min-width: 74px; text-align: center; }
+#dialRow .dial-hint { font-size: 12px; color: var(--mid); letter-spacing: 1px; }
+.testmemo { max-width: 640px; }
+.testrow { border-top: 1px solid var(--ghost); padding: 10px 0; }
+.testrow .tq { font-size: 16.5px; margin-bottom: 8px; }
+.testrow .tbtns { display: flex; gap: 8px; }
+.testrow .tbtns button { min-width: 110px; font-family: ui-monospace, 'Courier New', monospace; font-size: 14px; }
+.testrow .twhy { font-size: 14.5px; color: var(--mid); font-style: italic; margin: 8px 0 0; }
+.testrow.wrong .tq { text-decoration: underline; text-decoration-style: wavy; }
+#fpDialWrap { border: var(--rule); padding: 10px 12px; margin: 0 0 14px; break-inside: avoid; }
+#fpDialChart { width: 100%; height: 150px; display: block; }
 </style>
 </head>
 <body>
@@ -307,9 +324,23 @@ button.primary, button[aria-pressed="true"] { background: var(--ink); color: var
         <span class="played mono" id="playedB"></span>
       </button>
     </div>
+    <button class="scenario capstone" id="btnF">
+      <span class="opt">THE CAPSTONE</span>
+      <span class="trap mono">AFTER THE BALANCE — THE REAL GAME</span>
+      <h2>Your Company</h2>
+      <p class="motto">“No philosophy. A dial, six instruments, and my attention.”</p>
+      <p class="desc" id="descF">A dial you can turn any week: how much of the company reaches your desk. The right setting moves. Notice the drift.</p>
+      <span class="played mono" id="playedF"></span>
+    </button>
+    <div class="testline">
+      <button id="btnTest">🧪 The 60-second sorting test</button>
+      <span class="mono" id="testDelta"></span>
+    </div>
     <p class="title-foot mono" id="visitLine" hidden></p>
     <p class="title-foot">
       Best with sound on 🔉 — there are ka-chings, alarms, and one very sad trombone.<br>
+      📖 <a href="lessons.html">The Field Guide</a> — every lesson in this game, and the one behind them all.<br>
+      Teaching a class? Add <span class="mono">?debrief=1</span> to the URL for discussion breaks.<br>
       Prefer the org-chart view? <a href="index.html">Classic edition</a> — same game, same save.<br>
       Brought to potluck by the <a href="../index.html">Daylight Computer Club</a>.
     </p>
@@ -332,6 +363,14 @@ button.primary, button[aria-pressed="true"] { background: var(--ink); color: var
     </div>
 
     <div id="metrics"></div>
+
+    <div id="dialRow" hidden>
+      <span class="mono dial-label">THE DIAL — HOW MUCH OF THE COMPANY REACHES YOUR DESK:</span>
+      <button id="dialDown" title="Trust more">−</button>
+      <span class="mono" id="dialValue">50%</span>
+      <button id="dialUp" title="Grip more">+</button>
+      <span class="mono dial-hint">watch the gauges. turn early, turn small.</span>
+    </div>
 
     <div id="main">
       <div id="orgboard">
@@ -366,6 +405,7 @@ button.primary, button[aria-pressed="true"] { background: var(--ink); color: var
       <div class="choices" id="cardChoices">
         <button id="chooseTake">🖋 I'll decide this myself</button>
         <button id="chooseDel">📤 Delegate it</button>
+        <button id="chooseMemo" hidden>📝 Delegate — memo first, review after</button>
       </div>
       <p class="nb" id="cardNB"></p>
       <div id="cardOutcome" hidden>
@@ -387,6 +427,10 @@ button.primary, button[aria-pressed="true"] { background: var(--ink); color: var
         <h4>HOW IT HAPPENED — A TIMELINE OF FINE DECISIONS</h4>
         <ul class="moments" id="fpMoments"></ul>
         <div id="fpDoors"></div>
+        <div id="fpDialWrap" hidden>
+          <h4>THE REVEAL — THE DIAL YOU SET (━━) vs THE DIAL IT NEEDED (┄┄)</h4>
+          <canvas id="fpDialChart"></canvas>
+        </div>
         <div id="fpEssay"></div>
         <div class="lessons">
           <h4 id="fpLessonTitle"></h4>
@@ -399,6 +443,32 @@ button.primary, button[aria-pressed="true"] { background: var(--ink); color: var
   </div>
 
 </div>
+<div class="overlay" id="debriefOverlay" hidden>
+  <div class="memo" role="dialog" aria-modal="true">
+    <div class="memohead"><span id="debriefWk">DISCUSSION BREAK</span><span>FACILITATOR MODE</span></div>
+    <h3>Pause the tape.</h3>
+    <div class="body" id="debriefQ"></div>
+    <p class="nb">Talk it out, write it down, then resume the time-lapse.</p>
+    <div class="choices" style="grid-template-columns:1fr">
+      <button id="debriefResume" class="primary">Resume the time-lapse ▸</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="testOverlay" hidden>
+  <div class="memo testmemo" role="dialog" aria-modal="true">
+    <div class="memohead"><span>THE 60-SECOND SORTING TEST</span><span>ME or THEM?</span></div>
+    <p class="body" style="margin-top:0">Six decisions land on a CEO's desk. For each: does the CEO make it, or does someone closer to the facts?</p>
+    <div id="testRows"></div>
+    <div class="choices" style="grid-template-columns:1fr 1fr">
+      <button id="testSubmit" class="primary" disabled>Grade me</button>
+      <button id="testClose">Close</button>
+    </div>
+    <p class="nb" id="testScoreLine" hidden></p>
+    <div id="testResult" hidden><p class="nb" style="font-style:normal"><b id="testScoreLine2"></b></p></div>
+  </div>
+</div>
+
 <script src="model.js"></script>
 <script src="iso.js"></script>
 <script src="game.js"></script>
