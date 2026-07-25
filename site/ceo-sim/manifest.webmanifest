@@ -2,7 +2,7 @@
   "name": "The Decider \u2014 a CEO time-lapse sim",
   "short_name": "The Decider",
   "description": "Four famous ways to kill a company from the corner office, one narrow escape.",
-  "start_url": "./iso.html",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",

@@ -5,7 +5,7 @@
 // club opens instantly but self-heals when styles change.
 // APK files: never cached — always a fresh download.
 
-const CACHE = 'dcc-v5';
+const CACHE = 'dcc-v6';
 const SHELL = [
   './',
   'index.html',

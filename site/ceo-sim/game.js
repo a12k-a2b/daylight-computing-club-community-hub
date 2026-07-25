@@ -3,9 +3,27 @@
   'use strict';
   const S = window.CEOSIM;
   const $ = id => document.getElementById(id);
-  // Alternate skins (iso.html) define window.BOARD before this file loads;
-  // it takes over drawing the org view: {reset, render, fire, anchor}.
-  const board = () => window.BOARD;
+  // Two views, one driver. iso.js exposes window.ISO_BOARD (the hand-drawn
+  // city); when the ISO view is active it renders the org; otherwise the
+  // classic org-chart DOM does. Switchable mid-game, preference persisted.
+  let viewMode = 'iso';
+  const board = () => (viewMode === 'iso' && window.ISO_BOARD) ? window.ISO_BOARD : null;
+  function applyView() {
+    const isoOn = !!board();
+    if ($('isoCanvas')) $('isoCanvas').hidden = !isoOn;
+    if ($('classicBoard')) $('classicBoard').hidden = isoOn;
+    if ($('rivalToggle')) $('rivalToggle').hidden = !isoOn;
+    if ($('boardTitle')) $('boardTitle').textContent = isoOn
+      ? 'SUNBEAM SYSTEMS — THE COMPANY, FROM ABOVE'
+      : 'SUNBEAM SYSTEMS — LIVE ORGANISM VIEW';
+    const b = $('btnView');
+    if (b) b.textContent = isoOn ? 'ISO' : 'CHART';
+    if (game) {
+      if (isoOn) { board().reset(game.mode); board().render(game); }
+      else buildDepts();
+      renderAll();
+    }
+  }
   // Safari private mode can throw on localStorage — never let a save break play.
   const store = (k, v) => { try { localStorage.setItem(k, v); } catch (e) { /* private mode */ } };
   const readStore = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
@@ -123,6 +141,7 @@
   let speed = 1, paused = false, inCard = false;
   let cardIdx = 0, nextCardWeek = 0, currentCard = null;
   let bubbleTimer = 0, papersAlive = 0, successorFlip = false;
+  let cardResolved = false, userSpeed = false;
   let debriefDone = {};
   const DEBRIEF = QS.get('debrief') === '1';
 
@@ -305,15 +324,19 @@
       rows[i].classList.toggle('wrong', !right);
     });
     const p = progress();
-    const key = readJSON('dcc-ceosim-test-pre') && p.C && p.C.win ? 'dcc-ceosim-test-post' : 'dcc-ceosim-test-pre';
-    store(key, JSON.stringify({ score, total: S.SORT_TEST.length, at: Date.now() }));
-    const pre = readJSON('dcc-ceosim-test-pre'), post = readJSON('dcc-ceosim-test-post');
+    // recorded scores are written once and locked — the delta must be honest
+    let pre = readJSON('dcc-ceosim-test-pre'), post = readJSON('dcc-ceosim-test-post');
+    const key = !pre ? 'dcc-ceosim-test-pre'
+      : (p.C && p.C.win && !post) ? 'dcc-ceosim-test-post'
+      : null;
+    if (key) store(key, JSON.stringify({ score, total: S.SORT_TEST.length, at: Date.now() }));
+    pre = readJSON('dcc-ceosim-test-pre'); post = readJSON('dcc-ceosim-test-post');
     $('testScoreLine').textContent = 'SCORE: ' + score + '/' + S.SORT_TEST.length +
-      (post && pre && key === 'dcc-ceosim-test-post'
+      (key === 'dcc-ceosim-test-post'
         ? ' — before the game you scored ' + pre.score + '/' + pre.total + '. That delta is the point.'
         : key === 'dcc-ceosim-test-pre'
-          ? ' — baseline saved. Play through to The Balance, then re-take it.'
-          : '');
+          ? ' — baseline saved and locked. Play through to The Balance, then re-take it.'
+          : ' — practice round; your recorded scores stand.');
     $('testSubmit').hidden = true;
     $('testScoreLine').hidden = false;
     $('testResult').hidden = false;
@@ -363,6 +386,8 @@
     game = S.makeGame(mode, seed || parseInt(QS.get('seed'), 10) || (Date.now() % 100000));
     cardIdx = 0; nextCardWeek = S.CARD_WEEKS[mode]; currentCard = null;
     acc = 0; lastT = 0; paused = false; inCard = false; papersAlive = 0;
+    userSpeed = false; cardResolved = false;
+    if ($('reopenEnd')) $('reopenEnd').hidden = true;
     setSpeed(1);
     $('titleScreen').hidden = true;
     $('endOverlay').hidden = true;
@@ -435,7 +460,9 @@
     const brk = [24, 48, 96].find(w => game.week >= w && !debriefDone[w]);
     if (!brk) return false;
     debriefDone[brk] = true;
-    const q = (DEBRIEF_QS[game.mode] || DEBRIEF_QS.C)[brk];
+    // teachers can supply their own questions: ?debrief=1&dq=Q1|Q2|Q3
+    const custom = (QS.get('dq') || '').split('|').map(x => x.trim()).filter(Boolean);
+    const q = custom[[24, 48, 96].indexOf(brk)] || (DEBRIEF_QS[game.mode] || DEBRIEF_QS.C)[brk];
     $('debriefQ').textContent = q;
     $('debriefWk').textContent = 'DISCUSSION BREAK · WK ' + game.week + ' · Q' + Math.ceil(game.week / 12);
     $('debriefOverlay').hidden = false;
@@ -450,6 +477,10 @@
     renderAll();
     if (game.mode === 'F') renderDial();
     if (game.over) { setTimeout(showEnd, 1600); return; }
+    if ((game.mode === 'D' || game.mode === 'E') && game.week === 27 && !userSpeed && speed === 1) {
+      setSpeed(2);
+      logLine({ t: '⏩ The time-lapse accelerates — these years pass slowly from inside, but you don\'t have to watch in real time. (Slow it back down anytime.)' });
+    }
     if (maybeDebrief()) return;
     if (S.CARD_WEEKS[game.mode] && game.week >= nextCardWeek && cardIdx < game.deck.length) {
       const card = game.deck[cardIdx++];
@@ -680,15 +711,68 @@
     };
     line(g.history.cash, 3200);
     line(g.history.morale, 100, [4, 4]);
+    // every fire, pinned to the week it broke out
+    ctx.fillStyle = '#000';
+    (g.fireWeeks || []).forEach(fw => {
+      const x = X(fw);
+      ctx.beginPath(); ctx.moveTo(x - 4, 3); ctx.lineTo(x + 4, 3); ctx.lineTo(x, 10); ctx.closePath(); ctx.fill();
+    });
+    // live values at the line ends, so the chart reads without a tooltip
+    const n = g.history.cash.length;
+    if (n > 3) {
+      ctx.font = '10px ui-monospace, monospace'; ctx.textAlign = 'left'; ctx.fillStyle = '#000';
+      const lx = Math.min(X(n), w - 52);
+      ctx.fillText('$' + S.fmtK(Math.max(0, Math.round(g.history.cash[n - 1]))), lx + 4,
+        h - 4 - (h - 10) * Math.min(1, g.history.cash[n - 1] / 3200) - 3);
+      ctx.fillStyle = '#777';
+      ctx.fillText(Math.round(g.history.morale[n - 1]), lx + 4,
+        h - 4 - (h - 10) * Math.min(1, g.history.morale[n - 1] / 100) + 11);
+    }
   }
 
   // -------------------------------------------------------------- cards
+  function forcedChoice(mode, card) {
+    if (mode === 'A') return 'take';
+    if (mode === 'B' || mode === 'E') return 'del';
+    if (mode === 'D') return card.stakes === 'HIGH' ? 'take' : 'del';
+    return null;   // C: a real decision
+  }
+  const FORCED_NB = {
+    A: () => '(Delegate? And risk someone deciding... differently? Be serious.)',
+    B: () => '(You are on a silent retreat. The memo auto-delegated in the spirit of empowerment.)',
+    D: c => c.stakes === 'HIGH'
+      ? '(Delegate THIS? No no — this one\'s critical. They\'re all critical, somehow.)'
+      : '(Delegated before you finished reading! You\'re famous for delegating.)',
+    E: c => c.stakes === 'HIGH'
+      ? '(Overruling them would stunt their growth. You schedule some encouraging feedback instead.)'
+      : '(Obviously them — you\'re a conductor, not a micromanager.)'
+  };
+
   function openCard(card) {
     inCard = true; currentCard = card;
     FX.play('paper');
     $('cardNo').textContent = 'DECISION #' + (cardIdx) + ' · WK ' + game.week;
     $('cardTitle').textContent = card.t;
     $('cardDesc').textContent = card.d;
+    const fc = forcedChoice(game.mode, card);
+    if (fc) {
+      // the philosophy has already decided; you just have to live with it.
+      // One click (Continue), not two — the joke does the teaching.
+      const r = S.applyCard(game, card, fc);
+      cardResolved = true;
+      $('stampStakes').textContent = 'STAKES: ' + card.stakes;
+      $('stampDoor').textContent = card.oneWay ? 'ONE-WAY DOOR' : 'REVERSIBLE';
+      $('cardChoices').hidden = true;
+      $('cardNB').textContent = FORCED_NB[game.mode](card);
+      $('cardVerdict').textContent = fc === 'take' ? 'SO ORDERED.' : 'SO DELEGATED.';
+      $('cardResult').textContent = r.text;
+      $('cardOutcome').hidden = false;
+      $('cardOverlay').hidden = false;
+      FX.play(r.sfx || 'blip');
+      const cont = $('cardContinue'); if (cont) cont.focus();
+      return;
+    }
+    cardResolved = false;
     if (game.mode === 'C') {
       // no training wheels in the corner office: classify it yourself
       $('stampStakes').textContent = 'STAKES: ?';
@@ -698,35 +782,13 @@
       $('stampDoor').textContent = card.oneWay ? 'ONE-WAY DOOR' : 'REVERSIBLE';
     }
     const memo = $('chooseMemo');
-    if (memo) memo.hidden = !(game.mode === 'C' && game.learning >= 25);
+    if (memo) memo.hidden = !(game.learning >= 25);
     $('cardOutcome').hidden = true;
     $('cardChoices').hidden = false;
-    const take = $('chooseTake'), del = $('chooseDel'), nb = $('cardNB');
-    take.disabled = false; del.disabled = false;
-    const high = card.stakes === 'HIGH';
-    if (game.mode === 'A') {
-      del.disabled = true;
-      nb.textContent = '(Delegate? And risk someone deciding... differently? Be serious.)';
-    } else if (game.mode === 'B') {
-      take.disabled = true;
-      nb.textContent = '(You are on a silent retreat. The memo auto-delegates in the spirit of empowerment.)';
-    } else if (game.mode === 'D') {
-      if (high) {
-        del.disabled = true;
-        nb.textContent = '(Delegate THIS? No no — this one\'s critical. They\'re all critical, somehow.)';
-      } else {
-        take.disabled = true;
-        nb.textContent = '(Delegated before you finished reading! See? You delegate constantly. You\'re famous for it.)';
-      }
-    } else if (game.mode === 'E') {
-      take.disabled = true;
-      nb.textContent = high
-        ? '(Overruling them would stunt their growth. You schedule some encouraging feedback instead.)'
-        : '(Obviously them — you\'re a conductor, not a micromanager.)';
-    } else {
-      nb.textContent = 'No stamps on your desk. Two questions, every time: how bad if wrong — and can we undo it?';
-    }
+    $('chooseTake').disabled = false; $('chooseDel').disabled = false;
+    $('cardNB').textContent = 'No stamps on your desk. Two questions, every time: how bad if wrong — and can we undo it?';
     $('cardOverlay').hidden = false;
+    $('chooseTake').focus();
   }
 
   function choose(choice) {
@@ -776,12 +838,15 @@
         g.doors.map(d => '◼ ' + d).join(' &nbsp; ') + '</p>'
       : '';
     $('fpLessonTitle').textContent = end.lessonTitle;
+    $('fpKeyLesson').textContent = end.lessons[0];
+    if ($('fpMore')) $('fpMore').open = false;
     $('fpEssay').innerHTML = '';
+    $('fpCalib').innerHTML = '';
     // Balance mode: your calibration, mirrored back
     if (g.mode === 'C' && (g.cHoard || g.cGhost || g.cMemoTax || g.cGood)) {
       const h = document.createElement('h4');
       h.textContent = 'YOUR CALIBRATION';
-      $('fpEssay').appendChild(h);
+      $('fpCalib').appendChild(h);
       const par = document.createElement('p');
       const bits = [];
       bits.push('You sorted ' + g.cGood + ' correctly.');
@@ -795,7 +860,7 @@
           ? 'Your lean is trust. When you drift, you\'ll drift toward the quiet detonations — watch your surprise rate.'
           : 'You miss in both directions equally — rare, and honestly harder to instrument. Watch queue AND surprises.');
       par.textContent = bits.join(' ');
-      $('fpEssay').appendChild(par);
+      $('fpCalib').appendChild(par);
     }
     // Capstone: the reveal — the dial you set vs the dial it needed
     const dialWrap = $('fpDialWrap');
@@ -857,6 +922,7 @@
     if (g.mode === 'C' && key === 'C_WIN' && !p.F) addBtn('Now the real thing ▸ YOUR COMPANY', true, () => startScenario('F'));
     if (g.mode === 'F' && key !== 'F_WIN') addBtn('Steer it again ▸', true, () => startScenario('F'));
     addBtn('📸 Keep this front page', false, shareEndCard);
+    addBtn(key === 'C_WIN' || key === 'F_WIN' ? '👀 Look around the city' : '👀 Inspect the wreckage', false, dismissEnd);
     addBtn('📖 The field guide', false, () => { location.href = 'lessons.html'; });
     if (unlocked && nextUnplayed.length) {
       const n = nextUnplayed[0];
@@ -869,8 +935,14 @@
     renderTitle();   // refresh unlocks behind the overlay
   }
 
+  function dismissEnd() {
+    $('endOverlay').hidden = true;
+    if ($('reopenEnd')) $('reopenEnd').hidden = false;
+  }
+
   function backToTitle() {
     cancelAnimationFrame(raf); raf = 0; game = null;
+    if ($('reopenEnd')) $('reopenEnd').hidden = true;
     $('endOverlay').hidden = true;
     $('cardOverlay').hidden = true;
     $('simScreen').hidden = true;
@@ -901,6 +973,23 @@
   if ($('debriefResume')) $('debriefResume').addEventListener('click', () => {
     $('debriefOverlay').hidden = true; inCard = false;
   });
+  if ($('btnView')) $('btnView').addEventListener('click', () => {
+    viewMode = viewMode === 'iso' ? 'classic' : 'iso';
+    store('dcc-ceosim-view', viewMode);
+    applyView();
+  });
+  if ($('reopenEnd')) $('reopenEnd').addEventListener('click', () => {
+    $('endOverlay').hidden = false;
+    $('reopenEnd').hidden = true;
+  });
+  // Escape closes whatever is on top (never skips an unmade decision)
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if ($('testOverlay') && !$('testOverlay').hidden) $('testOverlay').hidden = true;
+    else if ($('debriefOverlay') && !$('debriefOverlay').hidden) { $('debriefOverlay').hidden = true; inCard = false; }
+    else if (!$('cardOverlay').hidden && !$('cardOutcome').hidden) $('cardContinue').click();
+    else if (!$('endOverlay').hidden) dismissEnd();
+  });
   $('btnQuit').addEventListener('click', backToTitle);
   $('btnPause').addEventListener('click', () => {
     paused = !paused;
@@ -908,7 +997,7 @@
     $('btnPause').setAttribute('aria-pressed', String(paused));
   });
   document.querySelectorAll('.speedbtn[data-speed]').forEach(b =>
-    b.addEventListener('click', () => setSpeed(Number(b.dataset.speed))));
+    b.addEventListener('click', () => { userSpeed = true; setSpeed(Number(b.dataset.speed)); }));
   function renderMute() { $('btnMute').textContent = FX.muted ? '🔇' : '🔉'; }
   $('btnMute').addEventListener('click', () => {
     FX.muted = !FX.muted;
@@ -936,9 +1025,13 @@
     choose, model: S
   };
 
+  viewMode = QS.get('view') === 'classic' ? 'classic'
+    : QS.get('view') === 'iso' ? 'iso'
+    : (readStore('dcc-ceosim-view') || 'iso');
   renderMute();
   renderTitle();
   applyMotion();
+  applyView();
   visitCounter();
   // offline: the club's service worker caches the whole game after one visit
   try {
@@ -948,7 +1041,7 @@
   // Deep link: ?scenario=A[&week=N] jumps straight into a run mid-flight —
   // used by the DC-1 preview audit, tests, and shareable moments.
   const dlMode = (QS.get('scenario') || '').toUpperCase();
-  if (MODE_META[dlMode] && (dlMode !== 'C' || progress().A)) {
+  if (MODE_META[dlMode] && (dlMode !== 'C' || progress().A) && (dlMode !== 'F' || progress().C)) {
     startScenario(dlMode);
     const targetWk = parseInt(QS.get('week'), 10) || 0;
     while (game && !game.over && game.week < targetWk) {
@@ -958,12 +1051,10 @@
         $('debriefOverlay').hidden = true; inCard = false; continue;
       }
       if (inCard && currentCard) {
-        const keep = game.mode === 'A' ? true
-          : game.mode === 'D' ? currentCard.stakes === 'HIGH'
-          : game.mode === 'C' ? (currentCard.oneWay && currentCard.stakes === 'HIGH')
-          : false;
-        choose(keep);
-        $('cardOverlay').hidden = true; inCard = false; currentCard = null;
+        if (!cardResolved && game.mode === 'C') {
+          choose(currentCard.oneWay && currentCard.stakes === 'HIGH' ? 'take' : 'del');
+        }
+        $('cardOverlay').hidden = true; inCard = false; currentCard = null; cardResolved = false;
       }
     }
   }
