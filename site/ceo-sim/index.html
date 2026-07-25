@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="An interactive time-lapse sim: run a company under five decision-making philosophies and watch the second-order effects arrive.">
-<meta property="og:title" content="The Decider — a time-lapse tragedy in four acts (and one escape)">
-<meta property="og:description" content="Four famous ways to kill a company from the corner office, one narrow escape. Pick a philosophy, watch years happen in minutes.">
+<meta property="og:title" content="The Decider — a CEO time-lapse sim">
+<meta property="og:description" content="Four famous ways to kill a company from the corner office, one narrow escape — as a tiny hand-drawn civilization. Watch years happen in minutes.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://daylightcomputer.club/ceo-sim/">
 <meta property="og:image" content="https://daylightcomputer.club/ceo-sim/og.png">
@@ -227,6 +227,17 @@ button.primary, button[aria-pressed="true"] { background: var(--ink); color: var
   border: 3px solid var(--ink); padding: 8px 14px; transform: rotate(-3deg);
   display: inline-block; margin-top: 14px;
 }
+#orgboard .boardtitle { padding-right: 116px; }
+#rivalToggle {
+  position: absolute; top: 8px; right: 10px; z-index: 5;
+  font-family: ui-monospace, 'Courier New', monospace; font-size: 11px; letter-spacing: 2px;
+  color: var(--mid); cursor: pointer; user-select: none; padding: 6px;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+#rivalToggle input { width: 15px; height: 15px; accent-color: #000; cursor: pointer; margin: 0; }
+#isoCanvas { width: 100%; height: 380px; display: block; }
+@media (min-width: 700px) and (max-width: 1000px) { #isoCanvas { height: 470px; } }
+@media (max-width: 699px) { #isoCanvas { height: 300px; } }
 .papermode *, .papermode *::before, .papermode *::after {
   animation: none !important; transition: none !important;
 }
@@ -256,6 +267,19 @@ button.primary, button[aria-pressed="true"] { background: var(--ink); color: var
 }
 #rotateHint span { flex: 1; min-width: 200px; }
 #rotateHint button { min-height: 44px; padding: 6px 14px; }
+#fpLead .lessons { margin-top: 12px; }
+#fpKeyLesson { font-size: 17.5px; font-style: italic; margin: 8px 0 0; }
+#fpCalib h4 { font-family: ui-monospace, 'Courier New', monospace; font-size: 12px; letter-spacing: 2px; margin: 12px 0 6px; }
+#fpCalib p { font-size: 16px; margin: 0; }
+#fpMore { margin-top: 16px; }
+#fpMore summary {
+  cursor: pointer; border: var(--rule); padding: 12px 16px; min-height: 48px;
+  font-family: ui-monospace, 'Courier New', monospace; font-size: 14px; letter-spacing: 1px;
+  list-style: none; display: flex; align-items: center;
+}
+#fpMore summary::-webkit-details-marker { display: none; }
+#fpMore[open] summary { background: var(--ink); color: var(--paper); margin-bottom: 14px; }
+#reopenEnd { position: fixed; right: 18px; bottom: 18px; z-index: 9; }
 </style>
 </head>
 <body>
@@ -337,7 +361,6 @@ button.primary, button[aria-pressed="true"] { background: var(--ink); color: var
       Best with sound on 🔉 — there are ka-chings, alarms, and one very sad trombone.<br>
       📖 <a href="lessons.html">The Field Guide</a> — every lesson in this game, and the one behind them all.<br>
       Teaching a class? Add <span class="mono">?debrief=1</span> to the URL for discussion breaks.<br>
-      Prefer little buildings? <a href="iso.html">Isometric edition</a> — same game, same save.<br>
       Brought to potluck by the <a href="../index.html">Daylight Computer Club</a>.
     </p>
   </section>
@@ -354,6 +377,7 @@ button.primary, button[aria-pressed="true"] { background: var(--ink); color: var
       <button class="speedbtn" data-speed="2">2×</button>
       <button class="speedbtn" data-speed="4">4×</button>
       <button class="speedbtn" data-speed="8">8×</button>
+      <button class="speedbtn" id="btnView" title="Two skins, same game: ISO is the hand-drawn city; CHART is the org-chart view.">ISO</button>
       <button class="speedbtn" id="btnMotion" title="LIVE animates continuously — the DC-1's 60–120fps LivePaper screen renders motion beautifully. PAPER redraws once per simulated week: a calmer time-lapse of stills, easier on the battery.">LIVE</button>
       <button id="btnMute" title="Sound">🔉</button>
     </div>
@@ -375,15 +399,19 @@ button.primary, button[aria-pressed="true"] { background: var(--ink); color: var
 
     <div id="main">
       <div id="orgboard">
-        <div class="boardtitle">SUNBEAM SYSTEMS — LIVE ORGANISM VIEW</div>
-        <div id="ceoRow">
-          <div>
-            <div id="pile"></div>
-            <div id="pileLabel">queue: 0</div>
+        <div class="boardtitle" id="boardTitle">SUNBEAM SYSTEMS — THE COMPANY, FROM ABOVE</div>
+        <label id="rivalToggle" title="Show or hide the competition across the water"><input type="checkbox" id="showRival" checked> MOONBEAM</label>
+        <canvas id="isoCanvas"></canvas>
+        <div id="classicBoard" hidden>
+          <div id="ceoRow">
+            <div>
+              <div id="pile"></div>
+              <div id="pileLabel">queue: 0</div>
+            </div>
+            <div id="ceoBox"><div class="who">YOU</div><div class="role">CHIEF EVERYTHING OFFICER</div></div>
           </div>
-          <div id="ceoBox"><div class="who">YOU</div><div class="role">CHIEF EVERYTHING OFFICER</div></div>
+          <div id="depts"></div>
         </div>
-        <div id="depts"></div>
         <div id="doorsRow"><span id="doorsHint">ONE-WAY DOORS WALKED THROUGH APPEAR HERE ▸</span></div>
         <div id="bubble" hidden><div class="bwho"></div><div class="btext"></div></div>
       </div>
@@ -430,26 +458,38 @@ button.primary, button[aria-pressed="true"] { background: var(--ink); color: var
       <div class="dateline"><span id="fpDate"></span><span>PRICE: ONE DECISION</span></div>
       <h2 class="headline" id="fpHeadline"></h2>
       <p class="subhead" id="fpSub"></p>
-      <div class="cols">
-        <h4>HOW IT HAPPENED — A TIMELINE OF FINE DECISIONS</h4>
-        <ul class="moments" id="fpMoments"></ul>
-        <div id="fpDoors"></div>
+      <div id="fpLead">
         <div id="fpDialWrap" hidden>
           <h4>THE REVEAL — THE DIAL YOU SET (━━) vs THE DIAL IT NEEDED (┄┄)</h4>
           <canvas id="fpDialChart"></canvas>
         </div>
-        <div id="fpEssay"></div>
+        <div id="fpCalib"></div>
         <div class="lessons">
           <h4 id="fpLessonTitle"></h4>
-          <ol id="fpLessons"></ol>
+          <p id="fpKeyLesson"></p>
         </div>
       </div>
+      <details id="fpMore">
+        <summary>📖 The full post-mortem — timeline, essay, every lesson</summary>
+        <div class="cols">
+          <h4>HOW IT HAPPENED — A TIMELINE OF FINE DECISIONS</h4>
+          <ul class="moments" id="fpMoments"></ul>
+          <div id="fpDoors"></div>
+          <div id="fpEssay"></div>
+          <div class="lessons">
+            <h4>ALL THE LESSONS</h4>
+            <ol id="fpLessons"></ol>
+          </div>
+        </div>
+      </details>
       <div id="fpUnlock"></div>
       <div class="endbtns" id="fpButtons"></div>
     </div>
   </div>
 
 </div>
+<button id="reopenEnd" class="primary" hidden>☰ FRONT PAGE</button>
+
 <div class="overlay" id="debriefOverlay" hidden>
   <div class="memo" role="dialog" aria-modal="true">
     <div class="memohead"><span id="debriefWk">DISCUSSION BREAK</span><span>FACILITATOR MODE</span></div>
@@ -477,6 +517,7 @@ button.primary, button[aria-pressed="true"] { background: var(--ink); color: var
 </div>
 
 <script src="model.js"></script>
+<script src="iso.js"></script>
 <script src="game.js"></script>
 </body>
 </html>

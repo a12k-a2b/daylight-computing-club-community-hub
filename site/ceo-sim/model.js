@@ -151,11 +151,11 @@
     { w: 37, t: 'FIRE: Competitor Moonbeam ships first. Their CEO reportedly "lets people do things."', sfx: 'alarm', major: true, cash: -150, fire: 'PRODUCT' },
     { w: 40, t: 'You start deciding faster to catch up. Quality dips. Nobody tells you — telling you is item #38 in the queue.' },
     { w: 43, who: 'DOUG', t: '"Approvals pending: 41. Including my request for a meeting to discuss the approvals backlog."' },
-    { w: 46, t: '2 a.m. You approve a $1.8M contract you did not read. It contains a llama clause.', sfx: 'thud', major: true, cash: -180 },
+    { w: 46, t: '2 a.m. You approve a $1.8M contract you did not read. It contains a llama clause.', sfx: 'thud', major: true, cash: -180, tag: 'llama' },
     { w: 49, t: 'FIRE: The big retail deal dies waiting for your signature. It was #23 in the queue, behind the birthday card.', sfx: 'alarm', major: true, cash: -250, fire: 'SALES' },
     { w: 52, t: 'Q4: growth flat. Your diagnosis: you must decide MORE, and FASTER. The queue files a dissenting opinion.', major: true },
-    { w: 55, t: 'Margaret quits. Exit interview, in full: "I was a vending machine that dispensed slide decks."', sfx: 'thud', major: true, morale: -8 },
-    { w: 58, t: 'Your three best engineers leave for Moonbeam. The ones who stay really, truly like being told what to do.', major: true, morale: -6 },
+    { w: 55, t: 'Margaret quits. Exit interview, in full: "I was a vending machine that dispensed slide decks."', sfx: 'thud', major: true, morale: -8, tag: 'departure', riders: 1 },
+    { w: 58, t: 'Your three best engineers leave for Moonbeam. The ones who stay really, truly like being told what to do.', major: true, morale: -6, tag: 'departure', riders: 3 },
     { w: 61, who: 'KEVIN', t: '"New hires ask me how things get decided here. I point at the queue and whisper: they don\'t."' },
     { w: 64, t: 'FIRE: The factory needs a materials yes by Friday. Your Friday is fully booked deciding a favicon.', sfx: 'alarm', major: true, cash: -200, fire: 'OPS' },
     { w: 67, t: 'You dream in checkboxes now. The dreams are pending your approval.' },
@@ -190,10 +190,10 @@
     { w: 62, who: 'DOUG', t: '"The cash forecast has three columns: best case, worst case, and \'depends who you ask\'."' },
     { w: 66, t: 'Two VPs are now openly at war. The all-hands has a seating chart and a mediator.', major: true, morale: -8 },
     { w: 70, t: 'FIRE: Security "wasn\'t anyone\'s decision." The breach was, briefly, everyone\'s.', sfx: 'alarm', major: true, cash: -380, morale: -12, fire: 'OPS' },
-    { w: 74, who: 'YOU', t: '"How did we buy a llama farm?" Doug: "You weren\'t at the meeting." You: "Which meeting?" Doug: "Any of them."', sfx: 'thud', major: true, cash: -250 },
+    { w: 74, who: 'YOU', t: '"How did we buy a llama farm?" Doug: "You weren\'t at the meeting." You: "Which meeting?" Doug: "Any of them."', sfx: 'thud', major: true, cash: -250, tag: 'llama' },
     { w: 78, t: 'Customers now describe the product, affectionately, as "four startups in a trench coat".', major: true },
     { w: 82, t: 'The Q2 pricing decision is now load-bearing. It cannot be moved. It is also wrong.', major: true, door: 'PRICING' },
-    { w: 86, t: 'Priya quits — not angry, just "tired of winning the same argument weekly, best-of-infinity."', sfx: 'thud', major: true, morale: -10 },
+    { w: 86, t: 'Priya quits — not angry, just "tired of winning the same argument weekly, best-of-infinity."', sfx: 'thud', major: true, morale: -10, tag: 'departure', riders: 1 },
     { w: 90, t: 'FIRE: The "unlimited forever" customers have found the fine print. There is no fine print.', sfx: 'alarm', major: true, cash: -230, fire: 'SALES' },
     { w: 94, t: 'You return full-time to "align the org". The org has four strategies. Each strategy has its own hoodie.', major: true },
     { w: 98, t: 'Emergency all-hands. You make your first decision in two years. Nobody can tell whether it is binding.', major: true },
@@ -220,7 +220,7 @@
     { w: 85, t: 'Fires this quarter: zero. Growth this quarter: also zero. It\'s very calm here. Calm like a pond. Ponds don\'t go anywhere.', major: true },
     { w: 92, t: 'You approve roadmap v9. It is 96% identical to v1, submitted in February.', sfx: 'paper', major: true },
     { w: 100, t: 'Year two: Moonbeam is now bigger than you. Not better — faster. Their CEO makes fewer, worse decisions, sooner.', major: true },
-    { w: 108, t: 'Margaret quits — gently. Exit interview: "Nothing was wrong. That\'s sort of the problem. I\'d like to make a call before I\'m forty."', sfx: 'thud', major: true, morale: -8 },
+    { w: 108, t: 'Margaret quits — gently. Exit interview: "Nothing was wrong. That\'s sort of the problem. I\'d like to make a call before I\'m forty."', sfx: 'thud', major: true, morale: -8, tag: 'departure', riders: 1 },
     { w: 116, t: 'Her replacement asks what the role\'s real decision scope is. Everyone, silently, in unison, looks at your office.' },
     { w: 124, t: 'Breakthrough: you raise your delegation threshold to $50k! The critical list, examined closely, has not changed by one item.', major: true },
     { w: 132, who: 'DOUG', t: '"Growth: 4%. Payroll growth: 11%. I\'ve put these two numbers next to each other in the deck, as a bit."' },
@@ -487,6 +487,7 @@
       dial: 0.5,            // mode F: fraction of decisions that reach your desk
       devSum: 0, driftDebt: 0, driftIdx: 0,
       rival: 6,             // Moonbeam's stature — feeds on your growth deficit
+      fireWeeks: [],
       history: { cash: [], morale: [], health: [], dial: [], tstar: [] }
     };
     if (mode === 'F') g.morale = 72;
@@ -527,7 +528,7 @@
     if (g.over) return [];
     g.week++;
     const ev = [];
-    const push = e => { ev.push(e); if (e.major) g.keyMoments.push({ w: e.w || g.week, t: e.t }); };
+    const push = e => { ev.push(e); if (e.major) g.keyMoments.push({ w: e.w || g.week, t: e.t }); if (e.sfx === 'alarm') g.fireWeeks.push(g.week); };
 
     // ---- mode dynamics ----
     if (g.mode === 'A') {
@@ -543,7 +544,7 @@
       if (g.morale > 60 && g.week % 3 === 0) g.headcount++;
       if (g.morale < 45 && g.week % 7 === 0) {
         g.headcount = Math.max(20, g.headcount - 2);
-        push({ t: 'Two more resignations. Their goodbye email is one word: "deciding!"', sfx: 'thud', morale: 0 });
+        push({ t: 'Two more resignations. Their goodbye email is one word: "deciding!"', sfx: 'thud', morale: 0, tag: 'departure', riders: 2 });
         g.morale = clamp(g.morale - 2, 2, 100);
       }
     } else if (g.mode === 'B') {

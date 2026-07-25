@@ -155,9 +155,9 @@
       "tagline": "Run a company, die four famous ways, find the narrow path — a CEO time-lapse sim with a llama.",
       "author": "Anjan",
       "type": "pwa",
-      "version": "2.0",
-      "updated": "2026-07-23",
-      "url": "https://daylightcomputer.club/ceo-sim/iso.html",
+      "version": "3.0",
+      "updated": "2026-07-24",
+      "url": "https://daylightcomputer.club/ceo-sim/",
       "description": "A time-lapse management tragedy in four acts and one escape. Watch Sunbeam Systems live or die under five decision-making philosophies, then take the dial yourself in the capstone. Ink-on-paper isometric city, decision memos, newspaper endings, a 60-second sorting test, and a field guide with the lessons written down. Built for the DC-1: pure grayscale, motion that suits LivePaper (with an optional PAPER stills mode), works offline once visited.",
       "inspected": [
         "plain HTML/JS served from the club itself — no build, no trackers",
@@ -166,7 +166,7 @@
       "afterInstall": [
         "Open The Decider from the shelf — it plays right in the browser.",
         "For an app-like feel, open the browser menu and choose “Add to Home screen”.",
-        "The DC-1’s LivePaper screen runs the animation beautifully. If you’d rather watch a calm time-lapse of stills (or stretch the battery), tap MOTION and pick PAPER.",
+        "Two skins, one save: the ISO/CHART button switches between the hand-drawn city and the org-chart view. MOTION picks continuous animation or a calm still per week.",
         "Sound on if you can: there are ka-chings, alarms, and one very sad trombone."
       ],
       "source": "https://github.com/a12k-a2b/daylight-computing-club-community-hub/tree/master/site/ceo-sim"

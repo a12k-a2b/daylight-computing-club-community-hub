@@ -1,7 +1,9 @@
-/* The Decider — isometric edition renderer.
-   Defines window.BOARD before game.js loads; game.js delegates the org view
-   to it. Everything is ink on paper: white faces, black 2px outlines,
-   diagonal hatching for shade — a tiny civilization drawn by hand. */
+/* The Decider — the isometric city view.
+   Exposes window.ISO_BOARD ({reset, render, fire, anchor, onEvent});
+   game.js activates it when the ISO view is selected and falls back to the
+   org-chart DOM view otherwise. Everything is ink on paper: white faces,
+   black 2px outlines, diagonal hatching for shade — a tiny civilization
+   drawn by hand. */
 (function () {
   'use strict';
   const TW = 76, TH = 38;           // tile diamond
@@ -22,11 +24,9 @@
   // rival visibility toggle — some people find the skyline clearer without it
   const readStore = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
   let showRival = readStore('dcc-ceosim-rival') !== '0';
-  let mode = 'A';
   let fires = {};                   // dept -> until-timestamp
   let papers = [];                  // {from,to,t,dur,spin}
   let workers = [];                 // {road, t, dir, speed}
-  let doorsDrawn = 0;
   let raf = 0, lastSpawn = 0;
   // civilization life
   let lastFireWeek = 0, lastGrowthWeek = -99, prevHeadcount = 0;
@@ -365,6 +365,33 @@
       Math.max(ref.base.x, 96), ref.base.y + 26);
   }
 
+  function victory(tops, t) {
+    // bunting between the rooftops, and for once a boat coming home
+    const hq = tops.CEO ? tops.CEO.top : iso(3, 1);
+    [['ENG', -1], ['OPS', 1]].forEach(([k]) => {
+      const b = tops[k] ? tops[k].top : null;
+      if (!b) return;
+      ctx.strokeStyle = '#000'; ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(hq.x, hq.y - 6);
+      ctx.quadraticCurveTo((hq.x + b.x) / 2, Math.max(hq.y, b.y) + 14, b.x, b.y - 4);
+      ctx.stroke();
+      for (let i = 1; i < 7; i++) {
+        const u = i / 7;
+        const x = (1 - u) * (1 - u) * hq.x + 2 * (1 - u) * u * ((hq.x + b.x) / 2) + u * u * b.x;
+        const y = (1 - u) * (1 - u) * (hq.y - 6) + 2 * (1 - u) * u * (Math.max(hq.y, b.y) + 14) + u * u * (b.y - 4);
+        poly([{ x: x - 3, y: y }, { x: x + 3, y: y }, { x: x, y: y + 7 }], i % 2 ? '#000' : '#fff', '#000', 1);
+      }
+    });
+    // the returning ferry: moonbeam -> mainland, on a loop
+    const a = iso(-1.05, 6.35), b2 = iso(-0.35, 5.3);
+    const u = (t / 2600) % 1;
+    const x = a.x + (b2.x - a.x) * u, y = a.y + (b2.y - a.y) * u + Math.sin(t / 400) * 1.5;
+    poly([{ x: x - 10, y: y }, { x: x + 10, y: y }, { x: x + 6, y: y + 5 }, { x: x - 6, y: y + 5 }], '#fff', '#000', 1.5);
+    ctx.fillStyle = '#000';
+    ctx.beginPath(); ctx.arc(x, y - 3, 2, 0, Math.PI * 2); ctx.fill();
+  }
+
   function cracks() {
     ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5;
     [[0.4, 2.2], [2.6, 3.1], [3.8, 1.4]].forEach((c, i) => {
@@ -390,7 +417,9 @@
   }
 
   function drawScene(t) {
-    if (!cur || !ctx || document.hidden) return;
+    if (!cur || !ctx || document.hidden || cv.hidden) return;
+    const sim = document.getElementById('simScreen');
+    if (!sim || sim.hidden) return;
     sizeCanvas();
     const g = cur;
     ctx.clearRect(0, 0, W, H);
@@ -415,7 +444,8 @@
     });
     ctx.setLineDash([]);
 
-    if (g.over && g.ended !== 'C_WIN') cracks();
+    const won = g.ended === 'C_WIN' || g.ended === 'F_WIN';
+    if (g.over && !won && g.ended !== 'F_DRIFT') cracks();
 
     // paper pile (the queue)
     pilePaper(g.queue, t);
@@ -449,6 +479,7 @@
     if (llamaHere) llama(6.6, 4.4);
     fireSign(g.week, t);
     ferryBoats(t, window.PAPER_MOTION ? 30 : 1);
+    if (g.over && won) victory(tops, t);
 
     // one-way doors as monoliths on the front lawn (in front of the city)
     (g.doors || []).forEach((d, i) => monolith(i, d));
@@ -483,9 +514,9 @@
   }
 
   // ---- BOARD API (called by game.js) ------------------------------------
-  window.BOARD = {
+  window.ISO_BOARD = {
     reset(m) {
-      mode = m; fires = {}; papers = []; doorsDrawn = 0;
+      fires = {}; papers = [];
       lastFireWeek = 0; lastGrowthWeek = -99; prevHeadcount = 0;
       llamaHere = false; ferries = [];
       cv = document.getElementById('isoCanvas');
@@ -544,11 +575,11 @@
       if (window.PAPER_MOTION && cur) drawScene(cur.week * 300 + 60);
     },
     onEvent(e) {
-      if (!e || !e.t) return;
-      if (/llama/i.test(e.t)) llamaHere = true;
-      if (/quits|resignation|leave for Moonbeam/i.test(e.t)) {
-        const riders = /three best/i.test(e.t) ? 3 : /Two more/i.test(e.t) ? 2 : 1;
-        ferries.push({ t: 0, riders });
+      // events carry semantic tags from the model — no prose sniffing
+      if (!e || !e.tag) return;
+      if (e.tag === 'llama') llamaHere = true;
+      if (e.tag === 'departure') {
+        ferries.push({ t: 0, riders: e.riders || 1 });
         if (window.PAPER_MOTION && cur) drawScene(cur.week * 300 + 30);
       }
     },
