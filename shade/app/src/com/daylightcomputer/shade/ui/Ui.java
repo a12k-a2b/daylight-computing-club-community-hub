@@ -25,7 +25,7 @@ public final class Ui {
     public static int MID = 0xFF555555;
     public static int FAINT = 0xFF999999;
     public static int PRESSED = 0xFFDDDDDD;
-    public static final int SCRIM = 0x66000000; // over the app behind us, both themes
+    public static int SCRIM = 0x66000000; // over the app behind us — flipped per theme so the edge stays visible
 
     private Ui() {}
 
@@ -42,6 +42,12 @@ public final class Ui {
         MID = n ? 0xFFAAAAAA : 0xFF555555;
         FAINT = n ? 0xFF777777 : 0xFF999999;
         PRESSED = n ? 0xFF333333 : 0xFFDDDDDD;
+        // The scrim must contrast the panel edge in both themes:
+        // - light panel (white) on a darkened scrim (gray) = visible
+        // - dark panel (black) on a lightened scrim (mid-gray) = visible
+        // Before this fix dark was 0x66000000 which over a black activity
+        // renders as pure black — zero edge contrast, panel blends into void.
+        SCRIM = n ? 0x66FFFFFF : 0x66000000;
     }
 
     public static int dp(Context c, float v) {
