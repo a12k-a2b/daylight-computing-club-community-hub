@@ -41,7 +41,17 @@ public class InkSlider extends View {
         enabled = e; disabledHint = hint == null ? "" : hint; invalidate();
     }
 
-    private float pad() { return Ui.dp(getContext(), 44); }
+    /** Where the track (and so the thumb's travel) starts, measured from
+     *  the row's edge. It must clear the end glyph by a hair: the thumb is
+     *  15dp half-width plus a 3dp border, and the widest glyph reaches
+     *  glyphIn() + 13dp. Found on glass 2026-08-02 — at 44dp the thumb sat
+     *  ON the sun at either extreme and ate three of its eight rays. */
+    private float pad() { return Ui.dp(getContext(), 58); }
+
+    /** End glyphs sit at their own fixed inset, NOT half the track inset —
+     *  otherwise widening the track just drags the glyph along with it and
+     *  the collision never goes away. */
+    private float glyphIn() { return Ui.dp(getContext(), 21); }
 
     @Override public boolean onTouchEvent(MotionEvent e) {
         if (!enabled) return false;
@@ -76,8 +86,8 @@ public class InkSlider extends View {
         paint.setColor(ink);
         cv.drawLine(left, cy, right, cy, paint);
 
-        drawEndGlyph(cv, left / 2f, cy, false, ink);
-        drawEndGlyph(cv, getWidth() - left / 2f, cy, true, ink);
+        drawEndGlyph(cv, glyphIn(), cy, false, ink);
+        drawEndGlyph(cv, getWidth() - glyphIn(), cy, true, ink);
 
         if (!enabled) {
             if (!disabledHint.isEmpty()) {
