@@ -1,5 +1,21 @@
 # Daylight Shade
 
+> ## ⚠️ THIS COPY HAS MOVED — do not edit it
+>
+> Shade now lives in its own private repo, **`a12k-a2b/daylight-shade`**,
+> checked out at `~/code/daylight-shade`. Extracted 2026-08-05 with
+> `git subtree split -P shade`, so all 37 commits of history came with it
+> and the trees were byte-identical at the moment of the split
+> (`e5c48d5`).
+>
+> Everything below is **frozen at the extraction point** and is kept only
+> so this branch's history stays readable. Edits made here go nowhere:
+> `shade/` was never on the hub's `master`, and the club site does not
+> reference it. Work in `~/code/daylight-shade` instead.
+>
+> Nothing has been deleted — removing `shade/` from this branch is a
+> separate, supervised decision for Anjan.
+
 Our own pull-down quick settings for the DC-1 — grayscale, bordered, serif,
 calm — built as a tiny standalone system app instead of a SystemUI fork, so
 we can iterate on it in an afternoon and carry it across the AOSP 13 → 16/17
