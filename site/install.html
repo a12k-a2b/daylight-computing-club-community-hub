@@ -245,9 +245,13 @@ function pwaSteps(app) {
     title: 'Put ' + app.name + ' on your home screen.',
     body: `
       <p>${esc(app.description)}</p>
-      <p class="hint">Web apps don’t “install” — you pin them. Pinned, they
-      open full-screen from your home screen like any other app. Takes three
-      taps.</p>`,
+      <p class="hint">${isSelf
+        ? `Web apps don’t “install” — you pin them. The club pins as a
+           shortcut: its own icon on your home screen, opening in a browser
+           window, and it still works offline. Takes three taps.`
+        : `Web apps don’t “install” — you pin them. Pinned, they
+           open full-screen from your home screen like any other app. Takes
+           three taps.`}</p>`,
     next: 'Start →'
   });
 
@@ -267,12 +271,12 @@ function pwaSteps(app) {
     body: `
       <p>Tap the <strong>⋮ three dots</strong> in the top-right corner of
       Chrome.</p>
-      <p>In the menu, look for one of these and tap it:</p>
+      <p>${isSelf ? 'Look for this and tap it:' : 'In the menu, look for one of these and tap it:'}</p>
       <div class="ui-mock">
         <div class="mock-toggle"><span class="tap-this">&nbsp;Add to Home screen&nbsp;</span></div>
-        <div class="mock-toggle" style="margin-top:12px"><span class="tap-this">&nbsp;Install app&nbsp;</span></div>
+        ${isSelf ? '' : '<div class="mock-toggle" style="margin-top:12px"><span class="tap-this">&nbsp;Install app&nbsp;</span></div>'}
       </div>
-      <p>Then tap <strong>Add</strong> / <strong>Install</strong> to confirm.</p>`,
+      <p>Then tap <strong>Add</strong>${isSelf ? '' : ' / <strong>Install</strong>'} to confirm.</p>`,
     next: 'Added it →'
   });
 
@@ -280,8 +284,11 @@ function pwaSteps(app) {
     title: 'Done — check your home screen.',
     body: `
       <div class="done-mark">☀</div>
-      <p>${esc(app.name)} now lives on your home screen and opens
-      full-screen, no browser bars. ${app.source ? `<a href="${app.source}">Source code here.</a>` : ''}</p>`,
+      <p>${esc(app.name)} now lives on your home screen${isSelf
+        ? ` and opens in a browser window — the door is always one tap away,
+           online or off.`
+        : ` and opens full-screen, no browser bars.`}
+      ${app.source ? `<a href="${app.source}">Source code here.</a>` : ''}</p>`,
     next: null
   });
 

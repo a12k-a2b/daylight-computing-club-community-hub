@@ -5,7 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Daylight Computer Club</title>
 <link rel="stylesheet" href="style.css">
-<link rel="manifest" href="manifest.webmanifest">
+<!-- No manifest on purpose. A manifest here would be scoped to the origin root,
+     and Chrome treats every page inside an installed app's scope as part of
+     that app — so an installed club site swallowed /lofi/ and /ceo-sim/ and
+     greyed out their Install buttons. The club is the shelf, not the house:
+     it pins as a shortcut (and still works offline via sw.js), and the dishes
+     stay installable as real apps in any order. See fixture card copy:
+     "Nothing to install; the link is the door." -->
 <link rel="icon" href="icons/icon-192.png">
 <meta name="theme-color" content="#ffffff">
 <meta property="og:type" content="website">

@@ -89,7 +89,7 @@
       "version": "v0",
       "updated": "2026-07-09",
       "url": "./",
-      "description": "The club as a web page — daylightcomputer.club. It works in any browser on any device (iPhone, Mac, a friend's laptop), and on Android you can pin it to your home screen where it opens full-screen like an app. On a Daylight, the Clubhouse app is the cozier door — this is the door that's always open everywhere else.",
+      "description": "The club as a web page — daylightcomputer.club. It works in any browser on any device (iPhone, Mac, a friend's laptop), and you can pin it to your home screen for its own icon, one tap from the shelf, working offline. It stays a pinned page rather than an installed app on purpose: the club sits at the top of the domain, and an app there would swallow the dishes below it — Lofi and The Decider would stop being installable on their own. On a Daylight, the Clubhouse app is the cozier door — this is the door that's always open everywhere else.",
       "afterInstall": [],
       "source": "https://github.com/a12k-a2b/daylight-computing-club-community-hub",
       "fixture": true

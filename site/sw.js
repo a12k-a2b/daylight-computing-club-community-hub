@@ -5,7 +5,7 @@
 // club opens instantly but self-heals when styles change.
 // APK files: never cached — always a fresh download.
 
-const CACHE = 'dcc-v6';
+const CACHE = 'dcc-v7';
 const SHELL = [
   './',
   'index.html',
@@ -29,7 +29,9 @@ const SHELL = [
   'why.html',
   'instincts.html',
   'style.css',
-  'manifest.webmanifest',
+  // No root manifest.webmanifest here — the club deliberately ships no
+  // manifest (see index.html). Precaching a 404 would make addAll() throw and
+  // silently take the whole club offline-cache down with it.
   'icons/icon-192.png',
   'icons/icon-512.png',
   'icons/icon-maskable-512.png'
