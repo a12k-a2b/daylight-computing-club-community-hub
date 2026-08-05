@@ -42,6 +42,11 @@ marked *needs blessing* lights up in the same APK the day it lands.
 - [ ] Zero-tap setup: pre-granted accesses in the build
       (`config_defaultListenerAccessPackages`, `config_defaultDndAccessPackages`,
       preset app-ops). New tablets come with the shade already alive.
+      *Partly available now:* `tools/grant-access.sh` hands over every
+      tier-1/tier-2 access in one shot (all 10 verified on an emulator
+      2026-08-05). Plain adb, no root — so it works on a stock DC-1 too.
+      The build-config half is still the only way to do it with zero taps
+      and no cable.
 - [ ] Warmth slider drives the real amber backlight — the key is known and
       wired (`screen_brightness_amber_rate` = 256+amber, discovered
       on-glass); Android only accepts the write from a system install, so
