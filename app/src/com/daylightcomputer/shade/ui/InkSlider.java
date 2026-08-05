@@ -41,7 +41,12 @@ public class InkSlider extends View {
         enabled = e; disabledHint = hint == null ? "" : hint; invalidate();
     }
 
-    private float pad() { return Ui.dp(getContext(), 44); }
+    /** Horizontal inset from the view edge to the track ends (and thus to
+     *  the thumb center at 0 / 1). End-glyphs sit at pad/2; the largest
+     *  sun (r=7 + 6dp rays) reaches pad/2+13, and the square thumb is
+     *  15dp half-width — so pad must be ≥ 2×(13+15+gap). 44 left the
+     *  thumb covering the suns at both extremes; 64 leaves a ~4dp gap. */
+    private float pad() { return Ui.dp(getContext(), 64); }
 
     @Override public boolean onTouchEvent(MotionEvent e) {
         if (!enabled) return false;
