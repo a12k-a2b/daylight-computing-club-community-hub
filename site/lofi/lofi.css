@@ -154,6 +154,54 @@ header.top .lab-link { margin-left: auto; }
 .scene.active .s-desc { color: #ccc; }
 .scene.active .s-name::after { content: ' ♪'; }
 
+/* ---------- takes: the instrument + real recordings ---------- */
+/* A strip of numbered chips joined under the scene card. 1 is always the
+   generated instrument; the rest are field recordings. The pen hovering
+   (EMR hover) or a focused chip reveals what each one is. */
+
+.takes {
+  position: relative;
+  display: flex;
+  border: var(--rule);
+  border-top: none;
+  margin: -14px 0 14px;
+  background: var(--paper);
+}
+
+.take-chip {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-right: var(--rule);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: ui-monospace, 'Courier New', monospace;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0;
+}
+.take-chip.active { background: var(--ink); color: var(--paper); }
+
+.take-tip {
+  display: none;
+  position: absolute;
+  left: 0;
+  bottom: 54px;
+  z-index: 20;
+  width: 300px;
+  background: var(--paper);
+  color: var(--ink);
+  border: var(--rule);
+  padding: 10px 12px;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 15px;
+  line-height: 1.35;
+  text-align: left;
+}
+.take-chip:hover .take-tip,
+.take-chip:focus-visible .take-tip { display: block; }
+
 /* ---------- breath strip ---------- */
 
 .breath {
@@ -268,6 +316,59 @@ input[type=range]::-moz-range-thumb {
   cursor: pointer;
 }
 .knob.on { background: var(--ink); color: var(--paper); }
+.knob.open { background: var(--ink); color: var(--paper); }
+
+/* ---------- sleep timer panel ---------- */
+
+.timer-panel {
+  position: fixed;
+  right: 24px;
+  bottom: 150px;
+  z-index: 10;
+  background: var(--paper);
+  border: var(--rule);
+  padding: 16px 18px;
+  max-width: 560px;
+}
+
+.tp-title {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+
+.tp-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.tp-btn {
+  font-family: ui-monospace, 'Courier New', monospace;
+  font-size: 14px;
+  letter-spacing: 1px;
+  border: var(--rule);
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 48px;
+  min-width: 48px;
+  padding: 10px 14px;
+  cursor: pointer;
+}
+.tp-btn:disabled { color: var(--faint); border-color: var(--faint); cursor: default; }
+.tp-wide { flex: 1 1 auto; }
+
+.tp-note {
+  margin: 4px 0 0;
+  font-size: 14px;
+  font-style: italic;
+  color: var(--mid);
+  max-width: 480px;
+}
+
+@media (max-width: 860px) {
+  .timer-panel { left: 16px; right: 16px; bottom: 220px; max-width: none; }
+}
 
 /* ---------- the lab ---------- */
 

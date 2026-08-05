@@ -10,6 +10,8 @@
   };
 
   let currentScene = null;      // scene spec the user picked
+  let currentTake = null;       // recorded take, or null = the instrument
+  let tookFallback = false;     // take failed to load; instrument stepped in
   let isPlaying = false;
   let timerMins = 0;            // 0 = off
   let timerEndsAt = null;
@@ -52,9 +54,43 @@
                       '<span class="s-desc">' + scene.desc + '</span>';
         b.addEventListener('click', () => tapScene(scene));
         col.appendChild(b);
+        if (scene.takes) col.appendChild(buildTakesRow(scene));
       });
       board.appendChild(col);
     });
+  }
+
+  /* ---------- takes: the instrument, plus real recordings ---------- */
+
+  const LIVE_TAKE = {
+    id: 'live', name: 'The instrument',
+    desc: 'Generated live by the tablet — never the same twice, works offline.',
+    src: null
+  };
+
+  function takesFor(scene) { return [LIVE_TAKE].concat(scene.takes || []); }
+
+  function savedTake(scene) {
+    const id = store.get('take:' + scene.id, 'live');
+    return takesFor(scene).find(t => t.id === id) || LIVE_TAKE;
+  }
+
+  function buildTakesRow(scene) {
+    const row = document.createElement('div');
+    row.className = 'takes';
+    row.id = 'takes-' + scene.id;
+    takesFor(scene).forEach((take, i) => {
+      const c = document.createElement('button');
+      c.className = 'take-chip';
+      c.id = 'take-' + scene.id + '-' + take.id;
+      c.setAttribute('aria-label', scene.name + ' take ' + (i + 1) + ': ' + take.name);
+      c.innerHTML = '<span class="tc-n">' + (i + 1) + '</span>' +
+        '<span class="take-tip" role="tooltip"><strong>' + take.name + '</strong><br>' +
+        take.desc + '</span>';
+      c.addEventListener('click', () => tapTake(scene, take));
+      row.appendChild(c);
+    });
+    return row;
   }
 
   /* ---------- play control ---------- */
@@ -65,12 +101,28 @@
       return;
     }
     currentScene = scene;
+    currentTake = savedTake(scene).src ? savedTake(scene) : null;
+    start();
+  }
+
+  function tapTake(scene, take) {
+    const pick = take.src ? take : null;
+    const samePick = currentScene && currentScene.id === scene.id &&
+      ((pick && currentTake && currentTake.id === pick.id) || (!pick && !currentTake));
+    if (samePick && isPlaying) { pause(); return; }
+    currentScene = scene;
+    currentTake = pick;
+    store.set('take:' + scene.id, take.id);
     start();
   }
 
   function start() {
     if (!currentScene) return;
-    Engine.play(currentScene);
+    tookFallback = false;
+    Engine.play(currentScene, currentTake);
+    // a side starts spinning when play begins; switching scenes mid-side
+    // keeps it spinning (the side belongs to the session, not the record)
+    if (!isPlaying) sideAnchor = Date.now();
     isPlaying = true;
 
     // the nap arms its own timer unless one is already running
@@ -91,15 +143,23 @@
 
   function refresh() {
     document.querySelectorAll('.scene').forEach(el => el.classList.remove('active'));
+    document.querySelectorAll('.take-chip').forEach(el => el.classList.remove('active'));
     if (currentScene && isPlaying) {
       const el = $('scene-' + currentScene.id);
       if (el) el.classList.add('active');
+      const chip = $('take-' + currentScene.id + '-' + (currentTake ? currentTake.id : 'live'));
+      if (chip) chip.classList.add('active');
     }
     $('playpause').disabled = !currentScene;
     $('playpause').innerHTML = isPlaying ? '&#10073;&#10073;' : '&#9654;';
     $('now-name').textContent = currentScene ? currentScene.name : 'Pick a soundscape';
-    $('now-desc').textContent = currentScene ? currentScene.desc
-      : 'Morning wakes you, day settles you, night puts you down.';
+    $('now-desc').textContent = !currentScene
+      ? 'Morning wakes you, day settles you, night puts you down.'
+      : tookFallback
+        ? 'Couldn’t reach that recording (offline?) — the instrument is playing instead.'
+        : currentTake
+          ? currentTake.name + ' — ' + currentTake.desc
+          : currentScene.desc;
     const showBreath = !!(currentScene && currentScene.breath && isPlaying);
     $('breath').hidden = !showBreath;
     if (!showBreath && breathTick) { clearInterval(breathTick); breathTick = null; }
@@ -121,15 +181,24 @@
     }, 1000);
   };
 
-  /* ---------- sleep timer ---------- */
+  /* ---------- sleep timer ----------
+     Three ways to say "stop later": minutes, record sides (this is a lo-fi
+     machine — a side is about 22 minutes), or "finish this side", which
+     stops at the current side's edge, counted from when play began. */
 
-  const TIMER_STEPS = [0, 15, 30, 45, 60];
+  const SIDE_MINS = 22;
+  let sideAnchor = null;        // when this play session started
 
   function setTimer(mins) {
+    setTimerEnd(mins ? Date.now() + mins * 60000 : null);
     timerMins = mins;
+  }
+
+  function setTimerEnd(endsAt) {
+    timerMins = 0;
     if (timerTick) { clearInterval(timerTick); timerTick = null; }
-    if (!mins) { timerEndsAt = null; paintTimer(); return; }
-    timerEndsAt = Date.now() + mins * 60000;
+    timerEndsAt = endsAt;
+    if (!endsAt) { paintTimer(); return; }
     timerTick = setInterval(() => {
       if (Date.now() >= timerEndsAt) {
         clearInterval(timerTick); timerTick = null;
@@ -139,6 +208,14 @@
       }
     }, 5000);
     paintTimer();
+  }
+
+  // the edge of the side currently spinning — where "finish this side" stops
+  function currentSideEnd() {
+    const anchor = sideAnchor || Date.now();
+    const side = SIDE_MINS * 60000;
+    const spun = Date.now() - anchor;
+    return anchor + Math.ceil((spun + 1) / side) * side;
   }
 
   function timerExpired() {
@@ -167,9 +244,40 @@
     }
   }
 
+  /* ---------- timer panel ---------- */
+
+  function paintPanel() {
+    const open = !$('timer-panel').hidden;
+    $('timer').classList.toggle('open', open);
+    $('tp-side-now').disabled = !isPlaying;
+  }
+
+  function closePanel() { $('timer-panel').hidden = true; paintPanel(); }
+
   $('timer').addEventListener('click', () => {
-    const idx = TIMER_STEPS.indexOf(timerMins);
-    setTimer(TIMER_STEPS[(idx + 1) % TIMER_STEPS.length]);
+    $('timer-panel').hidden = !$('timer-panel').hidden;
+    paintPanel();
+  });
+
+  document.querySelectorAll('#timer-panel [data-mins]').forEach(b => {
+    b.addEventListener('click', () => {
+      setTimer(Number(b.dataset.mins));
+      closePanel();
+    });
+  });
+
+  $('tp-side-now').addEventListener('click', () => {
+    if (!isPlaying) return;
+    setTimerEnd(currentSideEnd());
+    closePanel();
+  });
+
+  $('tp-off').addEventListener('click', () => { setTimer(0); closePanel(); });
+
+  // tapping anywhere outside folds the panel away
+  document.addEventListener('click', e => {
+    if ($('timer-panel').hidden) return;
+    if (!e.target.closest('#timer-panel') && !e.target.closest('#timer')) closePanel();
   });
 
   /* ---------- knobs ---------- */
@@ -198,11 +306,13 @@
 
   /* ---------- keep audio alive with the screen off ---------- */
   // A silent looped <audio> element marks the page as "playing media", so
-  // Android keeps the audio context running when the screen sleeps.
+  // Chrome holds its foreground media service and Android spares the app
+  // when the screen sleeps or we lose the foreground. If the system pauses
+  // the element out from under us (focus loss, interruption), re-arm it.
 
   let silentEl = null;
   function silentWav() {
-    const rate = 8000, secs = 1, data = rate * secs;
+    const rate = 8000, secs = 10, data = rate * secs;
     const buf = new ArrayBuffer(44 + data);
     const v = new DataView(buf);
     const w = (off, s) => { for (let i = 0; i < s.length; i++) v.setUint8(off + i, s.charCodeAt(i)); };
@@ -221,22 +331,51 @@
         silentEl = new Audio(silentWav());
         silentEl.loop = true;
         silentEl.volume = 0.001;
+        // the system paused us (interruption, focus loss) while we should
+        // be playing — take the needle back after a beat
+        silentEl.addEventListener('pause', () => {
+          if (isPlaying) setTimeout(() => {
+            if (isPlaying && silentEl.paused) {
+              silentEl.play().catch(() => {});
+              Engine.resume();
+            }
+          }, 1000);
+        });
       }
       silentEl.play().catch(() => {});
     } else if (silentEl) {
       silentEl.pause();
     }
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.playbackState = on ? 'playing' : 'paused';
+    }
   }
+
+  // waking the page back up is the moment suspended audio can resume
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && isPlaying) {
+      Engine.resume();
+      keepAlive(true);
+    }
+  });
+
+  // a chosen take couldn't load — the engine already switched to generated
+  Engine.onTakeFallback = () => {
+    currentTake = null;
+    tookFallback = true;
+    refresh();
+  };
 
   function updateMediaSession() {
     if (!('mediaSession' in navigator) || !currentScene) return;
     navigator.mediaSession.metadata = new MediaMetadata({
-      title: currentScene.name,
+      title: currentScene.name + (currentTake ? ' · ' + currentTake.name : ''),
       artist: 'Lofi — a quiet sound machine',
       album: currentScene.part
     });
     navigator.mediaSession.setActionHandler('play', () => start());
     navigator.mediaSession.setActionHandler('pause', () => pause());
+    try { navigator.mediaSession.setActionHandler('stop', () => pause()); } catch (e) {}
   }
 
   /* ---------- boot ---------- */
@@ -258,6 +397,9 @@
   window.__lofi = {
     get playing() { return isPlaying; },
     get scene() { return currentScene && currentScene.id; },
+    get take() { return currentScene ? (currentTake ? currentTake.id : 'live') : null; },
+    get fellBack() { return tookFallback; },
+    get timerEnd() { return timerEndsAt; },
     scenes: SCENES.length
   };
 })();

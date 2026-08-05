@@ -69,6 +69,11 @@ const SCENES = [
     name: 'Morning Pages',
     desc: 'A steady writing companion: warm drone, a soft bell now and then.',
     binaural: { carrier: 200, beat: 10 },       // alpha: relaxed focus
+    takes: [
+      { id: 'stream', name: 'Stream off Geyser Hill',
+        desc: 'A small stream with geysers rumbling behind, Yellowstone. Public domain (NPS).',
+        src: 'takes/stream-yellowstone.mp3' }
+    ],
     layers: [
       { kind: 'drone', notes: [N.F3, N.C4, N.F3 * 2.005], type: 'triangle',
         gain: 0.035, attack: 12, breathe: 0.015 },
@@ -84,6 +89,11 @@ const SCENES = [
     name: 'Open Window',
     desc: 'Morning air: a light breeze and songbirds somewhere outside.',
     binaural: { carrier: 210, beat: 12 },       // high alpha: awake, easy
+    takes: [
+      { id: 'dawnchorus', name: 'Dawn chorus, Yellowstone',
+        desc: 'Real daybreak birds recorded in Yellowstone. Public domain (NPS).',
+        src: 'takes/dawnchorus-yellowstone.mp3' }
+    ],
     layers: [
       { kind: 'noise', color: 'white', gain: 0.02,
         filter: { type: 'bandpass', freq: 500, q: 0.6 },
@@ -105,6 +115,11 @@ const SCENES = [
     desc: 'Box breathing, 4-4-4-4 — the sound swells as you inhale. Follow it.',
     binaural: { carrier: 180, beat: 8 },        // low alpha: let go
     breath: { pattern: [['Breathe in', 4], ['Hold', 4], ['Breathe out', 4], ['Rest', 4]] },
+    takes: [
+      { id: 'wind', name: 'Wind in the pines',
+        desc: 'Wind through lodgepole pines, recorded binaurally in Yellowstone — best on headphones. The pacer still paints, but the wind breathes at its own pace. Public domain (NPS).',
+        src: 'takes/wind-yellowstone.mp3' }
+    ],
     layers: [
       { kind: 'noise', color: 'pink', gain: 0.05, breathLayer: true,
         filter: { type: 'lowpass', freq: 900 } },
@@ -118,6 +133,14 @@ const SCENES = [
     name: 'Rain on the Roof',
     desc: 'Steady rain, close plinks, a far-off rumble once in a while.',
     binaural: { carrier: 190, beat: 10 },       // alpha: settle down
+    takes: [
+      { id: 'amazon', name: 'Rain on a metal roof',
+        desc: 'Real rain drumming a metal-sheet roof in the Amazon rainforest. Recorded by Félix Blume (CC0).',
+        src: 'takes/rain-amazon.mp3' },
+      { id: 'thunder', name: 'A storm rolls through',
+        desc: 'A Yellowstone thunderstorm — rain, long rolling thunder, birds after. Public domain (NPS).',
+        src: 'takes/thunder-yellowstone.mp3' }
+    ],
     layers: [
       { kind: 'noise', color: 'white', gain: 0.028,
         filter: { type: 'bandpass', freq: 2600, q: 0.35 },
@@ -152,6 +175,11 @@ const SCENES = [
     name: 'Fireside',
     desc: 'A low fire: crackle, warmth, the occasional deep slow note.',
     binaural: { carrier: 150, beat: 6 },        // theta: drowsy
+    takes: [
+      { id: 'maple-fire', name: 'A real forest fire, close',
+        desc: 'The 2016 Maple Fire burning through lodgepole pine, Yellowstone — deep crackle, no music. Public domain (NPS).',
+        src: 'takes/fire-yellowstone.mp3' }
+    ],
     layers: [
       { kind: 'crackle', density: 22, gain: 0.05,
         filter: { type: 'bandpass', freq: 900, q: 0.5 } },
@@ -170,6 +198,11 @@ const SCENES = [
     name: 'Night Tide',
     desc: 'Long, slow waves on a dark shore. Each one a little different.',
     binaural: { carrier: 140, beat: 5 },        // theta: drifting
+    takes: [
+      { id: 'chile', name: 'Waves on the Chilean shore',
+        desc: 'Real ocean waves breaking on the shore of Chile. Recorded by Félix Blume (CC0).',
+        src: 'takes/waves-chile.mp3' }
+    ],
     layers: [
       { kind: 'waves', gain: 0.09 },
       { kind: 'noise', color: 'brown', gain: 0.035,
@@ -185,6 +218,11 @@ const SCENES = [
     name: 'Sleep',
     desc: 'Almost nothing at all: deep hush and two tones beating slowly. Set a timer and let it fade.',
     binaural: { carrier: 120, beat: 3 },        // delta: sleep
+    takes: [
+      { id: 'crickets', name: 'Night crickets',
+        desc: 'Crickets on a quiet rural night, nothing else. Recorded by OwlStorm (CC0).',
+        src: 'takes/crickets-night.mp3' }
+    ],
     layers: [
       { kind: 'noise', color: 'brown', gain: 0.08,
         filter: { type: 'lowpass', freq: 300 },
