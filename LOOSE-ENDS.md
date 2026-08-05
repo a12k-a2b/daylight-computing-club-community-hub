@@ -145,3 +145,33 @@ from day one with literally zero taps. Same conversation, same ask
 list: default permission grants + default backup destination.
 
 — desktop session, 2026-07-11, after the 5am field test
+
+---
+
+## 8. The refresh-rate facts branch contradicts the measured inventory
+
+**Pick this up when:** someone next touches `skills/daylight-facts.json`, or
+the dc1-motion investigation reaches a verdict on blur.
+
+`claude/daylight-tablet-skills-1gdo5t` (1 commit, 2026-07-11, unmerged;
+worktree `~/code/hub-skills`) replaces the flat `"refresh_hz": 120` with a
+structured, honest entry — right instinct, wrong numbers. It asserts
+`vrr_range_hz: [30, 120]`, but `~/code/dc1-motion/phase0/OS-INVENTORY.md`
+measured the panel's mode list straight from `dumpsys`:
+
+    6, 10, 15, 24, 30, 45, 60, 72, 90, 120 Hz
+    idle = 24 Hz · any touch or pen contact = 120 Hz (held 2 s)
+
+So the hardware floor is **6 Hz**, not 30 — "well below the marketed 30 Hz
+floor" — and the OS idles *below* the branch's claimed minimum. The same
+commit adds a 155-line `REFRESH-MOTION-PROMPT.md` asking whether the blur
+Anjan sees is refresh rate or LC pixel response; phase 0 already partly
+answers it ("every scroll and every pen stroke runs at 120 Hz today"), so
+landing the prompt as-is risks re-running finished work.
+
+**Decision waiting:** land the branch *corrected* against the measured
+inventory, or drop it and let `dc1-motion` stay the single source of truth
+for refresh. Either way, master currently still says a flat `refresh_hz:
+120`, which hides the 24 Hz idle from anyone designing an idle animation.
+
+— desktop session, 2026-08-04, while fixing the PWA scope bug
