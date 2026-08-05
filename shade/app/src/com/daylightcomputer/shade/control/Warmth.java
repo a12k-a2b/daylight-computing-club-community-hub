@@ -12,9 +12,18 @@ import android.util.Log;
  *  Discovered on-glass 2026-07-11 by diffing `settings list system`
  *  around the stock slider.
  *
+ *  A write to the key is only half the job — the backlight does not move
+ *  until a brightness write follows it. See {@link #pokeBacklight}.
+ *
  *  Backend chain:
  *   1. SYSTEM-TABLE KEY — the real amber drive. Present on every DC-1;
- *      writable only from a system-image install (Sol:OS blessing).
+ *      writable only from an install that lives on a system partition
+ *      (the Sol:OS blessing, or a hand-placed system app on a rooted
+ *      unit). The gate is the settings provider's system-table rule,
+ *      which turns on whether the caller is a system app — no grantable
+ *      permission reaches it, so `pm grant` cannot open this door and
+ *      neither can an in-app `su` call on a stock userdebug build (that
+ *      su refuses every caller that is not root or shell).
  *   2. NIGHT DISPLAY — AOSP night light, ONLY on hardware that has no
  *      real key at all (emulators, dev devices). On a DC-1 a software
  *      tint over a hardware-amber backlight looks broken, not warm —
@@ -136,6 +145,45 @@ public final class Warmth {
         return 0f;
     }
 
+    /** Writing the amber key changes nothing on its own.
+     *
+     *  Verified on glass 2026-08-05 (JP4R01422, root shell reading the
+     *  driver directly): with the key set to 300 and left alone, both
+     *  `/sys/class/leds/lcd-backlight-amber/brightness` and its white
+     *  sibling stayed exactly where they were. The key is a passive side
+     *  channel — LightsService re-reads it only while servicing a
+     *  *brightness* write (`amber = getInt(...)` inside setBrightness),
+     *  which is why stock SystemUI "re-pokes the current brightness"
+     *  after every warmth change. Rewriting brightness to the value it
+     *  already holds does NOT count: the settings provider dedupes it and
+     *  the strings never move (measured — same 27/1 split before and
+     *  after). It takes a real change.
+     *
+     *  So: nudge one step and come straight back. Two facts from
+     *  {@link Brightness} constrain which way — raw 1 is backlight OFF
+     *  and raw 2 is a dead rung that emits nothing — so anything at or
+     *  below 3 nudges UP, or the "poke" would flash the panel dark. At
+     *  raw ≤ 1 the backlight is off, amber is moot (LightsService pins it
+     *  to 255 when the brightness byte is 0), and we skip entirely.
+     *
+     *  Costs only WRITE_SETTINGS, which the brightness slider already
+     *  needs — so this half works today, on any DC-1, blessed or not. */
+    private static void pokeBacklight(Context c) {
+        if (!Caps.writeSettings(c)) return;
+        try {
+            int b = Settings.System.getInt(c.getContentResolver(),
+                    Settings.System.SCREEN_BRIGHTNESS, -1);
+            if (b <= 1) return;
+            int nudge = b > 3 ? b - 1 : b + 1;
+            Settings.System.putInt(c.getContentResolver(),
+                    Settings.System.SCREEN_BRIGHTNESS, nudge);
+            Settings.System.putInt(c.getContentResolver(),
+                    Settings.System.SCREEN_BRIGHTNESS, b);
+        } catch (Throwable t) {
+            Log.w(TAG, "backlight poke failed: " + t);
+        }
+    }
+
     public static void set(Context c, float v) {
         v = Math.max(0f, Math.min(1f, v));
         String k = usableKey(c);
@@ -144,6 +192,7 @@ public final class Warmth {
             try {
                 Settings.System.putInt(c.getContentResolver(), k,
                         min + Math.round(v * (max - min)));
+                pokeBacklight(c);
                 return;
             } catch (Throwable t) {
                 Log.w(TAG, "system key write failed: " + t);

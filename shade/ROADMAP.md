@@ -36,6 +36,9 @@ marked *needs blessing* lights up in the same APK the day it lands.
 
 - [ ] Swipe on the status bar itself opens our panel; stock shade silenced.
       The code already does this — it just needs the permissions to exist.
+      (Careful with that phrase: it was also said of the warmth slider,
+      and was wrong there — see the v0.5 warmth entry below. Nothing here
+      has been exercised against real permissions yet.)
 - [ ] Zero-tap setup: pre-granted accesses in the build
       (`config_defaultListenerAccessPackages`, `config_defaultDndAccessPackages`,
       preset app-ops). New tablets come with the shade already alive.
@@ -45,7 +48,14 @@ marked *needs blessing* lights up in the same APK the day it lands.
       this lights up automatically with the blessing. (The night-light
       stand-in was retired on DC-1s after Anjan's hands-on: a software
       tint over a hardware-amber backlight reads as broken — the slider
-      now waits, disabled and honest, instead.)
+      now waits, disabled and honest, instead.) **Corrected 2026-08-05:**
+      the key write is only half of it — nothing moves until a brightness
+      write follows, so `Warmth` now nudges brightness after each write
+      (`decisions/2026-08-05-amber-needs-a-brightness-poke.md`). Without
+      that the slider would have looked dead on blessing day. Also
+      corrected there: root does *not* open this door for the app; system-
+      partition residency does, and a plain `/system_ext/app/` install may
+      be enough — less risk than the full priv-app allowlist route.
 
 ## v1 — polish that needs nothing
 
