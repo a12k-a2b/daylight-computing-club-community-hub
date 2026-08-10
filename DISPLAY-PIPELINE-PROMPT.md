@@ -37,8 +37,9 @@ precise asks for third parties (display controller vendor) where not.
 
 - Daylight DC-1: 10.5″ "LivePaper" — a **transflective TN LCD** on an
   **IGZO oxide TFT** backplane, **no color filter array**, **8-bit**,
-  1600×1200 (4:3), ~190 PPI, variable refresh 30–120 Hz (motion/refresh
-  has its own investigation: REFRESH-MOTION-PROMPT.md). E-paper-class but
+  1600×1200 (4:3), ~190 PPI, variable refresh — measured modes
+  6/10/15/24/30/45/60/72/90/120 Hz, idle 24 Hz, touch/pen boosts to 120 Hz
+  (motion/refresh has its own investigation: REFRESH-MOTION-PROMPT.md). E-paper-class but
   NOT e-ink — a real LCD. 256 gray levels driven; in practice eyes resolve ~9–16 in ambient
   light, fewest in the dark quarter (the dark end compresses badly).
 - Transflective: each pixel is read by reflected ambient light by day AND

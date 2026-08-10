@@ -175,3 +175,11 @@ for refresh. Either way, master currently still says a flat `refresh_hz:
 120`, which hides the 24 Hz idle from anyone designing an idle animation.
 
 — desktop session, 2026-08-04, while fixing the PWA scope bug
+
+**Resolved 2026-08-10** (skills session, on the branch itself): took the
+"land it corrected" fork. `daylight-facts.json` now carries the measured
+mode list (6–120 Hz, measured: true), the 24 Hz idle / 120 Hz touch-boost
+policy, and keeps only the blur-vs-pixel-response question open;
+REFRESH-MOTION-PROMPT.md opens with a STATUS block declaring phase 0 done
+so a fresh thread starts at the Phase 1 crossover measurement. Merging
+PR #47 closes this loose end.

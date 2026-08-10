@@ -5,6 +5,16 @@ Companion investigation to DISPLAY-PIPELINE-PROMPT.md (color→gray mapping);
 same device, same working style, different question. I'll upload the panel
 datasheet into this thread — read it thoroughly, it's the anchor document.
 
+> **STATUS (2026-08): Phase 0 is DONE — do not re-run it.** The dc1-motion
+> thread (`~/code/dc1-motion/phase0/OS-INVENTORY.md` on Anjan's machine)
+> measured the OS inventory on a real DC-1: supported modes are
+> **6, 10, 15, 24, 30, 45, 60, 72, 90, 120 Hz** (hardware floor 6 Hz, well
+> below the marketed 30); idle drops to **24 Hz**; any touch or pen contact
+> jumps to **120 Hz** and holds ~2 s — every scroll and pen stroke already
+> runs at 120 Hz today. Start from those findings and go straight to the
+> Phase 1 crossover measurement (the blur-vs-pixel-response question is
+> still open). Numbers below that say "30–120 Hz" predate this measurement.
+
 ---
 
 ## Mission

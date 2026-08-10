@@ -19,9 +19,11 @@
     "aspect": "4:3",
     "ppi": 190,
     "refresh": {
-      "vrr_range_hz": [30, 120],
+      "modes_hz": [6, 10, 15, 24, 30, 45, 60, 72, 90, 120],
+      "measured": true,
+      "modes_note": "mode list read straight from dumpsys on a real DC-1 (dc1-motion phase 0, 2026-08). Hardware floor is 6 Hz — well below the marketed 30. OS policy today: idle drops to 24 Hz; any touch or pen contact jumps to 120 Hz and holds ~2 s, so every scroll and pen stroke runs at 120 Hz. Design idle-state animation knowing the panel may be at 24 Hz.",
       "practical_ceiling_hz": { "value": 90, "measured": false },
-      "note": "variable-refresh IGZO, owner-confirmed fast (2026-07): animation and motion genuinely look good — the club site's minimal-animation rule is an aesthetic choice (living paper), not a hardware limit. Pixel response time vs refresh rate unresolved — motion blur reported at 120 Hz; investigation prompt: REFRESH-MOTION-PROMPT.md"
+      "note": "variable-refresh IGZO, owner-confirmed fast (2026-07): animation and motion genuinely look good — the club site's minimal-animation rule is an aesthetic choice (living paper), not a hardware limit. Still open: whether the blur seen at 120 Hz is refresh or LC pixel response — the dc1-motion thread owns that question (REFRESH-MOTION-PROMPT.md; its phase 0 is done, the blur crossover phases remain)"
     },
     "type": "LivePaper: transflective TN LCD, IGZO oxide TFT backplane, no color filter array (e-paper-class, NOT e-ink)",
     "bit_depth": 8,
