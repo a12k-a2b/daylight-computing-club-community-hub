@@ -120,7 +120,7 @@ while its cook's AI fixes it. (Added to RECALL thinking.)
   drift; auto-regenerated contention table.
 - **v2:** named actions + the Clubhouse dispatcher for whichever resource
   proves ungovernable by norms (volume keys are the likely first tower);
-  the club leader-gesture; quarantine rung.
+  the club leader-gesture. (Quarantine rung: built with v1, RECALL.md rung 0.)
 - **Always:** layer 5 (cohesion) is solved by the daylight-ify kitchen —
   a design language, not a police force.
 
