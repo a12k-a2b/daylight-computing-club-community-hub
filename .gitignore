@@ -1,3 +1,5 @@
 node_modules/
 dc1-preview/
 skills/daylight-port/references/webview-shell/build/
+__pycache__/
+*.pyc

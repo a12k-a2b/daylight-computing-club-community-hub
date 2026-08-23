@@ -98,6 +98,20 @@ Promise.all([
       catalog.appendChild(b);
     });
 
+    // quarantined dishes rest in the kitchen while their cooks fix them
+    // (RECALL.md rung 0 — gentler than a recall, invisible but not erased)
+    const resting = data.apps.filter(a => a.quarantined).length;
+    data.apps = data.apps.filter(a => !a.quarantined);
+    if (resting) {
+      const rest = document.createElement('p');
+      rest.className = 'meta';
+      rest.style.margin = '0 0 14px';
+      rest.textContent = resting + (resting === 1 ? ' dish is' : ' dishes are') +
+        ' resting in the kitchen while ' + (resting === 1 ? 'its cook fixes' : 'their cooks fix') +
+        ' something — back on the shelf soon.';
+      catalog.appendChild(rest);
+    }
+
     // the club's own two apps are furniture, not dishes — they get their
     // own side-by-side section at the bottom (see buildFixtureCard)
     const fixtures = data.apps.filter(a => a.fixture);

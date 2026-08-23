@@ -5,6 +5,16 @@ claims (a 🔴 from an inspector, a report from a friend, a bad feeling),
 here is the whole procedure. It's four steps and none of them are scary.
 Written down now so nobody has to think under stress later.
 
+## 0. Or quarantine — the gentler rung (HARMONY.md: graduated sanctions)
+
+Not every misbehaving dish deserves a recall. If it's broken or rude but
+not dangerous, quarantine it: add `"quarantined": true` to its entry in
+`site/apps.json` (one commit). The dish disappears from the shelf but
+keeps its files, history, and guestbook; friends who have it keep it.
+The cook (and their Claude) fix it; removing the flag lifts the
+quarantine. Escalate to a full recall only when a dish could hurt
+someone's tablet or trust.
+
 ## 1. Pull it from the shelf (one commit)
 
 - Remove the app's entry from `site/apps.json`.
