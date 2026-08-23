@@ -78,7 +78,12 @@
         "Hold the top button to save a picture of your notes over the page (it lands in Pictures).",
         "On the glass, tap the ▾ button to make notebooks — pick blank, lined, dots, or school paper and give each a name. The GLASS slider makes the pad more or less see-through, and SNIP pastes a clipping of the page onto your glass."
       ],
-      "source": "https://github.com/a12k-a2b/daylight-computing-club-community-hub/tree/master/apps-src/tracing-paper"
+      "source": "https://github.com/a12k-a2b/daylight-computing-club-community-hub/tree/master/apps-src/tracing-paper",
+      "uses": [
+        "accessibility",
+        "overlay",
+        "top-button"
+      ]
     },
     {
       "id": "dcc",

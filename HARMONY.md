@@ -114,7 +114,7 @@ while its cook's AI fixes it. (Added to RECALL thinking.)
 
 - **v0 (now):** this doc; claims vocabulary + modes in the catalog; wire
   the covenant into llms.txt so every cook plays nice by default.
-- **v1:** the plays-well robot — shelve-time diff of new claims vs ledger;
+- **v1** *(built 2026-08-23)*: the plays-well robot — shelve-time diff of new claims vs ledger;
   on clash it *negotiates* (comment with incumbent + free alternatives)
   instead of merely warning; declared-vs-manifest verification blocks
   drift; auto-regenerated contention table.

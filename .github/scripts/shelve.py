@@ -14,6 +14,11 @@ _spec = importlib.util.spec_from_file_location(
 club_inspect = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(club_inspect)
 
+_cspec = importlib.util.spec_from_file_location(
+    "club_contention", Path(__file__).with_name("contention.py"))
+club_contention = importlib.util.module_from_spec(_cspec)
+_cspec.loader.exec_module(club_contention)
+
 ROOT = Path(__file__).resolve().parents[2]
 DRY = os.environ.get("DRY_RUN") == "1"
 ISSUE = os.environ.get("ISSUE_NUMBER", "0")
@@ -201,8 +206,27 @@ def main():
         inspection_md = ("\n\n🟢 **☀ Inspector's report:** web app — runs sandboxed in the "
                          "browser, so it can't touch the tablet the way an installed app can.")
 
+    # HARMONY.md rung 4 — negotiation, not just warning: name the incumbent
+    # for every overlapping claim and ask for the adaptation. Advisory here;
+    # a keeper decides on the PR, the friend decides at install.
+    overlaps = []
+    for other in catalog["apps"]:
+        shared = set(entry.get("uses", [])) & set(other.get("uses", []))
+        for cap in sorted(shared):
+            hard = cap in club_contention.EXCLUSIVE
+            overlaps.append(f"- `{cap}` is already held by **{other['name']}**"
+                            + (" — exclusive: only one app can win it" if hard
+                               else " — shareable, if both yield gracefully"))
+    if overlaps:
+        inspection_md += ("\n\n☀ **Playing-nice check** (HARMONY.md):\n" + "\n".join(overlaps) +
+                          "\n\nFirst declarer keeps the capability — the newcomer adapts: a free "
+                          "corner (see CONTENTION.md), a different gesture, a transient mode, or "
+                          "a built-in yield (“harmonized with …” is a badge of honor here). "
+                          "A keeper may ask for the adaptation before this lands.")
+
     catalog["apps"].insert(0, entry)
     catalog_path.write_text(json.dumps(catalog, indent=2, ensure_ascii=False) + "\n")
+    club_contention.regenerate()
     print(json.dumps(entry, indent=2))
 
     if DRY:

@@ -134,6 +134,13 @@ def inspect(path):
         report["warnings"].append("asks for uncommon permissions: " + ", ".join(
             p.rsplit(".", 1)[-1] for p in unknown))
 
+    # accessibility services don't show in badging — read the manifest tree,
+    # so the least-verifiable harmony claim becomes verifiable (HARMONY.md)
+    xml = subprocess.run(["aapt", "dump", "xmltree", path, "AndroidManifest.xml"],
+                         capture_output=True, text=True).stdout
+    if "android.permission.BIND_ACCESSIBILITY_SERVICE" in xml:
+        report["uses"] = sorted(set(report["uses"]) | {"accessibility"})
+
     try:
         report["virustotal"] = virustotal(path)
     except Exception as e:
