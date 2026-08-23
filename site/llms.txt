@@ -52,6 +52,24 @@ as a new entry crediting the original ("remixed from X by Y" in the
 description). Same-key signing means your remix can't accidentally
 overwrite the original unless you reuse its package name — don't.
 
+## Playing nice with the other dishes (HARMONY.md — read before building)
+
+The tablet your dish lands on already has other friends' dishes on it.
+Before you build:
+1. Read apps.json and note every existing `uses` claim (volume-keys,
+   accessibility, overlay corners, settings:brightness, ...).
+2. **First declarer keeps the capability; you adapt** — pick a free
+   corner, a different gesture, a transient mode. Design the conflict
+   away rather than winning it.
+3. Declare ALL your claims in `uses`; declaring nothing is a promise of
+   inertness (no background work, no overlays, no settings writes). Your
+   declarations are verified against your APK's manifest.
+4. Never reuse another dish's Android package name.
+5. If overlap is unavoidable, build the adaptation in (check for the
+   other app, yield gracefully) and say so in your description —
+   "harmonized with X" is a badge of honor here.
+Full covenant: HARMONY.md in the repo.
+
 ## House rules (enforced by robots and by manners)
 
 - Describe honestly what it does and what it asks for.
