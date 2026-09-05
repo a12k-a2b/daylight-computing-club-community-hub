@@ -43,8 +43,9 @@ Any of these works:
 
 ## The shared facts file
 
-`daylight-facts.json` is the single source of device truth (panel, viewport,
-simulation curve) — every tool reads it, with sane fallbacks if a script is
+`daylight-facts.json` is the single source of device truth (panel, **display**,
+viewport, simulation curve — note that `panel` and `display` are different
+numbers, and layout wants `display`) — every tool reads it, with sane fallbacks if a script is
 copied out alone. Several values are educated defaults awaiting a reading
 from a real DC-1: open **https://daylightcomputer.club/calibrate.html** on
 the tablet, tap "copy my readings", and send them back. One edit here

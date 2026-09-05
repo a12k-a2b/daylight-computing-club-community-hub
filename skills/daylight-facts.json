@@ -16,6 +16,7 @@
       1600,
       1200
     ],
+    "resolution_note": "This is the PANEL (landscape-first). It is correct, and it is almost never the number you want: the firmware excludes an 8px band on all four sides, so no app, screenshot, WebView or browser ever sees 1600x1200. Lay out against display.resolution. The panel number belongs to digitizer math and hardware talk only — never to an app coordinate.",
     "aspect": "4:3",
     "ppi": 190,
     "refresh_hz": 120,
@@ -31,20 +32,67 @@
     },
     "refresh_note": "panel runs 60–120Hz (owner-confirmed 2026-07) — LivePaper is a fast transflective RLCD, NOT e-ink; animation and motion genuinely look good on it. The club site’s minimal-animation rule is an aesthetic choice (living paper), not a hardware limit."
   },
+  "display": {
+    "_": "What every app, screenshot, WebView and browser actually sees. Landscape-first, like panel.resolution. THIS is the number to lay out against.",
+    "resolution": [
+      1584,
+      1184
+    ],
+    "measured": true,
+    "measured_how": "`adb shell wm size` on a bench DC-1, 2026-09-05: 'Physical size: 1200x1600 / Override size: 1184x1584' (portrait), corroborated by `dumpsys display` logicalFrame=Rect(0,0-1184,1584) and by `getprop ro.hw.display.area.*` = 8,8,1192,1592. Cross-checked against archived captures from two further units, one of them a stock retail image (ro.build.type=user, ro.debuggable=0) on which no dev override is even possible. All three report the identical rectangle.",
+    "note": "The panel is 1200x1600, but bezel ink is printed slightly over the panel edge to round the display corners, so firmware excludes 8px on every side: 1200-8-8 = 1184, 1600-8-8 = 1584. Those pixels are physically covered and can never be seen. Never run `wm size reset` on a DC-1 — it puts content underneath the ink.",
+    "aspect": "1184:1584 = 0.7475 — close to the panel's 4:3, deliberately not equal to it"
+  },
   "viewport": {
+    "_": "CSS px = display.resolution / devicePixelRatio. Derive it; do not hardcode it. devicePixelRatio is NOT the same on every DC-1.",
     "devicePixelRatio": {
-      "value": 1.25,
+      "value": 1.6875,
       "measured": false,
-      "note": "read from calibrate.html on a real DC-1"
+      "note": "UNIT-DEPENDENT — the most misquoted number about this device. dpr = densityDpi / 160, and densityDpi is not fleet-uniform: units on a userdebug build report 270 (-> 1.6875, exactly 27/16), while a stock retail unit reports 200 with no override (-> 1.25, exactly 5/4). Both are in by_density. 1.6875 is the default here because it yields the NARROWER CSS viewport, so a layout that clears this pack's gates clears either unit. Run site/calibrate.html on your own DC-1 and use what it reports."
     },
     "css_landscape": [
-      1280,
-      960
+      939,
+      702
     ],
     "css_portrait": [
-      960,
-      1280
-    ]
+      702,
+      939
+    ],
+    "by_density": {
+      "_": "densityDpi -> the geometry that follows from it. Read your own unit with `adb shell wm density` (an Override line wins over Physical), or `window.devicePixelRatio * 160` in a browser on the device.",
+      "270": {
+        "dpr": 1.6875,
+        "css_landscape": [
+          939,
+          702
+        ],
+        "css_portrait": [
+          702,
+          939
+        ],
+        "seen_on": "two bench units, both on a userdebug build",
+        "measured": false,
+        "note": "A WebView on one of these reported ~702 CSS px for the 1184px display at dpr ~1.688 during an unrelated glass run, which corroborates the arithmetic on one unit. Not yet confirmed by a calibrate.html reading, so this stays measured:false."
+      },
+      "200": {
+        "dpr": 1.25,
+        "css_landscape": [
+          1267,
+          947
+        ],
+        "css_portrait": [
+          947,
+          1267
+        ],
+        "seen_on": "one stock retail unit (ro.build.type=user), density read from an archived capture",
+        "measured": false,
+        "note": "The density is a real reading; the CSS viewport that follows from it has never been measured in a browser."
+      }
+    },
+    "arithmetic": "1584 / 1.6875 = 938.67 -> 939 and 1184 / 1.6875 = 701.63 -> 702. 1584 / 1.25 = 1267.2 -> 1267 and 1184 / 1.25 = 947.2 -> 947. Browsers report innerWidth/innerHeight as integers, so expect +/-1 against these.",
+    "breakpoint_note": "Every CSS viewport a DC-1 can produce — 702 or 947 wide in portrait — is far below 1200. A `min-width: 1200px` tablet breakpoint has never once fired on this device, whatever its density.",
+    "dp_note": "A related trap for native work: at densityDpi 270 the panel's true optical density is ~190 dpi, so 1dp renders about 1.42x physically larger than the 160-dpi dp reference intends, and 16 CSS px is ~27 device px. That is a deliberate legibility choice, not a bug — but a design mock rendered at another density cannot be compared to a DC-1 screenshot without accounting for it.",
+    "history": "Corrected 2026-09-05. This block previously read dpr 1.25 with css_landscape [1280,960] / css_portrait [960,1280], all measured:false. The 1.25 was plausibly a correct reading from a density-200 unit and is preserved above under by_density. The viewport pair was not: [1280,960] is 1600/1.25 x 1200/1.25 — derived from the PANEL instead of the display, which is wrong at any density and by ~36% on width. Every preview screenshot and layout gate in this pack had been measuring against a screen that does not exist."
   },
   "curve": {
     "_": "LivePaper simulation: luminance -> shadow-crushing gamma -> compressed range -> paper tint. Tuned by eye, not measured.",

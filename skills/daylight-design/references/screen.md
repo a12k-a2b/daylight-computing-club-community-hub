@@ -5,13 +5,13 @@
 | Property | Value |
 |---|---|
 | Panel | 10.5″ "LivePaper" — **transflective TN LCD** on an IGZO oxide TFT backplane, no color filter array (e-paper-class, not e-ink) |
-| Resolution | 1600×1200, 4:3, ~190 PPI, 8-bit |
+| Resolution | Panel 1600×1200; **apps see 1584×1184** — firmware excludes an 8px bezel-ink band on all four sides. 4:3-ish, ~190 PPI, 8-bit |
 | Refresh | 60 Hz, no e-ink-style full-screen flashing; slight smear on fast motion |
 | Gray depth | 256 levels driven; roughly **9–16 distinguishable in practice**, fewest in the dark end |
 | Light | Transflective: lit by the room/sun by day; the **amber** (blue-free) backlight shines through the same pixels at night |
 | Viewing angle | TN mode: **gamma shifts with vertical tilt** (extreme angles can invert grays) — contrast is best head-on |
 | OS / browser | Android 13 (Sol:OS); Chrome + Android WebView |
-| CSS viewport | ≈1280×960 landscape at devicePixelRatio 1.25 (defaults; measure `window.devicePixelRatio` on a real device and correct this file) |
+| CSS viewport | **≈939×702 landscape / 702×939 portrait at devicePixelRatio 1.6875** — the display divided by the ratio, not the panel. **The ratio varies by unit** (dpr = densityDpi/160; bench units report 270 → 1.6875, a stock retail unit reports 200 → 1.25, which gives ≈1267×947 / 947×1267). Both are far below 1200, so a `min-width: 1200px` tablet breakpoint has never once fired on a DC-1. Measure `window.devicePixelRatio` on your own device and use that. |
 
 ## What the physics means for design
 

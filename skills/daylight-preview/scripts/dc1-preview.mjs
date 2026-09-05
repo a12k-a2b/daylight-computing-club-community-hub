@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // dc1-preview — see any web app the way a Daylight DC-1 will show it.
 //
-// Renders a URL at the DC-1's screen geometry (10.5" 4:3, 1600×1200 panel),
+// Renders a URL at the DC-1's screen geometry (10.5" 4:3; the 1200×1600 panel
+// minus an 8px firmware bezel inset, so apps see 1184×1584),
 // saves three screenshots — the original, a daylight LivePaper simulation,
 // and a night (amber backlight) simulation — and audits the page for the
 // jank that hurts most on this device: small touch targets, low effective
@@ -13,9 +14,14 @@
 //
 // Options:
 //   --out <dir>        output directory (default: ./dc1-preview)
-//   --portrait         960×1280 CSS viewport instead of landscape 1280×960
-//   --dpr <n>          devicePixelRatio to emulate (default 1.25; measure the
-//                      real device with `window.devicePixelRatio` and pass it)
+//   --portrait         702×939 CSS viewport instead of landscape 939×702
+//                      (at the default dpr — both are derived, see below)
+//   --dpr <n>          devicePixelRatio to emulate (default 1.6875). THIS VARIES
+//                      BY UNIT: dpr = densityDpi/160, and densityDpi is not the
+//                      same on every DC-1 (270 -> 1.6875, 200 -> 1.25). The
+//                      default is the one that gives the narrower viewport, so a
+//                      page that passes here passes on either. Measure your own
+//                      with `window.devicePixelRatio` and pass it.
 //   --posterize        also save a 12-level posterized image — roughly how
 //                      many gray steps the panel resolves in practice
 //   --full             full-page screenshots instead of one viewport
@@ -62,15 +68,19 @@ const opt = name => {
 };
 const outDir = typeof opt('out') === 'string' ? opt('out') : './dc1-preview';
 const portrait = args.includes('--portrait');
-const dpr = Number(opt('dpr')) || FACTS?.viewport?.devicePixelRatio?.value || 1.25;
+const dpr = Number(opt('dpr')) || FACTS?.viewport?.devicePixelRatio?.value || 1.6875;
 const posterize = args.includes('--posterize');
 const fullPage = args.includes('--full');
 const strict = args.includes('--strict');
 
-// DC-1 panel: 1600×1200. CSS viewport = panel / dpr.
-const [pw, ph] = FACTS?.panel?.resolution ?? [1600, 1200];
-const panel = portrait ? { w: ph, h: pw } : { w: pw, h: ph };
-const viewport = { width: Math.round(panel.w / dpr), height: Math.round(panel.h / dpr) };
+// CSS viewport = DISPLAY / dpr — not panel / dpr. The DC-1's panel is 1200×1600,
+// but firmware excludes an 8px band on all four sides (bezel ink is printed over
+// the panel edge), so every app, screenshot and browser sees 1184×1584. Dividing
+// the panel instead of the display is what made this tool render ~36% too wide
+// for its first year: 1600/1.25 = 1280 is a screen that does not exist.
+const [dw, dh] = FACTS?.display?.resolution ?? [1584, 1184];
+const display = portrait ? { w: dh, h: dw } : { w: dw, h: dh };
+const viewport = { width: Math.round(display.w / dpr), height: Math.round(display.h / dpr) };
 
 // ---------- LivePaper simulation curve ----------
 // A reflective LCD has no light of its own: "white" is paper-bright at best,
@@ -271,7 +281,7 @@ const section = (title, items, fmt) => {
 };
 
 console.log(`dc1-preview — ${url}`);
-console.log(`viewport ${viewport.width}×${viewport.height} CSS px @ ${dpr}x (panel ${panel.w}×${panel.h})`);
+console.log(`viewport ${viewport.width}×${viewport.height} CSS px @ ${dpr}x (display ${display.w}×${display.h})`);
 console.log(`screenshots → ${outDir}/original.png, dc1-day.png, dc1-night.png${posterize ? ', dc1-levels.png' : ''}`);
 
 if (!audit.viewportMeta) problems.push('no <meta name=viewport> — page will render desktop-scaled and blurry');

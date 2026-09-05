@@ -59,7 +59,11 @@ deliberately — full algorithm and worked example in
 
 The tablet trap: a stretched phone layout looks like a kindergarten poster;
 a crammed desktop layout is untappable. The DC-1's CSS viewport is roughly
-1280×960 landscape / 960×1280 portrait — nearly square. Design for
+**939×702 landscape / 702×939 portrait** — nearly square, and far narrower
+than the tablet number most people assume. (That is the 1584×1184 display
+divided by devicePixelRatio 1.6875. The ratio varies by unit — a stock
+retail unit at density 200 gives ≈1267×947 — but every DC-1 lands well
+under 1200 CSS px, so desktop-tablet breakpoints never fire.) Design for
 "comfortable book", between phone and desktop density.
 
 - **Spend the extra space on visibility, not size.** What a phone hides
@@ -68,7 +72,7 @@ a crammed desktop layout is untappable. The DC-1's CSS viewport is roughly
   navigational hops is the single biggest tablet win.
 - Landscape: two panes (list + detail, canvas + tools, document + notes).
   Portrait: one column, generous margins — cap prose at 60–75 characters
-  per line, don't let text run the full 960px.
+  per line, don't let text run the full 702px.
 - Support **both** orientations; reflow between the two layouts above.
 - Reachability: held two-handed, thumbs live at the left and right edges;
   resting on a table, everything is equal. Put frequent actions near the

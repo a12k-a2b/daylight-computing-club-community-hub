@@ -35,9 +35,15 @@ function loadFacts() {
   return null;
 }
 const FACTS = loadFacts();
-const [PW, PH] = FACTS?.panel?.resolution ?? [1600, 1200];
-const DPR = FACTS?.viewport?.devicePixelRatio?.value ?? 1.25;
-const LAND = { width: Math.round(PW / DPR), height: Math.round(PH / DPR) };
+// Gate against the DISPLAY, not the panel. The DC-1's panel is 1200×1600, but
+// firmware excludes an 8px band on all four sides, so apps see 1184×1584. And
+// dpr varies by unit (densityDpi/160: 270 -> 1.6875, 200 -> 1.25) — the default
+// is the one giving the NARROWER viewport, because a layout that fits 702 CSS px
+// fits 947, but not the reverse. Gating at the old panel-derived 1280×960 could
+// certify a dish that overflows on the real glass.
+const [DW, DH] = FACTS?.display?.resolution ?? [1584, 1184];
+const DPR = FACTS?.viewport?.devicePixelRatio?.value ?? 1.6875;
+const LAND = { width: Math.round(DW / DPR), height: Math.round(DH / DPR) };
 const PORT = { width: LAND.height, height: LAND.width };
 
 const args = process.argv.slice(2);

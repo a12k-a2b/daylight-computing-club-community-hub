@@ -18,7 +18,7 @@ grayscale reflective screen, tablet layout, voice) and **daylight-preview**
 | Fact | Consequence for porting |
 |---|---|
 | Android 13 (Sol:OS), Chrome + WebView available | PWAs and WebView shells both work; modern web APIs OK |
-| 10.5″ 4:3, 1600×1200, ~190 PPI | CSS viewport ≈ 1280×960 landscape @ DPR 1.25 (measure!) |
+| 10.5″ 4:3, 1600×1200 panel — apps see **1584×1184** (8px firmware bezel inset), ~190 PPI | CSS viewport ≈ **939×702 landscape / 702×939 portrait @ DPR 1.6875** — display ÷ dpr, never panel ÷ dpr. DPR is **unit-dependent** (densityDpi/160: 270 → 1.6875, 200 → 1.25 → ≈1267×947). Either way it is far under 1200, so `min-width: 1200px` never fires. Measure yours. |
 | MediaTek Helio G99, 8 GB RAM | midrange: small bundles, no re-render storms |
 | Wi-Fi only, no cellular; used outdoors, on walks | **offline-first is a requirement, not a feature** |
 | No camera; mic + speakers; Wacom EMR stylus | no QR/camera flows; voice input is first-class |
@@ -110,7 +110,9 @@ device.
   screens deep (must not exit), a file upload and a download/export if the
   app has them, long-press on text (selection should work in content, not in
   chrome), keyboard opening over the input it belongs to.
-- If an emulator is handy: Android 13, 1600×1200 190 dpi profile. Real DC-1
+- If an emulator is handy: Android 13, 1600×1200 190 dpi profile (an emulator
+  has no bezel inset, so it shows 1200×1600 where a real DC-1 shows 1184×1584).
+  Real DC-1
   beats everything.
 
 ## Shelving it in the club

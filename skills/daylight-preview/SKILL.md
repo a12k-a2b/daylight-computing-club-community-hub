@@ -70,8 +70,13 @@ And a report:
 The curve is a tuned pessimist, not a measurement. Two facts to calibrate
 against a real device when you can:
 
-- **devicePixelRatio**: the script defaults to 1.25 (panel 1600×1200 ÷ 1.25 =
-  1280×960 CSS px landscape). Open the club's calibration page
+- **devicePixelRatio**: the script defaults to 1.6875 (display 1584×1184 ÷
+  1.6875 = 939×702 CSS px landscape — the *display*, not the 1600×1200 panel,
+  because firmware hides an 8px band on every side). **This ratio is not the
+  same on every DC-1**: dpr = densityDpi/160, and bench units report 270
+  (→1.6875) while a stock retail unit reports 200 (→1.25, i.e. 1267×947).
+  The default is the narrower of the two, so a page that passes here passes
+  on either. Pass `--dpr` to check the other. Open the club's calibration page
   (`https://daylightcomputer.club/calibrate.html`) once on a real DC-1 —
   it reads out the true value and shows gray-step patterns to count.
 - **The gray floor**: the panel shows ~256 levels but eyes resolve roughly

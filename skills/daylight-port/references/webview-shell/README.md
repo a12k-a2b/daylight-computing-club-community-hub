@@ -82,7 +82,8 @@ Keyboard-mic dictation into text fields works everywhere with zero code.
 ## Before shelving
 
 Run the sibling **daylight-preview** skill on the app, and smoke-test the
-APK on an Android 13 emulator (1600×1200, 190 dpi) or a real DC-1: launch,
+APK on an Android 13 emulator (1600×1200, 190 dpi — note a real DC-1 hides an
+8px bezel band, so it shows 1184×1584) or a real DC-1: launch,
 rotate, back-button from deep, airplane-mode relaunch, one file in, one file
 out. This template is young — if you hit a build or runtime wart, fix it and
 send the fix back to the club repo so every future dish benefits.
