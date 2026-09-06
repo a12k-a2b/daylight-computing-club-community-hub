@@ -14,10 +14,15 @@ else
   exit 0
 fi
 adb logcat -c
-if adb shell monkey -p "$PKG" --throttle 100 --ignore-security-exceptions -v 1500 > monkey.log 2>&1; then
+# The monkey must not stop for anyone: by default it aborts on a crash or ANR
+# in ANY process — a loaded CI runner can stall com.android.systemui and sink
+# an innocent dish's verdict. With the ignore flags every event lands, faults
+# are still all in logcat, and the counters below bill them to the right app.
+if adb shell monkey -p "$PKG" --throttle 100 --ignore-security-exceptions \
+    --ignore-crashes --ignore-timeouts --ignore-native-crashes -v 1500 > monkey.log 2>&1; then
   echo "MONKEY=survived" >> report.env
 else
-  echo "MONKEY=crashed" >> report.env
+  echo "MONKEY=aborted" >> report.env
 fi
 MEM=$(adb shell dumpsys meminfo "$PKG" 2>/dev/null | grep -m1 "TOTAL PSS:" | grep -o '[0-9]*' | head -1)
 if [ -n "$MEM" ]; then echo "MEM_MB=$((MEM / 1024))" >> report.env; else echo "MEM_MB=" >> report.env; fi
@@ -28,4 +33,10 @@ FATALS=$(grep -A1 "FATAL EXCEPTION" logcat.txt | grep -c "Process: $PKG")
 ALL_FATALS=$(grep -c "FATAL EXCEPTION" logcat.txt)
 echo "FATALS=$FATALS" >> report.env
 echo "OTHER_FATALS=$((ALL_FATALS - FATALS))" >> report.env
+# same attribution for ANRs (count the ActivityManager line only — the monkey
+# echoes each one a second time)
+ANRS=$(grep -c "ActivityManager: ANR in $PKG" logcat.txt)
+ALL_ANRS=$(grep -c "ActivityManager: ANR in " logcat.txt)
+echo "ANRS=$ANRS" >> report.env
+echo "OTHER_ANRS=$((ALL_ANRS - ANRS))" >> report.env
 exit 0

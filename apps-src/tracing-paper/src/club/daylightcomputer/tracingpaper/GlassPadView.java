@@ -49,6 +49,14 @@ public class GlassPadView extends View {
     static final int HI_FILL = 0x59969696;
     static final int HI_EDGE = Color.BLACK;
 
+    /** ink shades for the pen: full black, pencil gray, light marginalia gray */
+    static final int[] INK_SHADES = {0xFF000000, 0xFF5A5A5A, 0xFF9E9E9E};
+    static final String[] SHADE_NAMES = {"BLACK", "DARK", "LIGHT"};
+
+    static int inkShade(int idx) {
+        return INK_SHADES[Math.max(0, Math.min(idx, INK_SHADES.length - 1))];
+    }
+
     private static final float SNAP_DEG = 4f;
 
     /** Tool size steps, 1..5, as multiples of the base width. */
@@ -60,6 +68,7 @@ public class GlassPadView extends View {
 
     static class Stroke {
         int kind;
+        int shade;               // INK_SHADES index; ink only
         float base;              // stroke width as a fraction of page width
         float[] pts = new float[64 * 3]; // x, y, pressure triplets
         int n;
@@ -112,6 +121,7 @@ public class GlassPadView extends View {
     static class Book {
         String name;
         int template;
+        int opacity = -1;        // this notebook's remembered GLASS; -1 = the shared default
         long createdTime, lastModified;
         final List<PageData> pages = new ArrayList<>();
     }
@@ -188,8 +198,18 @@ public class GlassPadView extends View {
 
     // gesture state
     private static final int M_NONE = 0, M_DRAW = 1, M_SCROLL = 2,
-            M_MOVE = 3, M_RESIZE = 4, M_ROTATE = 5, M_WORLD = 6;
+            M_MOVE = 3, M_RESIZE = 4, M_ROTATE = 5, M_WORLD = 6, M_PINCH = 7;
     private int mode = M_NONE;
+
+    // zoom: pinch in to write fine — ink stores proportionally, so it's
+    // smaller when you zoom back out; pinch (or tap the chip) to return
+    private float zoom = 1f;
+    private float viewX, viewY;          // page px at the screen's top-left while zoomed
+    private Bitmap zoomBmp;              // crisp re-render of the zoomed viewport
+    private Canvas zoomC;
+    private boolean zoomFresh;
+    private float pinchD0, pinchZoom0, pinchPX, pinchPY, pinchMY0, pinchScroll0;
+    private final RectF zoomChip = new RectF();
 
     // "Annotate the World" beta
     private boolean betaFlick;
@@ -203,6 +223,7 @@ public class GlassPadView extends View {
 
     /** Beta: the app beneath scrolled this many pixels — keep the roll in step. */
     void followWorld(int dy) {
+        if (zoom > 1f) return; // zoomed writing shouldn't be dragged around
         scroller.abortAnimation();
         scrollY += dy;
         clampScroll();
@@ -307,11 +328,103 @@ public class GlassPadView extends View {
     private void clampScroll() { scrollY = Math.max(0, Math.min(scrollY, maxScroll())); }
 
     void scrollToPage(int i) {
+        resetZoom();
         i = Math.max(0, Math.min(i, cb().pages.size() - 1));
         scroller.abortAnimation();
         scrollY = Math.min(pageTop(i), maxScroll());
         invalidate();
         notifyState();
+    }
+
+    // ------------------------------------------------------------------ zoom
+
+    boolean isZoomed() { return zoom > 1f; }
+
+    void resetZoom() {
+        if (zoom <= 1f) return;
+        zoom = 1f;
+        zoomFresh = false;
+        scrollY = pageTop(activePage) + viewY;
+        clampScroll();
+        viewX = 0;
+        viewY = 0;
+        invalidate();
+        notifyState();
+    }
+
+    private void clampView() {
+        int w = getWidth(), h = pageH();
+        viewX = Math.max(0, Math.min(viewX, w - w / zoom));
+        viewY = Math.max(0, Math.min(viewY, h - h / zoom));
+    }
+
+    private void beginPinch(MotionEvent e) {
+        if (mode == M_DRAW) abortStroke();
+        if (velocity != null) { velocity.recycle(); velocity = null; }
+        deselect();
+        scroller.abortAnimation();
+        if (zoom <= 1f) {
+            activatePage(dominantPage());
+            viewX = 0;
+            viewY = Math.max(0, Math.min(scrollY - pageTop(activePage), pageH()));
+        }
+        float dx = e.getX(1) - e.getX(0), dy = e.getY(1) - e.getY(0);
+        pinchD0 = Math.max(1f, (float) Math.hypot(dx, dy));
+        pinchZoom0 = zoom;
+        float mx = (e.getX(0) + e.getX(1)) / 2f, my = (e.getY(0) + e.getY(1)) / 2f;
+        pinchPX = viewX + mx / zoom;
+        pinchPY = viewY + my / zoom;
+        pinchMY0 = my;
+        pinchScroll0 = scrollY;
+        zoomFresh = false;
+        mode = M_PINCH;
+    }
+
+    private void movePinch(MotionEvent e) {
+        if (e.getPointerCount() < 2) return;
+        float dx = e.getX(1) - e.getX(0), dy = e.getY(1) - e.getY(0);
+        float d = Math.max(1f, (float) Math.hypot(dx, dy));
+        float mx = (e.getX(0) + e.getX(1)) / 2f, my = (e.getY(0) + e.getY(1)) / 2f;
+        zoom = Math.max(1f, Math.min(pinchZoom0 * d / pinchD0, 4f));
+        if (zoom > 1.001f) {
+            viewX = pinchPX - mx / zoom;
+            viewY = pinchPY - my / zoom;
+            clampView();
+        } else {
+            scrollY = pinchScroll0 + (pinchMY0 - my);
+            clampScroll();
+        }
+        invalidate();
+        notifyState();
+    }
+
+    private void endPinch() {
+        if (zoom < 1.05f) resetZoom();
+        else renderZoomCrisp();
+    }
+
+    /** Re-render the zoomed viewport from vectors so ink stays sharp at any zoom. */
+    private void renderZoomCrisp() {
+        if (zoom <= 1f || sInk == null) return;
+        int w = getWidth(), h = getHeight();
+        if (zoomBmp == null) {
+            zoomBmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+            zoomC = new Canvas(zoomBmp);
+        }
+        Canvas[] cs = {sBaseC, sHiC, sInkC};
+        for (Canvas cv : cs) {
+            cv.save();
+            cv.translate(-viewX * zoom, -viewY * zoom);
+            cv.scale(zoom, zoom);
+        }
+        renderPage(activePage, sBaseC, sHiC, sInkC, sBase, sHi, sInk, null);
+        for (Canvas cv : cs) cv.restore();
+        zoomBmp.eraseColor(Color.TRANSPARENT);
+        zoomC.drawBitmap(sBase, 0, 0, null);
+        zoomC.drawBitmap(sHi, 0, 0, null);
+        zoomC.drawBitmap(sInk, 0, 0, null);
+        zoomFresh = true;
+        invalidate();
     }
 
     @Override
@@ -329,6 +442,14 @@ public class GlassPadView extends View {
     @Override
     protected void onSizeChanged(int w, int h, int ow, int oh) {
         if (w <= 0 || h <= 0) return;
+        allocBitmaps(w, h);
+        Prefs.get(getContext()).edit()
+                .putInt(Prefs.K_CANVAS_W, w).putInt(Prefs.K_CANVAS_H, h).apply();
+        scrollY = Math.min(pageTop(activePage), maxScroll());
+        rebuildActive();
+    }
+
+    private void allocBitmaps(int w, int h) {
         base = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         hi = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
         ink = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
@@ -338,15 +459,36 @@ public class GlassPadView extends View {
         baseC = new Canvas(base); hiC = new Canvas(hi); inkC = new Canvas(ink);
         sBaseC = new Canvas(sBase); sHiC = new Canvas(sHi); sInkC = new Canvas(sInk);
         composites.evictAll();
-        Prefs.get(getContext()).edit()
-                .putInt(Prefs.K_CANVAS_W, w).putInt(Prefs.K_CANVAS_H, h).apply();
-        scrollY = Math.min(pageTop(activePage), maxScroll());
-        rebuildActive();
+    }
+
+    /** Reallocate after releaseBitmaps() — the view keeps its size while hidden. */
+    void ensureBitmaps() {
+        if (ink == null && getWidth() > 0 && getHeight() > 0) {
+            allocBitmaps(getWidth(), getHeight());
+            rebuildActive();
+        }
+    }
+
+    /** The pad is away: hand every pixel back. ~70MB idle becomes ~0. */
+    void releaseBitmaps() {
+        // A stroke can be mid-air when the pad is toggled away. Commit it now,
+        // while the canvases are still alive — the pen-up that trails in after
+        // the window is gone finds ink == null and is ignored.
+        if (mode == M_DRAW) finishDraw();
+        else if (mode == M_MOVE || mode == M_RESIZE || mode == M_ROTATE) finishSnipEdit();
+        if (velocity != null) { velocity.recycle(); velocity = null; }
+        mode = M_NONE;
+        resetZoom();
+        base = hi = ink = sBase = sHi = sInk = null;
+        baseC = hiC = inkC = sBaseC = sHiC = sInkC = null;
+        if (zoomBmp != null) { zoomBmp = null; zoomC = null; }
+        composites.evictAll();
     }
 
     private void rebuildActive() {
         if (ink == null) return;
         renderPage(activePage, baseC, hiC, inkC, base, hi, ink, sel != null && selPage == activePage ? sel : null);
+        if (zoom > 1f) renderZoomCrisp();
         invalidate();
         notifyState();
     }
@@ -414,10 +556,12 @@ public class GlassPadView extends View {
     }
 
     private void renderStroke(Stroke s, Canvas hC, Canvas iC) {
+        if (hC == null || iC == null) return; // layers released; vectors keep the truth
         int w = getWidth(), h = pageH();
         boolean gz = grazed.contains(s); // half-faded: the eraser has it, lift to finish
         switch (s.kind) {
             case KIND_INK: {
+                pen.setColor(inkShade(s.shade));
                 pen.setAlpha(gz ? 70 : 255);
                 float bw = s.base * w;
                 if (s.n == 1) {
@@ -467,14 +611,14 @@ public class GlassPadView extends View {
         return p;
     }
 
-    /** Live segment for the fallback (non-wet) path, into the active page layers. */
-    private void renderSegment(float sx, float sy, float pr) {
+    /** Live segment for the fallback (non-wet) path — page-space coordinates in. */
+    private void renderSegment(float x, float y, float pr) {
+        if (inkC == null || hiC == null) return;
         int w = getWidth();
-        float top = pageTop(curPage) - scrollY;
-        float x = sx, y = sy - top;
-        float lx = lastX, ly = lastY - top;
+        float lx = lastX, ly = lastY;
         switch (cur.kind) {
             case KIND_INK:
+                pen.setColor(inkShade(cur.shade));
                 pen.setAlpha(255);
                 pen.setStrokeWidth(cur.base * w * (0.5f + pr));
                 if (cur.n == 0) inkC.drawPoint(x, y, pen);
@@ -496,8 +640,26 @@ public class GlassPadView extends View {
 
     @Override
     protected void onDraw(Canvas canvas) {
-        canvas.drawColor(Color.argb(Math.round(opacity / 100f * 255f), 255, 255, 255));
+        canvas.drawColor(Color.argb(Math.round(getOpacity() / 100f * 255f), 255, 255, 255));
         if (ink == null) return;
+        if (zoom > 1f) {
+            int w = getWidth(), h = pageH();
+            canvas.save();
+            canvas.translate(-viewX * zoom, -viewY * zoom);
+            canvas.scale(zoom, zoom);
+            drawTemplate(canvas, cb().template, w, h, tpl, false);
+            if (!zoomFresh || zoomBmp == null) {
+                canvas.drawBitmap(base, 0, 0, null);
+                canvas.drawBitmap(hi, 0, 0, null);
+                canvas.drawBitmap(ink, 0, 0, null);
+                canvas.restore();
+            } else {
+                canvas.restore();
+                canvas.drawBitmap(zoomBmp, 0, 0, null);
+            }
+            drawZoomChip(canvas);
+            return;
+        }
         int w = getWidth(), h = pageH(), n = cb().pages.size();
         int first = Math.max(0, (int) (scrollY / (h + gapPx)));
         int last = Math.min(n - 1, (int) ((scrollY + h) / (h + gapPx)));
@@ -526,6 +688,21 @@ public class GlassPadView extends View {
             }
         }
         drawSelection(canvas);
+    }
+
+    private void drawZoomChip(Canvas canvas) {
+        String label = String.format(java.util.Locale.US, "%.1f×  ✕", zoom);
+        seamText.setTextAlign(Paint.Align.LEFT);
+        float tw = seamText.measureText(label);
+        float m = 10 * density, pad = 10 * density;
+        zoomChip.set(m, m, m + tw + pad * 2, m + 30 * density);
+        handleFill.setAlpha(235);
+        canvas.drawRect(zoomChip, handleFill);
+        handleFill.setAlpha(255);
+        canvas.drawRect(zoomChip, handleLine);
+        canvas.drawText(label, zoomChip.left + pad,
+                zoomChip.centerY() + 4 * density, seamText);
+        seamText.setTextAlign(Paint.Align.RIGHT);
     }
 
     /** Shared with the PDF exporter, which passes onPaper=true for full-strength lines. */
@@ -663,6 +840,7 @@ public class GlassPadView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent e) {
+        if (ink == null) return false; // pad put away (or not yet sized): no pixels to touch
         int toolType = e.getToolType(0);
         boolean stylus = toolType == MotionEvent.TOOL_TYPE_STYLUS
                 || toolType == MotionEvent.TOOL_TYPE_ERASER;
@@ -671,41 +849,44 @@ public class GlassPadView extends View {
         switch (e.getActionMasked()) {
             case MotionEvent.ACTION_DOWN: {
                 scroller.abortAnimation();
+                if (zoom > 1f && zoomChip.contains(e.getX(), e.getY())) {
+                    resetZoom();
+                    mode = M_NONE;
+                    return true;
+                }
                 // a tap on the selection's handles wins over everything
-                int hit = hitSelection(e.getX(), e.getY());
+                int hit = zoom > 1f ? H_NONE : hitSelection(e.getX(), e.getY());
                 if (hit == H_DELETE) { deleteSelected(); mode = M_NONE; return true; }
                 if (hit != H_NONE) { beginSnipEdit(hit, e.getX(), e.getY()); return true; }
                 if (sel != null) deselect();
-                if (tool == TOOL_PICK) {
+                if (tool == TOOL_PICK && zoom <= 1f) {
                     if (pickSnipAt(e.getX(), e.getY())) { beginSnipEdit(H_INSIDE, e.getX(), e.getY()); return true; }
                     beginScroll(e);
                     return true;
                 }
-                if (finger && betaFlick && worldGestures != null) {
+                if (finger && betaFlick && worldGestures != null && zoom <= 1f) {
                     // beta: record the finger; on lift it replays beneath the glass
                     mode = M_WORLD;
                     wn = 0;
                     worldPoint(e.getX(), e.getY(), e.getEventTime());
                     return true;
                 }
-                if (finger && penOnly) { beginScroll(e); return true; }
+                if (finger && (penOnly || zoom > 1f)) { beginScroll(e); return true; }
                 beginDraw(e);
                 return true;
             }
             case MotionEvent.ACTION_POINTER_DOWN:
-                // second finger: this gesture is a scroll of the roll, not a stroke
-                if (mode == M_DRAW && cur != null && finger) {
-                    abortStroke();
-                    beginScroll(e);
-                } else if (mode == M_WORLD) {
-                    mode = M_SCROLL;
-                    beginScroll(e);
+                // second finger: pinch to zoom (fingers only)
+                if (finger && (mode == M_DRAW || mode == M_SCROLL || mode == M_WORLD
+                        || mode == M_NONE)) {
+                    beginPinch(e);
                 }
                 return true;
             case MotionEvent.ACTION_MOVE:
                 switch (mode) {
                     case M_DRAW: moveDraw(e); break;
                     case M_SCROLL: moveScroll(e); break;
+                    case M_PINCH: movePinch(e); break;
                     case M_WORLD:
                         for (int i = 0; i < e.getHistorySize(); i++)
                             worldPoint(e.getHistoricalX(i), e.getHistoricalY(i),
@@ -715,10 +896,17 @@ public class GlassPadView extends View {
                     case M_MOVE: case M_RESIZE: case M_ROTATE: moveSnipEdit(e); break;
                 }
                 return true;
+            case MotionEvent.ACTION_POINTER_UP:
+                if (mode == M_PINCH && e.getPointerCount() <= 2) {
+                    endPinch();
+                    mode = M_NONE;
+                }
+                return true;
             case MotionEvent.ACTION_UP:
                 switch (mode) {
                     case M_DRAW: finishDraw(); break;
                     case M_SCROLL: finishScroll(e); break;
+                    case M_PINCH: endPinch(); break;
                     case M_WORLD: finishWorld(e); break;
                     case M_MOVE: case M_RESIZE: case M_ROTATE: finishSnipEdit(); break;
                 }
@@ -726,6 +914,7 @@ public class GlassPadView extends View {
                 return true;
             case MotionEvent.ACTION_CANCEL:
                 if (mode == M_DRAW) finishDraw();
+                if (mode == M_PINCH) endPinch();
                 if (velocity != null) { velocity.recycle(); velocity = null; }
                 mode = M_NONE;
                 return true;
@@ -762,9 +951,14 @@ public class GlassPadView extends View {
     // --- drawing
 
     private void beginDraw(MotionEvent e) {
-        int page = pageAtDoc(e.getY() + scrollY);
-        if (page < 0) { beginScroll(e); return; }
-        activatePage(page);
+        int page;
+        if (zoom > 1f) {
+            page = activePage; // zoomed: the view lives inside one page
+        } else {
+            page = pageAtDoc(e.getY() + scrollY);
+            if (page < 0) { beginScroll(e); return; }
+            activatePage(page);
+        }
         curPage = page;
         int toolType = e.getToolType(0);
         boolean eraserEnd = toolType == MotionEvent.TOOL_TYPE_ERASER;
@@ -784,13 +978,15 @@ public class GlassPadView extends View {
         }
         cur = new Stroke();
         cur.kind = kind;
+        cur.shade = kind == KIND_INK ? p.getInt(Prefs.K_PEN_SHADE, 0) : 0;
         float mul = kind == KIND_HIGHLIGHT ? sizeMul(p.getInt(Prefs.K_HI_SIZE, 2))
                 : kind == KIND_ERASE ? sizeMul(p.getInt(Prefs.K_ERASE_SIZE, 2))
                 : sizeMul(p.getInt(Prefs.K_PEN_SIZE, 2));
         float widthPx = (kind == KIND_HIGHLIGHT ? hiWidthPx : baseWidthPx) * mul;
-        cur.base = widthPx / Math.max(1, getWidth());
+        // zoomed-in writing stores proportionally finer ink on the page
+        cur.base = widthPx / (zoom * Math.max(1, getWidth()));
         wetActive = kind != KIND_ERASE && wet != null && wet.isReady();
-        if (wetActive) wet.begin(widthPx, kind);
+        if (wetActive) wet.begin(widthPx, kind, inkShade(cur.shade));
         addPoint(e.getX(), e.getY(), e.getPressure(), e.getEventTime());
         if (wetActive) wet.present();
         mode = M_DRAW;
@@ -814,11 +1010,17 @@ public class GlassPadView extends View {
     private long lastGrazeRebuild;
 
     private void grazeAt(float sx, float sy) {
-        float top = pageTop(curPage) - scrollY;
         int w = Math.max(1, getWidth()), h = pageH();
-        float nx = sx / w;
-        float ny = Math.max(0, Math.min(sy - top, h - 1)) / h;
-        float nr = eraseRadiusPx / w; // radius in normalized-x units; pages are wider than tall-ish
+        float nx, ny;
+        if (zoom > 1f) {
+            nx = (viewX + sx / zoom) / w;
+            ny = Math.max(0, Math.min(viewY + sy / zoom, h - 1)) / h;
+        } else {
+            float top = pageTop(curPage) - scrollY;
+            nx = sx / w;
+            ny = Math.max(0, Math.min(sy - top, h - 1)) / h;
+        }
+        float nr = eraseRadiusPx / (zoom * w); // radius in normalized-x units
         boolean newGraze = false;
         for (Stroke s : pg(curPage).strokes) {
             if (s.kind == KIND_ERASE || grazed.contains(s)) continue;
@@ -847,19 +1049,28 @@ public class GlassPadView extends View {
 
     private void addPoint(float x, float y, float rawPressure, long tMs) {
         float pr = Math.max(0.15f, Math.min(rawPressure, 1.3f));
-        // clamp into the stroke's page — ink stops at the paper's edge
-        float top = pageTop(curPage) - scrollY;
-        float cy = Math.max(top, Math.min(y, top + pageH() - 1));
-        if (wetActive) {
-            wet.addPoint(x, cy, pr, tMs);
+        int w = Math.max(1, getWidth()), h = pageH();
+        float pageX, pageY, screenY;
+        if (zoom > 1f) {
+            pageX = viewX + x / zoom;
+            pageY = Math.max(0, Math.min(viewY + y / zoom, h - 1));
+            screenY = (pageY - viewY) * zoom;
         } else {
-            renderSegment(x, cy, pr);
+            float top = pageTop(curPage) - scrollY;
+            // clamp into the stroke's page — ink stops at the paper's edge
+            screenY = Math.max(top, Math.min(y, top + h - 1));
+            pageX = x;
+            pageY = screenY - top;
+        }
+        if (wetActive) {
+            wet.addPoint(x, screenY, pr, tMs);
+        } else {
+            renderSegment(pageX, pageY, pr);
             invalidate();
         }
-        int w = Math.max(1, getWidth());
-        cur.add(x / w, (cy - top) / pageH(), pr);
-        lastX = x;
-        lastY = cy;
+        cur.add(pageX / w, pageY / h, pr);
+        lastX = pageX;
+        lastY = pageY;
     }
 
     private void finishDraw() {
@@ -888,6 +1099,7 @@ public class GlassPadView extends View {
         if (cur == null) return;
         if (wetActive) {
             renderStroke(cur, hiC, inkC);
+            if (zoom > 1f) renderZoomCrisp();
             invalidate();
             wet.end();
             wetActive = false;
@@ -926,16 +1138,30 @@ public class GlassPadView extends View {
 
     // --- scrolling
 
+    private float grabViewX0, grabViewY0;
+
     private void beginScroll(MotionEvent e) {
         mode = M_SCROLL;
+        grabX = e.getX();
         grabY = e.getY();
         grabScroll = scrollY;
+        grabViewX0 = viewX;
+        grabViewY0 = viewY;
         if (velocity != null) velocity.recycle();
         velocity = VelocityTracker.obtain();
         velocity.addMovement(e);
     }
 
     private void moveScroll(MotionEvent e) {
+        if (zoom > 1f) {
+            // zoomed: one finger pans the magnified page
+            viewX = grabViewX0 + (grabX - e.getX()) / zoom;
+            viewY = grabViewY0 + (grabY - e.getY()) / zoom;
+            clampView();
+            zoomFresh = false;
+            invalidate();
+            return;
+        }
         if (velocity != null) velocity.addMovement(e);
         scrollY = grabScroll + (grabY - e.getY());
         clampScroll();
@@ -944,6 +1170,11 @@ public class GlassPadView extends View {
     }
 
     private void finishScroll(MotionEvent e) {
+        if (zoom > 1f) {
+            renderZoomCrisp();
+            if (velocity != null) { velocity.recycle(); velocity = null; }
+            return;
+        }
         if (velocity == null) return;
         velocity.addMovement(e);
         velocity.computeCurrentVelocity(1000);
@@ -1219,6 +1450,16 @@ public class GlassPadView extends View {
         structuralChange();
     }
 
+    void renameBook(int i, String name) {
+        if (i < 0 || i >= books.size() || name == null) return;
+        String n = name.trim();
+        if (n.isEmpty()) return;
+        books.get(i).name = n;
+        books.get(i).lastModified = System.currentTimeMillis();
+        flushSave();
+        notifyState();
+    }
+
     void newBook(String name, int template) {
         flushSave();
         deselect();
@@ -1258,13 +1499,16 @@ public class GlassPadView extends View {
 
     // ----------------------------------------------------------------- glass
 
+    /** Each notebook remembers its own GLASS; the shared default follows your last choice. */
     void setOpacity(int pct) {
         opacity = Math.max(0, Math.min(pct, 100));
+        cb().opacity = opacity;
         Prefs.get(getContext()).edit().putInt(Prefs.K_OPACITY, opacity).apply();
         invalidate();
+        markChanged();
     }
 
-    int getOpacity() { return opacity; }
+    int getOpacity() { return cb().opacity >= 0 ? cb().opacity : opacity; }
 
     // ------------------------------------------------------------ persistence
 
@@ -1275,6 +1519,7 @@ public class GlassPadView extends View {
             Book nb = new Book();
             nb.name = b.name;
             nb.template = b.template;
+            nb.opacity = b.opacity;
             nb.createdTime = b.createdTime;
             nb.lastModified = b.lastModified;
             for (PageData p : b.pages) nb.pages.add(copyOf(p));

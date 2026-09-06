@@ -43,54 +43,6 @@ final class Backup {
     // ------------------------------------------------------------- write
 
     static String writeBackup(Context c, List<GlassPadView.Book> books) throws Exception {
-        JSONObject root = new JSONObject();
-        root.put("v", 2);
-        root.put("app", "tracing-paper");
-        JSONArray bs = new JSONArray();
-        for (GlassPadView.Book b : books) {
-            JSONObject bo = new JSONObject();
-            bo.put("n", b.name);
-            bo.put("t", b.template);
-            bo.put("c", b.createdTime);
-            bo.put("m", b.lastModified);
-            JSONArray ps = new JSONArray();
-            for (GlassPadView.PageData pd : b.pages) {
-                JSONObject po = new JSONObject();
-                JSONArray ss = new JSONArray();
-                for (GlassPadView.Stroke s : pd.strokes) {
-                    JSONObject o = new JSONObject();
-                    o.put("k", s.kind);
-                    o.put("w", s.base);
-                    JSONArray a = new JSONArray();
-                    for (int k = 0; k < s.n * 3; k++) a.put(s.pts[k]);
-                    o.put("p", a);
-                    ss.put(o);
-                }
-                po.put("s", ss);
-                if (!pd.snips.isEmpty()) {
-                    JSONArray si = new JSONArray();
-                    for (GlassPadView.Snip s : pd.snips) {
-                        JSONObject so = new JSONObject();
-                        so.put("x", s.x); so.put("y", s.y);
-                        so.put("w", s.w); so.put("h", s.h);
-                        if (s.r != 0) so.put("r", s.r);
-                        Bitmap bm = NoteStore.snipBitmap(c, s.file);
-                        if (bm != null) {
-                            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-                            bm.compress(Bitmap.CompressFormat.PNG, 100, bos);
-                            so.put("data", Base64.encodeToString(bos.toByteArray(), Base64.NO_WRAP));
-                        }
-                        si.put(so);
-                    }
-                    po.put("i", si);
-                }
-                ps.put(po);
-            }
-            bo.put("pages", ps);
-            bs.put(bo);
-        }
-        root.put("books", bs);
-
         String name = PREFIX + new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US)
                 .format(new Date()) + ".json";
         ContentValues cv = new ContentValues();
@@ -100,9 +52,12 @@ final class Backup {
         cv.put(MediaStore.MediaColumns.IS_PENDING, 1);
         Uri uri = c.getContentResolver().insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, cv);
         if (uri == null) throw new IOException("MediaStore refused the backup");
-        try (OutputStream os = c.getContentResolver().openOutputStream(uri)) {
+        try (OutputStream os = c.getContentResolver().openOutputStream(uri);
+             java.io.BufferedWriter w = new java.io.BufferedWriter(
+                     new java.io.OutputStreamWriter(os, StandardCharsets.UTF_8), 1 << 16)) {
             if (os == null) throw new IOException("no stream");
-            os.write(root.toString().getBytes(StandardCharsets.UTF_8));
+            // streamed, snips embedded — bounded memory however big the shelf
+            NoteStore.writeLibrary(w, c, books, 0);
         }
         cv.clear();
         cv.put(MediaStore.MediaColumns.IS_PENDING, 0);
@@ -166,6 +121,7 @@ final class Backup {
             GlassPadView.Book b = new GlassPadView.Book();
             b.name = bo.optString("n", "Restored");
             b.template = bo.optInt("t", GlassPadView.TPL_BLANK);
+            b.opacity = bo.optInt("o", -1);
             b.createdTime = bo.optLong("c", 0);
             b.lastModified = bo.optLong("m", System.currentTimeMillis());
             JSONArray ps = bo.getJSONArray("pages");
@@ -177,6 +133,7 @@ final class Backup {
                     JSONObject o = ss.getJSONObject(k);
                     GlassPadView.Stroke s = new GlassPadView.Stroke();
                     s.kind = o.optInt("k", 0);
+                    s.shade = o.optInt("c", 0);
                     s.base = (float) o.optDouble("w", 0.003);
                     JSONArray a = o.getJSONArray("p");
                     for (int m = 0; m + 2 < a.length(); m += 3)

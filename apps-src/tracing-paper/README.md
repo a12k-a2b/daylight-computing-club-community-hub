@@ -29,6 +29,10 @@ you can run the real thing, go support it.
   add, wipe, or tear out; everything autosaves to app-private storage.
 - **GLASS slider** — the pad's opacity, 0 to 100%, right in the toolbar:
   clear glass at one end, opaque paper at the other.
+- **Pinch to zoom** (1–4×): write fine detail zoomed in — the ink is stored
+  proportionally, so it's correspondingly small when you zoom back out.
+  One finger pans while zoomed, ink re-renders crisp from vectors when the
+  gesture settles, and the ×-chip (top-left) snaps you back to 1×.
 - **PEEK** makes the glass untouchable so you can scroll the app underneath
   while your notes stay visible; a WRITE pill (or the top button) brings the
   ink back under your pen.
@@ -59,6 +63,15 @@ stays Gradle-free:
   bitmap layer and the wet surface is wiped; eraser strokes stay on the dry
   path since erasing has to reveal what's underneath. If the surface isn't
   available the pad silently falls back to the plain path.
+
+## Fitting an 8GB tablet
+
+Snips are stored as lossy WebP (q87 — several times smaller than PNG, text
+still crisp) and decode at half the memory (RGB_565, free on a grayscale
+panel). Backups embed the compressed bytes as-is. All layer bitmaps
+(~70MB while drawing) are handed back the moment the pad is put away, so
+the idle service holds almost nothing. Export and backup threads catch
+even OOM-class errors — a giant PDF fails with a toast, never a crash.
 
 ## Not losing your notes
 

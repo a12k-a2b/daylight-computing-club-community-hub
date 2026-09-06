@@ -15,6 +15,7 @@ final class Prefs {
     static final String K_CANVAS_W = "canvas_w";
     static final String K_CANVAS_H = "canvas_h";
     static final String K_PEN_SIZE = "pen_size";
+    static final String K_PEN_SHADE = "pen_shade";
     static final String K_HI_SIZE = "hi_size";
     static final String K_ERASE_SIZE = "erase_size";
     static final String K_ERASE_PIXEL = "erase_pixel";

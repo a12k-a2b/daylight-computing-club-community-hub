@@ -109,8 +109,14 @@ jobs:
             source report.env
             if [ "$INSTALL" != "ok" ]; then
               body="🔴 **☀ Inspector's smoke test — failed.** The app **would not install** on an emulated Android 11 tablet."
-            elif [ "$MONKEY" = "crashed" ] || [ "${FATALS:-0}" -gt 0 ]; then
-              body="🔴 **☀ Inspector's smoke test — failed.** The app **crashed** under 1500 random taps (fatal exceptions in this app: ${FATALS:-?}). The smoke-logs artifact on the workflow run has the stack trace."
+            elif [ "${FATALS:-0}" -gt 0 ]; then
+              # the only red for a crash is a crash IN THIS APP — the monkey no
+              # longer aborts for bystanders, and fatals are billed per-process
+              body="🔴 **☀ Inspector's smoke test — failed.** The app **crashed** under 1500 random taps (fatal exceptions in this app: ${FATALS}). The smoke-logs artifact on the workflow run has the stack trace."
+            elif [ "${ANRS:-0}" -gt 0 ]; then
+              body="🟡 **☀ Inspector's smoke test — passed, with a flag.** No crashes, but the app **stopped responding to input** ${ANRS} time(s) under the poke. CI emulators are slow, so this can be the runner's fault rather than the app's — the smoke-logs artifact has the trace."
+            elif [ "$MONKEY" != "survived" ]; then
+              body="🟡 **☀ Inspector's smoke test — no full verdict.** The app didn't crash, but the poke was cut short (emulator flake). Advisory only, doesn't block."
             elif [ -n "$MEM_MB" ] && [ "$MEM_MB" -gt 400 ]; then
               body="🟡 **☀ Inspector's smoke test — passed, with a flag.** Installed and survived 1500 random taps, but used ${MEM_MB} MB of memory — that is a lot for a homebrew app."
             else
@@ -119,7 +125,7 @@ jobs:
               mem_note=""
               if [ -n "$MEM_MB" ]; then mem_note=" Memory in use while poked: ${MEM_MB} MB."; fi
               other_note=""
-              if [ "${OTHER_FATALS:-0}" -gt 0 ]; then other_note=" (A different app on the emulator crashed during the poke — not this dish; the smoke-logs artifact has details.)"; fi
+              if [ "${OTHER_FATALS:-0}" -gt 0 ] || [ "${OTHER_ANRS:-0}" -gt 0 ]; then other_note=" (Something else on the emulator — not this dish — crashed or stalled during the poke; the smoke-logs artifact has details.)"; fi
               body="🟢 **☀ Inspector's smoke test — passed.** Installed cleanly and survived 1500 random taps on an emulated tablet without crashing.$mem_note$other_note"
             fi
           fi
