@@ -1,0 +1,168 @@
+package com.daylightcomputer.shade.control;
+
+import android.app.AlarmManager;
+import android.app.NotificationManager;
+import android.app.UiModeManager;
+import android.content.Context;
+import android.content.Intent;
+import android.content.res.Configuration;
+import android.os.BatteryManager;
+import android.provider.Settings;
+import android.text.format.DateFormat;
+import android.util.Log;
+
+/** Every quick toggle in one place. Uniform shape: state(), sub(), toggle().
+ *  toggle() returns true when it changed the setting directly and false when
+ *  it had to fall back to opening a Settings screen (the panel closes then).
+ *  Direct paths need tier-2/3 grants; fallbacks work on any DC-1 today. */
+public final class Toggles {
+    private static final String TAG = "ShadeToggles";
+    private Toggles() {}
+
+    private static void openSettings(Context c, String action) {
+        try {
+            Intent i = new Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            c.startActivity(i);
+        } catch (Throwable t) {
+            Log.w(TAG, "no settings screen for " + action);
+        }
+    }
+
+    // ---- wifi / bluetooth ----
+    // state + direct flips live in WifiNets / BtDevices; these are the
+    // system hand-off surfaces the panel falls back to
+    public static boolean wifiOn(Context c) { return WifiNets.isOn(c); }
+    public static boolean btOn(Context c) { return BtDevices.isOn(c); }
+
+    /** Straight to the Wi-Fi settings screen. (The Settings.Panel bottom
+     *  sheet is deprecated and renders as a bare "Wi-Fi" stub on Sol:OS —
+     *  field-tested 2026-07-11: it looked shady and just led here anyway.) */
+    public static void openWifiSheet(Context c) {
+        openSettings(c, Settings.ACTION_WIFI_SETTINGS);
+    }
+    /** No compact sheet exists for Bluetooth — full settings it is. */
+    public static void openBtSettings(Context c) {
+        openSettings(c, Settings.ACTION_BLUETOOTH_SETTINGS);
+    }
+
+    // ---- airplane ----
+    public static boolean airplaneOn(Context c) {
+        return Settings.Global.getInt(c.getContentResolver(),
+                Settings.Global.AIRPLANE_MODE_ON, 0) != 0;
+    }
+    public static boolean airplaneToggle(Context c) {
+        boolean target = !airplaneOn(c);
+        if (Caps.airplaneDirect(c) && SysApi.setAirplaneMode(c, target)) return true;
+        openSettings(c, Settings.ACTION_AIRPLANE_MODE_SETTINGS);
+        return false;
+    }
+
+    // ---- do not disturb ----
+    public static boolean dndOn(Context c) {
+        NotificationManager nm = c.getSystemService(NotificationManager.class);
+        int f = nm.getCurrentInterruptionFilter();
+        return f != NotificationManager.INTERRUPTION_FILTER_ALL
+                && f != NotificationManager.INTERRUPTION_FILTER_UNKNOWN;
+    }
+    public static boolean dndToggle(Context c) {
+        NotificationManager nm = c.getSystemService(NotificationManager.class);
+        if (nm.isNotificationPolicyAccessGranted()) {
+            nm.setInterruptionFilter(dndOn(c)
+                    ? NotificationManager.INTERRUPTION_FILTER_ALL
+                    : NotificationManager.INTERRUPTION_FILTER_PRIORITY);
+            return true;
+        }
+        openSettings(c, Settings.ACTION_NOTIFICATION_POLICY_ACCESS_SETTINGS);
+        return false;
+    }
+
+    // ---- dark mode ----
+    public static boolean darkOn(Context c) {
+        int m = c.getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK;
+        return m == Configuration.UI_MODE_NIGHT_YES;
+    }
+    public static boolean darkToggle(Context c) {
+        boolean target = !darkOn(c);
+        UiModeManager um = c.getSystemService(UiModeManager.class);
+        if (Caps.dayNight(c)) {
+            try {
+                um.setNightMode(target
+                        ? UiModeManager.MODE_NIGHT_YES : UiModeManager.MODE_NIGHT_NO);
+                return true;
+            } catch (Throwable t) { Log.w(TAG, "setNightMode: " + t); }
+        }
+        // preview-mode flip: ui_night_mode is an ordinary secure setting
+        // (2 = dark, 1 = light), and a momentary car-mode nudge makes
+        // UiModeManagerService re-read it now instead of at the next
+        // screen cycle. Public SDK; needs only the adb-grantable
+        // WRITE_SECURE_SETTINGS. The blessed setNightMode path above
+        // replaces this the day MODIFY_DAY_NIGHT_MODE exists.
+        if (Caps.secureSettings(c)) {
+            try {
+                Settings.Secure.putInt(c.getContentResolver(),
+                        "ui_night_mode", target ? 2 : 1);
+                um.enableCarMode(0);
+                um.disableCarMode(0);
+                return true;
+            } catch (Throwable t) { Log.w(TAG, "ui_night_mode flip: " + t); }
+        }
+        openSettings(c, Settings.ACTION_DISPLAY_SETTINGS);
+        return false;
+    }
+
+    // ---- rotation lock (works today: plain WRITE_SETTINGS) ----
+    public static boolean rotationLocked(Context c) {
+        return Settings.System.getInt(c.getContentResolver(),
+                Settings.System.ACCELEROMETER_ROTATION, 1) == 0;
+    }
+    public static boolean rotationToggle(Context c) {
+        if (Caps.writeSettings(c)) {
+            Settings.System.putInt(c.getContentResolver(),
+                    Settings.System.ACCELEROMETER_ROTATION, rotationLocked(c) ? 1 : 0);
+            return true;
+        }
+        openSettings(c, Settings.ACTION_MANAGE_WRITE_SETTINGS);
+        return false;
+    }
+
+    // ---- header info ----
+    public static int batteryPercent(Context c) {
+        BatteryManager bm = c.getSystemService(BatteryManager.class);
+        return bm == null ? -1 : bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
+    }
+    public static boolean batteryCharging(Context c) {
+        BatteryManager bm = c.getSystemService(BatteryManager.class);
+        return bm != null && bm.isCharging();
+    }
+
+    /** Battery in words — numbers are phone anxiety. While charging, the
+     *  one number people actually want is a time ("full by 9:40", public
+     *  API; some fuel gauges can't estimate → fall back to the percent).
+     *  Steady state: words, the percent surfacing only when it's time to
+     *  think about a charger. */
+    public static String batteryLine(Context c) {
+        int pct = batteryPercent(c);
+        if (pct < 0) return "";
+        if (batteryCharging(c)) {
+            if (pct >= 100) return "fully charged";
+            try {
+                BatteryManager bm = c.getSystemService(BatteryManager.class);
+                long ms = bm == null ? -1 : bm.computeChargeTimeRemaining();
+                if (ms > 0) return "full by " + DateFormat.getTimeFormat(c)
+                        .format(new java.util.Date(System.currentTimeMillis() + ms));
+            } catch (Throwable ignored) {}
+            return "charging · " + pct + "%";
+        }
+        if (pct >= 90) return "full";
+        if (pct >= 40) return "plenty";
+        if (pct >= 15) return "low · " + pct + "%";
+        return "nearly empty · " + pct + "%";
+    }
+    public static String nextAlarmText(Context c) {
+        AlarmManager am = c.getSystemService(AlarmManager.class);
+        AlarmManager.AlarmClockInfo info = am == null ? null : am.getNextAlarmClock();
+        if (info == null) return "";
+        return "alarm " + DateFormat.getTimeFormat(c).format(
+                new java.util.Date(info.getTriggerTime()));
+    }
+}

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A window shade being pulled down: bar, sheet, pull-tab. Pure ink. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#000000" android:pathData="M30,32h48v8h-48z" />
+    <path android:fillColor="#000000"
+        android:pathData="M34,44h40v18h-40z M38,48v10h32v-10z"
+        android:fillType="evenOdd" />
+    <path android:fillColor="#000000" android:pathData="M52,62h4v8h-4z" />
+    <path android:fillColor="#000000" android:pathData="M46,72h16l-8,9z" />
+</vector>
