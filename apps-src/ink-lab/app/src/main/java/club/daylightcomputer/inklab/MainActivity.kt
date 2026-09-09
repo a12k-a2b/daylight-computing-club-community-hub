@@ -19,6 +19,24 @@ import android.widget.TextView
  */
 class MainActivity : Activity() {
 
+    private fun startOverlayBench() {
+        val wm = getSystemService(android.view.WindowManager::class.java)
+        val ink = JetpackInkView(this)
+        val lp = android.view.WindowManager.LayoutParams(
+            android.view.WindowManager.LayoutParams.MATCH_PARENT,
+            android.view.WindowManager.LayoutParams.MATCH_PARENT,
+            android.view.WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            android.view.WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+            android.graphics.PixelFormat.TRANSLUCENT)
+        try {
+            wm.addView(ink, lp)
+            android.util.Log.i("InkLab", "BENCH: overlay window added (TYPE_APPLICATION_OVERLAY, TRANSLUCENT, fullscreen)")
+        } catch (t: Throwable) {
+            android.util.Log.w("InkLab", "BENCH: overlay add failed", t)
+        }
+    }
+
+
     private lateinit var row: LinearLayout
     private lateinit var clubPane: View
     private lateinit var jetpackPane: View
@@ -27,6 +45,13 @@ class MainActivity : Activity() {
 
     override fun onCreate(b: Bundle?) {
         super.onCreate(b)
+        // BENCH: `am start ... --ez overlay true` hosts the IDENTICAL JetpackInkView
+        // in a TYPE_APPLICATION_OVERLAY / TRANSLUCENT full-screen window instead of
+        // this Activity. Same ink code, two hosts — the decisive test for whether
+        // the latency gap belongs to overlays or to Note Overlay's own setup.
+        if (intent?.getBooleanExtra("overlay", false) == true) {
+            startOverlayBench(); return
+        }
         val d = resources.displayMetrics.density
         fun dp(v: Int) = (v * d).toInt()
 

@@ -8,7 +8,7 @@ android {
     compileSdk 35
 
     defaultConfig {
-        applicationId 'club.daylightcomputer.inklab'
+        applicationId 'club.daylightcomputer.inklab.bench'
         minSdk 30
         targetSdk 33
         versionCode 1
