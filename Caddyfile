@@ -4,6 +4,9 @@
 
 :{$PORT:8080}
 
+redir /starterpack https://daylight-rescue.a12kk.chatgpt.site 308
+redir /starterpack/ https://daylight-rescue.a12kk.chatgpt.site 308
+
 root * /srv
 file_server
 encode gzip
