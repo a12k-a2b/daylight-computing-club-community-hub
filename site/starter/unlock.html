@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Official OEM unlock — Daylight Computer Club</title>
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="starter.css">
+<link rel="icon" href="../icons/icon-192.png">
+<meta name="theme-color" content="#ffffff">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="club">
+    <a class="club-mark" href="./">
+      <img src="../icons/icon-192.png" alt="">
+      <h1>Official OEM unlock</h1>
+    </a>
+    <p class="club-tagline">Daylight’s own unlock. No unofficial tools.</p>
+  </header>
+
+  <main>
+    <p class="progress" id="progress"></p>
+    <h2 class="step-title" id="step-title"></h2>
+    <div class="step-body" id="step-body"></div>
+    <div class="wizard-nav" id="nav"></div>
+  </main>
+
+  <footer class="club">
+    <p><a href="./">← First hour</a> · <a href="../">Club</a></p>
+  </footer>
+
+</div>
+<script src="starter.js"></script>
+<script>
+const saved = Starter.unlock();
+
+const steps = [
+  {
+    title: 'This is the official door — and only that door.',
+    body: `
+      <p>OEM unlock is how a DC-1 is allowed to run elevated club apps (Club Shizuku, and anything that needs it). Daylight issues the unlock. This page does not unlock the tablet by itself.</p>
+      <div class="honest">
+        <p><strong>We will not</strong> give you a fastboot payload, a community flasher, or a bypass. If a page or a friend offers those, that is not this path.</p>
+        <p><strong>We will</strong> turn on the official OEM unlocking switch, collect your serial, and mail it to Anjan at Daylight for the official token.</p>
+      </div>
+      <p class="hint">Unlocking <strong>erases the tablet</strong>. If this Daylight already has your life on it, finish a backup before you ask for the token.</p>`,
+    next: 'I understand →'
+  },
+  {
+    title: 'Back up first.',
+    body: `
+      <p>When the official token is applied, Sol:OS wipes user data. Treat that as certain.</p>
+      <ul class="checklist">
+        <li><label><input type="checkbox"> <span>Reader highlights and PDFs you care about are exported or copied off the tablet.</span></label></li>
+        <li><label><input type="checkbox"> <span>Photos, notes, and APKs you want to keep are on a computer or a drive.</span></label></li>
+        <li><label><input type="checkbox"> <span>You know the Wi-Fi and Google account you will use after setup.</span></label></li>
+      </ul>
+      <p class="hint">A factory reset later is the same kind of wipe. If you only wanted a clean tablet, use <a href="recover.html">official recover</a> instead — you may not need unlock.</p>`,
+    next: 'Backed up, continue →'
+  },
+  {
+    title: 'Turn on official OEM unlocking.',
+    body: `
+      <p>This is a Sol:OS setting, not a trick.</p>
+      <p>1. Open <strong>Settings → About tablet</strong>.</p>
+      <p>2. Tap <strong>Build number</strong> seven times until it says you are a developer.</p>
+      <p>3. Go back, then <strong>Settings → System → Developer options</strong>.</p>
+      <div class="ui-mock">
+        <div class="mock-title">Developer options</div>
+        <div class="mock-toggle"><span>OEM unlocking</span><span class="pill on">ON</span></div>
+        <div class="mock-toggle"><span>USB debugging</span><span class="pill on">ON</span></div>
+      </div>
+      <p>4. Turn <strong>OEM unlocking</strong> on. If it is grey, connect to Wi-Fi, wait a minute, try again. Still grey? Stop here and write Anjan — do not look for a bypass.</p>
+      <p>5. Turn <strong>USB debugging</strong> on if you will use a computer in the next hour. You can also do that later on <a href="connect.html">Connect</a>.</p>
+      <p class="hint">OEM unlocking on is the request flag. The tablet is not unlocked until Daylight’s official token is applied.</p>`,
+    next: 'Switches are on →'
+  },
+  {
+    title: 'Find the serial.',
+    body: `
+      <p>Settings → About tablet → <strong>Serial number</strong> (sometimes under Status). Copy it exactly. Sixteen-ish characters is common; do not invent one.</p>
+      <label class="field">
+        <span>Serial number</span>
+        <input id="serial" type="text" autocomplete="off" spellcheck="false" value="${Starter.esc(saved.serial)}">
+      </label>
+      <p class="hint">Stored only on this tablet, in localStorage, until you send the mail.</p>`,
+    next: 'Serial is in →',
+    beforeNext() {
+      const serial = (document.getElementById('serial').value || '').trim();
+      if (!serial) {
+        alert('Paste the serial from Settings → About tablet. We need the real one.');
+        return false;
+      }
+      Starter.saveUnlock({ serial });
+    }
+  },
+  {
+    title: 'Ask Daylight for the official token.',
+    body: `
+      <p>The token backend is not a website yet. The live path is mail to <strong>anjan@daylightcomputer.com</strong> — he issues official unlocks. Your serial stays on this tablet and goes in the letter you send.</p>
+      <label class="field">
+        <span>Your name</span>
+        <input id="name" type="text" value="${Starter.esc(saved.name)}">
+      </label>
+      <label class="field">
+        <span>Email Daylight should reply to</span>
+        <input id="email" type="email" value="${Starter.esc(saved.email)}">
+      </label>
+      <label class="field">
+        <span>Anything Anjan should know (optional)</span>
+        <textarea id="note">${Starter.esc(saved.note)}</textarea>
+      </label>
+      <button type="button" class="btn" id="send-mail">Write the official request →</button>
+      <p></p>
+      <p class="hint">If mail does not open, write him yourself: subject “Official OEM unlock request”, include the serial. Do not send the serial to anyone else.</p>`,
+    next: 'I sent it →',
+    after() {
+      document.getElementById('send-mail').onclick = () => {
+        const name = (document.getElementById('name').value || '').trim();
+        const email = (document.getElementById('email').value || '').trim();
+        const note = (document.getElementById('note').value || '').trim();
+        const serial = Starter.unlock().serial;
+        if (!name || !email || !serial) {
+          alert('Name, reply email, and serial — all three, please.');
+          return;
+        }
+        Starter.saveUnlock({ name, email, note });
+        Starter.mailto({
+          to: 'anjan@daylightcomputer.com',
+          subject: 'Official OEM unlock request — DC-1 ' + serial,
+          body:
+            'Hi Anjan,\n\n' +
+            'Please issue an official OEM unlock token for this DC-1.\n\n' +
+            'Name: ' + name + '\n' +
+            'Reply-to: ' + email + '\n' +
+            'Serial: ' + serial + '\n' +
+            (note ? 'Note: ' + note + '\n' : '') +
+            '\nThis request came from daylightcomputer.club/starter/unlock\n' +
+            'Official path only — no unofficial flasher.\n'
+        });
+      };
+    }
+  },
+  {
+    title: 'Wait for the official token. Then stop guessing.',
+    body: `
+      <div class="done-mark">☀</div>
+      <p>When the token arrives, follow <strong>only</strong> the steps in that letter. If they are unclear, reply to the same thread. Do not fill the gap with a wiki unlock or a random <code>fastboot</code> paste.</p>
+      <p>After it is unlocked, come back for <a href="tools.html">club tools</a> — Keys, Club Shizuku, Tracing Paper — and <a href="connect.html">the desk</a>.</p>
+      <p class="hint">Still grey OEM unlocking, or the tablet is blank? <a href="recover.html">Official recover</a>, or <a href="/starterpack">Daylight Rescue</a> if the screen will not come up.</p>`,
+    next: null
+  }
+];
+
+Starter.wizard(steps, { storageKey: 'dcc-starter-unlock-step' }).render();
+</script>
+</body>
+</html>

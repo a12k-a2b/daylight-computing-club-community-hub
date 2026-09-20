@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Club tools — Daylight Computer Club</title>
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="starter.css">
+<link rel="icon" href="../icons/icon-192.png">
+<meta name="theme-color" content="#ffffff">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="club">
+    <a class="club-mark" href="./">
+      <img src="../icons/icon-192.png" alt="">
+      <h1>Club tools</h1>
+    </a>
+    <p class="club-tagline">The dishes that make the first hour feel like your tablet.</p>
+  </header>
+
+  <main class="prose">
+    <p>These are club apps, signed with the club key when they are on the shelf. The install wizard shows every Android screen before you see it. Nothing here is an unofficial flasher.</p>
+
+    <div class="card">
+      <span class="badge">KEY MAPPER</span>
+      <h2>Daylight Keys</h2>
+      <p class="tagline">Volume keys become brightness keys, a snip, and the dog-ear corner.</p>
+      <p>Made for Melissa, useful for everyone. Accessibility sits on the volume keys — the club already declared that, so other dishes leave those keys alone.</p>
+      <a class="btn" href="../install.html?app=dc1-keys">Install Daylight Keys →</a>
+    </div>
+
+    <div class="card">
+      <span class="badge">ELEVATED APPS</span>
+      <h2>Club Shizuku</h2>
+      <p class="tagline">The official elevated-apps door, after OEM unlock.</p>
+      <p>Club-signed Shizuku is how friends’ apps ask for the powers Android will not hand a normal APK — without a random download and without Magisk-from-a-forum.</p>
+      <div class="honest">
+        <p><strong>Not on the shelf yet.</strong> The signed APK is still being kept in-house. This page will deep-link the install wizard when it is catalogued. Until then, ask Anjan; do not sideload Shizuku from a search result and call it the club’s.</p>
+      </div>
+      <a class="btn secondary" href="unlock.html">Need unlock first? Official OEM unlock →</a>
+      <p></p>
+      <button type="button" class="btn" id="ask-shizuku">Ask for Club Shizuku →</button>
+    </div>
+
+    <div class="card">
+      <span class="badge">GLASS</span>
+      <h2>Tracing Paper</h2>
+      <p class="tagline">The orange top button slides a sheet of glass over whatever you are reading.</p>
+      <p>Write, snip, peek. Volume keys stay with Keys. Notes never leave the tablet.</p>
+      <a class="btn" href="../install.html?app=tracing-paper">Install Tracing Paper →</a>
+    </div>
+
+    <div class="card">
+      <span class="badge">HOUSE</span>
+      <h2>The Clubhouse</h2>
+      <p class="tagline">The shelf inside the tablet — knocks when a friend brings a dish, one-tap installs you still confirm.</p>
+      <a class="btn" href="../install.html?app=dcc-companion">Install the Clubhouse →</a>
+    </div>
+
+    <p><a class="btn secondary" href="./">← First hour</a></p>
+  </main>
+
+  <footer class="club">
+    <p>Want something that is not here? <a href="../wishboard.html">Wish board</a>. Made something? <a href="../share.html">Share it</a>.</p>
+  </footer>
+
+</div>
+<script src="starter.js"></script>
+<script>
+document.getElementById('ask-shizuku').onclick = () => {
+  const u = Starter.unlock();
+  Starter.mailto({
+    to: 'anjan@daylightcomputer.com',
+    subject: 'Club Shizuku — official signed APK',
+    body:
+      'Hi Anjan,\n\n' +
+      'Please send or shelve the club-signed Shizuku APK when it is ready.\n\n' +
+      'Name: ' + (u.name || '') + '\n' +
+      'Reply-to: ' + (u.email || '') + '\n' +
+      'Serial: ' + (u.serial || '(not collected yet)') + '\n' +
+      '\nFrom daylightcomputer.club/starter/tools\n' +
+      'Official Club Shizuku only — I will not sideload a random copy.\n'
+  });
+};
+</script>
+</body>
+</html>

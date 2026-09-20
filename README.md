@@ -14,6 +14,9 @@ to `master` — Railway watches the repo, and the Pages workflow does the rest.
 ```
 site/                     the club itself — a static site, no build step
   index.html              the shelf: every shared app as a card
+  starter/                first hour on a new DC-1 — official unlock, official
+                          recover, tools, adb, Live Paper skill, cherry builds
+                          (https://daylightcomputer.club/starter/)
   install.html            the guided installer — walks a friend through every
                           Android screen, one step at a time
   share.html              how to add your own app (incl. a copy-paste Claude prompt)

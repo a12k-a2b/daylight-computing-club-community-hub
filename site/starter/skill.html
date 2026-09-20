@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live Paper skill — Daylight Computer Club</title>
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="starter.css">
+<link rel="icon" href="../icons/icon-192.png">
+<meta name="theme-color" content="#ffffff">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="club">
+    <a class="club-mark" href="./">
+      <img src="../icons/icon-192.png" alt="">
+      <h1>Live Paper skill</h1>
+    </a>
+    <p class="club-tagline">Make a vibe-coded app belong on the DC-1.</p>
+  </header>
+
+  <main class="prose">
+    <p>The daylight-ify pack teaches your agent the medium: 10.5″ Live Paper, 1600×1200, 4:3 greyscale, Wacom EMR, Sol:OS. Port, then design, then teach — preview after every visual pass.</p>
+
+    <h2>Install the pack</h2>
+    <p>In Claude Code:</p>
+    <pre class="copyblock" id="plugin">/plugin marketplace add a12k-a2b/daylight-computing-club-community-hub
+/plugin install daylight-ify@daylight-computer-club</pre>
+    <button type="button" class="btn secondary" data-copy="plugin">Copy the plugin commands</button>
+    <p></p>
+    <p>Or copy the folders into a project:</p>
+    <pre class="copyblock">cp -r skills/daylight-* your-app/.claude/skills/</pre>
+    <p>Skills live in the club repo: <a href="https://github.com/a12k-a2b/daylight-computing-club-community-hub/tree/master/skills">skills/</a> — daylight-port, daylight-design, daylight-preview, daylight-teach.</p>
+
+    <h2>The daylight-ify prompt</h2>
+    <p>Paste this when the app already runs on a color monitor and you want it on the tablet:</p>
+    <pre class="copyblock" id="prompt">Daylight-ify this app for the Daylight DC-1.
+
+Read the club skill pack and apply it, in order:
+1. skills/daylight-port/SKILL.md — pick PWA / WebView shell / native, fix web↔Android collisions.
+2. skills/daylight-design/SKILL.md — grayscale that reads on Live Paper, 10.5″ 4:3 layout, touch/stylus/voice, keep the app’s soul.
+3. skills/daylight-preview/SKILL.md — render at DC-1 geometry, fix contrast, 48px targets, overflow.
+4. skills/daylight-teach/SKILL.md — a short teaching layer so a friend understands it.
+
+Official paths only. Do not add unofficial flashers, root exploits, or Magisk.
+When it feels at home, share it with the club:
+https://daylightcomputer.club/share.html
+
+Device facts: skills/daylight-facts.json
+Calibrate on the tablet if you can: https://daylightcomputer.club/calibrate.html</pre>
+    <button type="button" class="btn" data-copy="prompt">Copy the daylight-ify prompt</button>
+
+    <h2>Calibrate on the tablet</h2>
+    <p>A few facts in the pack are still educated defaults. Open <a href="../calibrate.html">calibrate.html</a> on the DC-1, tap “copy my readings”, send them back. One edit recalibrates preview and mapping.</p>
+
+    <p><a class="btn secondary" href="./">← First hour</a></p>
+  </main>
+
+  <footer class="club">
+    <p>Built something? <a href="build.html">Queue a cherry build</a> if the desk cannot compile.</p>
+  </footer>
+
+</div>
+<script>
+document.querySelectorAll('[data-copy]').forEach(btn => {
+  btn.onclick = () => {
+    const t = document.getElementById(btn.getAttribute('data-copy')).textContent;
+    navigator.clipboard.writeText(t)
+      .then(() => alert('Copied.'))
+      .catch(() => window.prompt('Copy this:', t));
+  };
+});
+</script>
+</body>
+</html>
