@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Official-image recover — Daylight Computer Club</title>
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="starter.css">
+<link rel="icon" href="../icons/icon-192.png">
+<meta name="theme-color" content="#ffffff">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="club">
+    <a class="club-mark" href="./">
+      <img src="../icons/icon-192.png" alt="">
+      <h1>Official recover</h1>
+    </a>
+    <p class="club-tagline">Official images and official reset. Nothing else is written.</p>
+  </header>
+
+  <main>
+    <p class="progress" id="progress"></p>
+    <h2 class="step-title" id="step-title"></h2>
+    <div class="step-body" id="step-body"></div>
+    <div class="wizard-nav" id="nav"></div>
+  </main>
+
+  <footer class="club">
+    <p><a href="./">← First hour</a> · <a href="../">Club</a></p>
+  </footer>
+
+</div>
+<script src="starter.js"></script>
+<script>
+const seen = Starter.read('dcc-starter-recover-seen', '');
+
+function rememberSeen(value) {
+  Starter.write('dcc-starter-recover-seen', value);
+}
+
+const steps = [
+  {
+    title: 'What is the Daylight doing?',
+    body: `
+      <p>First we pick the safest official fix. We will not flash a community ROM, a GSI, or anyone’s unofficial ZIP.</p>
+      <button type="button" class="choice" data-seen="boots"><strong>It still boots</strong><span>You can reach Settings, or at least the home screen.</span></button>
+      <button type="button" class="choice" data-seen="blank"><strong>The screen stays blank</strong><span>No logo, or it dies right after the logo.</span></button>
+      <button type="button" class="choice" data-seen="loop"><strong>It keeps restarting</strong><span>Logo, then it starts over.</span></button>
+      <button type="button" class="choice" data-seen="recovery"><strong>It’s on a recovery menu</strong><span>Android recovery, or a warning screen.</span></button>
+      <button type="button" class="choice" data-seen="other"><strong>Something else</strong><span>A bad flash leftover, password lost, Kids lock, not sure.</span></button>`,
+    next: null,
+    after() {
+      document.querySelectorAll('.choice').forEach(btn => {
+        btn.onclick = () => {
+          rememberSeen(btn.getAttribute('data-seen'));
+          wiz.goto(1);
+        };
+      });
+    }
+  },
+  {
+    title: 'Try the official first aid — nothing is written yet.',
+    body: `
+      <p>Daylight’s own first moves, the same ones Rescue starts with:</p>
+      <ul class="checklist">
+        <li><label><input type="checkbox"> <span>Charge for 20 minutes. Leave accessories unplugged.</span></label></li>
+        <li><label><input type="checkbox"> <span>Hold <strong>Power</strong> for a full 20 seconds, then let go and wait.</span></label></li>
+        <li><label><input type="checkbox"> <span>If it wakes, stay here. If it stays blank, you can open Rescue next — Rescue is write-locked and will not flash.</span></label></li>
+      </ul>
+      <p class="hint">A surprising number of “dead” tablets are a power button, not a brick.</p>`,
+    next: 'Tried first aid →'
+  },
+  function () {
+    const kind = Starter.read('dcc-starter-recover-seen', '');
+    if (kind === 'blank' || kind === 'loop') {
+      return {
+        title: 'If it still will not stay up — Rescue, then Daylight.',
+        body: `
+          <p>Do not download a stock image from a forum. Do not run a Lineage or “unbrick” script.</p>
+          <p><a class="btn" href="/starterpack">Open Daylight Rescue →</a></p>
+          <p></p>
+          <p>Rescue can look, and it can ask for a signed read. It cannot flash yet. If Rescue cannot bring it back, write <a href="mailto:hello@daylightcomputer.com">hello@daylightcomputer.com</a> or text <a href="sms:+14155991668">+1 (415) 599-1668</a>, or send Anjan the official-image request on the next step.</p>`,
+        next: 'I need an official image →'
+      };
+    }
+    if (kind === 'recovery') {
+      return {
+        title: 'Official recovery wipe — Daylight’s own steps.',
+        body: `
+          <p>If you lost the password and the tablet is on recovery, Daylight documents this. It <strong>erases everything</strong>.</p>
+          <p>Follow <a href="https://support.daylightcomputer.com/getting-started/how-to-do-a-factory-reset/reset-dc-1-without-password">Reset DC-1 without password</a> exactly: Power + Volume up into recovery, then Daylight’s “no command” chord, then <strong>Wipe data / Factory reset</strong> only. Reboot when it says to. Let the setup automations run; do not tap through them.</p>
+          <p class="hint">If the menu offers apply-update-from-ADB or a random ZIP, leave those alone unless Daylight mailed you that file.</p>`,
+        next: 'Next →'
+      };
+    }
+    return {
+      title: 'Official factory reset, if you can still reach Settings.',
+      body: `
+        <p>Daylight’s reset, from <a href="https://support.daylightcomputer.com/getting-started/how-to-do-a-factory-reset">their getting-started guide</a>:</p>
+        <div class="ui-mock">
+          <div class="mock-title">Settings → System → Reset options</div>
+          <div class="mock-toggle"><span class="tap-this">Erase all data</span></div>
+        </div>
+        <p>Confirm <strong>Erase all data</strong>. The tablet will run setup automations and then shut itself off. Do not poke it. When it is off, hold Power to turn it back on.</p>
+        <p>Kids tablet? Use <a href="https://support.daylightcomputer.com/getting-started/how-to-do-a-factory-reset-1">the Kids reset</a> (unlock parental controls first).</p>
+        <p class="hint">Also install the latest official update when you first set up: Daylight pushes Sol:OS on its own schedule — <a href="https://support.daylightcomputer.com/getting-started">getting started</a>.</p>`,
+      next: 'Next →'
+    };
+  },
+  {
+    title: 'Official restore image — requested, not downloaded from the internet.',
+    body: `
+      <p>There is no public “flash this ZIP” on this site on purpose. If first aid, Rescue, and official reset are not enough, Daylight can send an <strong>official</strong> restore image and the steps that go with it.</p>
+      <label class="field">
+        <span>Your name</span>
+        <input id="name" type="text" value="${Starter.esc(Starter.unlock().name)}">
+      </label>
+      <label class="field">
+        <span>Reply email</span>
+        <input id="email" type="email" value="${Starter.esc(Starter.unlock().email)}">
+      </label>
+      <label class="field">
+        <span>Serial, if you can still read it</span>
+        <input id="serial" type="text" autocomplete="off" spellcheck="false" value="${Starter.esc(Starter.unlock().serial)}">
+      </label>
+      <label class="field">
+        <span>What you see, in a sentence</span>
+        <textarea id="note"></textarea>
+      </label>
+      <button type="button" class="btn" id="send-mail">Ask for an official image →</button>
+      <p></p>
+      <p class="hint">Until that letter arrives, the rule stays: no unofficial flashers.</p>`,
+    next: 'I sent it, or I do not need it →',
+    after() {
+      const seenNow = Starter.read('dcc-starter-recover-seen', '');
+      const note = document.getElementById('note');
+      if (!note.value) {
+        note.value = ({
+          boots: 'Tablet still boots. Official reset may not have been enough.',
+          blank: 'Screen stays blank after official first aid.',
+          loop: 'Tablet keeps restarting after official first aid.',
+          recovery: 'Stuck in recovery / warning screen.',
+          other: 'Need official restore guidance.'
+        }[seenNow] || '');
+      }
+      document.getElementById('send-mail').onclick = () => {
+        const name = (document.getElementById('name').value || '').trim();
+        const email = (document.getElementById('email').value || '').trim();
+        const serial = (document.getElementById('serial').value || '').trim();
+        const what = (document.getElementById('note').value || '').trim();
+        if (!name || !email) {
+          alert('Name and a reply email so Daylight can send the official image.');
+          return;
+        }
+        Starter.saveUnlock({ name, email, serial });
+        Starter.mailto({
+          to: 'anjan@daylightcomputer.com',
+          subject: 'Official DC-1 restore image request',
+          body:
+            'Hi Anjan,\n\n' +
+            'Please send an official Sol:OS restore image and the official steps.\n\n' +
+            'Name: ' + name + '\n' +
+            'Reply-to: ' + email + '\n' +
+            'Serial: ' + (serial || '(unknown)') + '\n' +
+            'What I see: ' + what + '\n' +
+            '\nFrom daylightcomputer.club/starter/recover\n' +
+            'Official images only.\n'
+        });
+      };
+    }
+  },
+  {
+    title: 'That’s the official recover path.',
+    body: `
+      <div class="done-mark">☀</div>
+      <p>If the tablet is back, go on to <a href="tools.html">tools</a> or <a href="../">the shelf</a>.</p>
+      <p>If it is not: wait for the official image, keep using <a href="/starterpack">Rescue</a> as the write-locked look, and Daylight support at <a href="mailto:hello@daylightcomputer.com">hello@daylightcomputer.com</a> or <a href="sms:+14155991668">+1 (415) 599-1668</a>.</p>`,
+    next: null
+  }
+];
+
+const wiz = Starter.wizard(steps, { storageKey: 'dcc-starter-recover-step' });
+wiz.render();
+</script>
+</body>
+</html>

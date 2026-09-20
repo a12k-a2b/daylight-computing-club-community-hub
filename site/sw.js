@@ -5,10 +5,20 @@
 // club opens instantly but self-heals when styles change.
 // APK files: never cached — always a fresh download.
 
-const CACHE = 'dcc-v7';
+const CACHE = 'dcc-v8';
 const SHELL = [
   './',
   'index.html',
+  'starter/',
+  'starter/index.html',
+  'starter/unlock.html',
+  'starter/recover.html',
+  'starter/tools.html',
+  'starter/connect.html',
+  'starter/skill.html',
+  'starter/build.html',
+  'starter/starter.css',
+  'starter/starter.js',
   'ceo-sim/index.html',
   'ceo-sim/lessons.html',
   'ceo-sim/iso.html',

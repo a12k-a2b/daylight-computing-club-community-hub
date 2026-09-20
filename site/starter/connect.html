@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADB and wireless — Daylight Computer Club</title>
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="starter.css">
+<link rel="icon" href="../icons/icon-192.png">
+<meta name="theme-color" content="#ffffff">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="club">
+    <a class="club-mark" href="./">
+      <img src="../icons/icon-192.png" alt="">
+      <h1>Connect the desk</h1>
+    </a>
+    <p class="club-tagline">Official platform-tools. A cable, then wireless.</p>
+  </header>
+
+  <main>
+    <p class="progress" id="progress"></p>
+    <h2 class="step-title" id="step-title"></h2>
+    <div class="step-body" id="step-body"></div>
+    <div class="wizard-nav" id="nav"></div>
+  </main>
+
+  <footer class="club">
+    <p><a href="./">← First hour</a> · <a href="../">Club</a></p>
+  </footer>
+
+</div>
+<script src="starter.js"></script>
+<script>
+const steps = [
+  {
+    title: 'A computer that can see the tablet.',
+    body: `
+      <p>This is so Claude, Codex, or you can install a dish from the desk without emailing APKs to yourself. Official <strong>Android platform-tools</strong> only — the <code>adb</code> Google publishes, not a random “ADB installer” from a blog.</p>
+      <p>On a Mac:</p>
+      <pre class="copyblock">brew install --cask android-platform-tools</pre>
+      <p>Or download the zip from <a href="https://developer.android.com/tools/releases/platform-tools">Google’s platform-tools page</a> and put <code>adb</code> on your PATH.</p>
+      <p class="hint">Windows and Linux: same official zip. We are not wrapping it in a club installer.</p>`,
+    next: 'adb is on this computer →'
+  },
+  {
+    title: 'USB debugging on the Daylight.',
+    body: `
+      <p>Settings → About tablet → tap <strong>Build number</strong> seven times, then Settings → System → <strong>Developer options</strong>:</p>
+      <div class="ui-mock">
+        <div class="mock-toggle"><span>USB debugging</span><span class="pill on">ON</span></div>
+      </div>
+      <p>Plug USB-C into the Mac. Unlock the tablet. When it asks “Allow USB debugging?”, check <strong>Always allow from this computer</strong> and tap Allow.</p>
+      <pre class="copyblock">adb devices</pre>
+      <p>You should see the serial and the word <code>device</code>. <code>unauthorized</code> means the prompt is still waiting on the tablet. <code>offline</code> means unplug, unlock, plug in again.</p>`,
+    next: 'adb devices sees it →'
+  },
+  {
+    title: 'Wireless debugging — so the cable can go away.',
+    body: `
+      <p>Same Developer options screen. Turn on <strong>Wireless debugging</strong>. Tap it, then <strong>Pair device with pairing code</strong>.</p>
+      <p>On the Mac, in the same minute:</p>
+      <pre class="copyblock">adb pair HOST:PORT
+adb connect HOST:PORT</pre>
+      <p>Use the IP, port, and six-digit code the tablet shows — they change. After <code>adb devices</code> lists it as wireless, you can unplug.</p>
+      <p class="hint">The tablet and the computer need the same Wi-Fi. Guest networks that isolate clients will not pair.</p>`,
+    next: 'Wireless works →'
+  },
+  {
+    title: 'Claude or Codex on the desk.',
+    body: `
+      <div class="done-mark">☀</div>
+      <p>Once <code>adb devices</code> is happy, an agent on the Mac can install a club APK you built, pull a log, or open a page on the tablet. Point it at this club:</p>
+      <pre class="copyblock">The Daylight is already on adb (wireless or USB).
+Official paths only — do not flash unofficial images.
+Club shelf: https://daylightcomputer.club
+First hour: https://daylightcomputer.club/starter/
+If you daylight-ify an app, read the skill pack:
+https://github.com/a12k-a2b/daylight-computing-club-community-hub/tree/master/skills</pre>
+      <button type="button" class="btn secondary" id="copy-desk">Copy the desk prompt</button>
+      <p></p>
+      <p>Next: <a href="skill.html">the Live Paper skill</a>, or <a href="build.html">a remote build</a> if this computer cannot compile.</p>`,
+    next: null,
+    after() {
+      document.getElementById('copy-desk').onclick = () => {
+        const t = document.querySelector('.copyblock').textContent;
+        navigator.clipboard.writeText(t)
+          .then(() => alert('Copied — paste it into Claude or Codex on the desk.'))
+          .catch(() => window.prompt('Copy this:', t));
+      };
+    }
+  }
+];
+
+Starter.wizard(steps, { storageKey: 'dcc-starter-connect-step' }).render();
+</script>
+</body>
+</html>

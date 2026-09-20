@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cherry remote build — Daylight Computer Club</title>
+<link rel="stylesheet" href="../style.css">
+<link rel="stylesheet" href="starter.css">
+<link rel="icon" href="../icons/icon-192.png">
+<meta name="theme-color" content="#ffffff">
+</head>
+<body>
+<div class="wrap">
+
+  <header class="club">
+    <a class="club-mark" href="./">
+      <img src="../icons/icon-192.png" alt="">
+      <h1>Cherry remote build</h1>
+    </a>
+    <p class="club-tagline">A queue for when this computer cannot compile.</p>
+  </header>
+
+  <main>
+    <p class="progress" id="progress"></p>
+    <h2 class="step-title" id="step-title"></h2>
+    <div class="step-body" id="step-body"></div>
+    <div class="wizard-nav" id="nav"></div>
+  </main>
+
+  <footer class="club">
+    <p><a href="./">← First hour</a> · <a href="../">Club</a></p>
+  </footer>
+
+</div>
+<script src="starter.js"></script>
+<script>
+const draft = Starter.read('dcc-starter-cherry', {
+  name: Starter.unlock().name || '',
+  email: Starter.unlock().email || '',
+  repo: '',
+  want: 'apk',
+  note: ''
+});
+
+const steps = [
+  {
+    title: 'A build machine, not a flash machine.',
+    body: `
+      <p>Cherry is the club’s name for “please compile this on a real Android SDK and send me the APK.” It is for friends whose laptop will not run Gradle or <code>d8</code>.</p>
+      <div class="honest">
+        <p><strong>There is no cherry server yet.</strong> The live queue is mail to Anjan. He (or a machine he trusts) builds from the public source you name, signs with the club key when it is a club dish, and sends the file back or shelves it.</p>
+        <p>Cherry will not flash your tablet. It will not take unofficial images. If you need the tablet restored, that is <a href="recover.html">official recover</a>.</p>
+      </div>`,
+    next: 'Queue a build →'
+  },
+  {
+    title: 'What should get built?',
+    body: `
+      <label class="field">
+        <span>Your name</span>
+        <input id="name" type="text" value="${Starter.esc(draft.name)}">
+      </label>
+      <label class="field">
+        <span>Reply email</span>
+        <input id="email" type="email" value="${Starter.esc(draft.email)}">
+      </label>
+      <label class="field">
+        <span>Public source repo (https GitHub URL)</span>
+        <input id="repo" type="url" placeholder="https://github.com/you/your-app" value="${Starter.esc(draft.repo)}">
+      </label>
+      <label class="field">
+        <span>What to send back</span>
+        <select id="want">
+          <option value="apk"${draft.want === 'apk' ? ' selected' : ''}>A signed APK I can install</option>
+          <option value="shelf"${draft.want === 'shelf' ? ' selected' : ''}>Build and shelve it on the club</option>
+          <option value="skill"${draft.want === 'skill' ? ' selected' : ''}>Daylight-ify, then build</option>
+        </select>
+      </label>
+      <label class="field">
+        <span>Notes — branch, flavor, anything the builder should know</span>
+        <textarea id="note">${Starter.esc(draft.note)}</textarea>
+      </label>
+      <p class="hint">Source has to be readable. The club will not build a mystery blob.</p>`,
+    next: 'Looks right →',
+    beforeNext() {
+      const name = (document.getElementById('name').value || '').trim();
+      const email = (document.getElementById('email').value || '').trim();
+      const repo = (document.getElementById('repo').value || '').trim();
+      const want = document.getElementById('want').value;
+      const note = (document.getElementById('note').value || '').trim();
+      if (!name || !email || !repo) {
+        alert('Name, reply email, and a public repo URL.');
+        return false;
+      }
+      if (!/^https:\/\/github\.com\//i.test(repo)) {
+        alert('A public https://github.com/… URL, please. Cherry only builds in the open.');
+        return false;
+      }
+      Starter.write('dcc-starter-cherry', { name, email, repo, want, note });
+      Starter.saveUnlock({ name, email });
+    }
+  },
+  {
+    title: 'Send the ticket.',
+    body: `
+      <p>This opens mail to <strong>anjan@daylightcomputer.com</strong> with the ticket. When a real cherry server exists, this same form will POST there instead.</p>
+      <button type="button" class="btn" id="send-mail">Mail the cherry ticket →</button>
+      <p></p>
+      <p class="hint">No server is watching this page. If mail does not open, write the same facts by hand.</p>`,
+    next: 'I sent it →',
+    after() {
+      document.getElementById('send-mail').onclick = () => {
+        const t = Starter.read('dcc-starter-cherry', {});
+        const wantWord = {
+          apk: 'Signed APK back by email',
+          shelf: 'Build and shelve on the club',
+          skill: 'Daylight-ify, then build'
+        }[t.want] || t.want;
+        Starter.mailto({
+          to: 'anjan@daylightcomputer.com',
+          subject: 'Cherry remote build — ' + (t.repo || 'DC-1 app'),
+          body:
+            'Hi Anjan,\n\n' +
+            'Please queue a cherry remote build.\n\n' +
+            'Name: ' + t.name + '\n' +
+            'Reply-to: ' + t.email + '\n' +
+            'Repo: ' + t.repo + '\n' +
+            'Want: ' + wantWord + '\n' +
+            (t.note ? 'Notes: ' + t.note + '\n' : '') +
+            '\nFrom daylightcomputer.club/starter/build\n' +
+            'Public source only. Official club signing if it is going on the shelf.\n'
+        });
+      };
+    }
+  },
+  {
+    title: 'You are in the queue.',
+    body: `
+      <div class="done-mark">☀</div>
+      <p>When the APK comes back, install it with the club wizard if it is on the shelf, or Chrome if it was mailed to you. Then tell the cook — <a href="../guestbook.html">the guestbook</a> is for that.</p>
+      <p>Meanwhile the tablet can already take <a href="tools.html">Keys and Tracing Paper</a>.</p>`,
+    next: null
+  }
+];
+
+Starter.wizard(steps, { storageKey: 'dcc-starter-build-step' }).render();
+</script>
+</body>
+</html>

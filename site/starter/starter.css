@@ -1,0 +1,85 @@
+/* First-hour pack — extra type on top of the club stylesheet. */
+
+.starter-banner {
+  border: var(--rule);
+  padding: 20px;
+  margin: 0 0 24px;
+  text-decoration: none;
+  color: var(--ink);
+  display: block;
+}
+
+.starter-banner h2 {
+  margin: 0 0 6px;
+  font-size: 26px;
+  font-weight: normal;
+}
+
+.starter-banner p { margin: 0; color: var(--mid); }
+
+.choice {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: var(--rule);
+  background: var(--paper);
+  color: var(--ink);
+  min-height: 64px;
+  padding: 14px 16px;
+  font-family: inherit;
+  font-size: 20px;
+  line-height: 1.35;
+  margin: 0 0 12px;
+  cursor: pointer;
+}
+
+.choice strong { display: block; font-weight: normal; font-size: 22px; }
+.choice span { display: block; color: var(--mid); font-size: 16px; margin-top: 4px; }
+
+.field {
+  display: block;
+  margin: 0 0 16px;
+}
+
+.field > span {
+  display: block;
+  font-size: 16px;
+  color: var(--mid);
+  margin: 0 0 6px;
+}
+
+.field input,
+.field textarea,
+.field select {
+  width: 100%;
+  min-height: 52px;
+  font-family: inherit;
+  font-size: 20px;
+  border: var(--rule);
+  padding: 12px 14px;
+  background: var(--paper);
+  color: var(--ink);
+  border-radius: 0;
+}
+
+.field textarea { min-height: 120px; resize: vertical; }
+
+.honest {
+  border: var(--rule);
+  padding: 14px 16px;
+  margin: 0 0 20px;
+}
+
+.honest p { margin: 0 0 8px; }
+.honest p:last-child { margin: 0; }
+
+.flow-list { list-style: none; padding: 0; margin: 0 0 8px; }
+.flow-list li { margin: 0 0 16px; }
+.flow-list a.card {
+  display: block;
+  text-decoration: none;
+  color: var(--ink);
+  margin-bottom: 0;
+}
+.flow-list .card h2 { font-size: 24px; }
+.flow-list .meta { margin-bottom: 0; }
