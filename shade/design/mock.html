@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daylight Shade — design mock</title>
+<style>
+/* Daylight design system, on-device edition: pure grayscale, high contrast,
+   real borders instead of shadows, serif type, no gradients, no animation
+   beyond the sheet slide. This file is 1:1 with what PanelView.java draws. */
+:root {
+  --ink: #000; --paper: #fff; --mid: #555; --faint: #999; --pressed: #ddd;
+  --felt: #888;
+}
+/* night: the same page, inverted — exactly what the app does on-device */
+@media (prefers-color-scheme: dark) {
+  :root { --ink: #fff; --paper: #000; --mid: #aaa; --faint: #777;
+          --pressed: #333; --felt: #2e2e2e; }
+}
+:root[data-theme="dark"] {
+  --ink: #fff; --paper: #000; --mid: #aaa; --faint: #777;
+  --pressed: #333; --felt: #2e2e2e;
+}
+:root[data-theme="light"] {
+  --ink: #000; --paper: #fff; --mid: #555; --faint: #999;
+  --pressed: #ddd; --felt: #888;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+  margin: 0; background: var(--felt); font-family: Georgia, 'Times New Roman', serif;
+  color: var(--ink); display: flex; justify-content: center; padding: 24px 8px;
+}
+svg { color: var(--ink); }
+svg text { fill: currentColor; }
+.device {
+  width: 100%; max-width: 560px; background: var(--paper);
+  border: 3px solid var(--ink); position: relative; overflow: hidden;
+  min-height: 900px;
+}
+/* a faint stand-in home screen underneath */
+.homescreen { padding: 96px 32px; color: var(--faint); font-style: italic; }
+.homescreen h1 { font-weight: normal; color: var(--mid); font-size: 26px; }
+.statusbar {
+  height: 34px; border-bottom: 1px solid var(--faint); display: flex;
+  align-items: center; justify-content: space-between; padding: 0 14px;
+  font-size: 14px; color: var(--mid); font-family: ui-monospace, monospace;
+}
+.scrim {
+  position: absolute; inset: 0; background: rgba(0,0,0,.4);
+}
+.sheet {
+  position: absolute; top: 0; left: 0; right: 0; margin: 0 auto;
+  max-width: 560px; background: var(--paper); border-bottom: 4px solid var(--ink);
+}
+.section { padding: 14px 20px; }
+.rule { height: 2px; background: var(--ink); }
+
+/* header */
+.head-row { display: flex; align-items: baseline; }
+.clock { font-size: 40px; font-weight: bold; }
+.battery { margin-left: auto; font-size: 17px; }
+.dateline { color: var(--mid); font-size: 15px; margin-top: 2px; }
+
+/* sliders */
+.slider { display: flex; align-items: center; height: 60px; gap: 0; }
+.slider.labeled { height: 72px; }
+.slider svg.end { flex: 0 0 44px; }
+.zone {
+  position: absolute; top: 50%; margin-top: -40px; transform: translateX(-50%);
+  font-style: italic; font-size: 12.5px; color: var(--mid); white-space: nowrap;
+}
+.track {
+  flex: 1; height: 44px; position: relative; cursor: pointer;
+}
+.track::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 50%;
+  height: 4px; margin-top: -2px; background: var(--ink);
+}
+.thumb {
+  position: absolute; top: 50%; width: 30px; height: 30px;
+  margin: -15px 0 0 -15px; background: var(--paper); border: 3px solid var(--ink);
+}
+
+/* tiles — three human pairs (founder-approved 2026-07-12) */
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.pair-label {
+  font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--mid); margin: 10px 0 6px 2px;
+}
+.tile {
+  border: 3px solid var(--ink); min-height: 72px; background: var(--paper);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  cursor: pointer; user-select: none; text-align: center; padding: 6px;
+}
+.tile .name { font-weight: bold; font-size: 16px; }
+.tile .state { font-size: 12.5px; color: var(--mid); margin-top: 2px; }
+.tile.on { background: var(--ink); color: var(--paper); }
+.tile.on .state { color: var(--paper); }
+.tile:active { background: var(--pressed); }
+.tile.on:active { background: var(--mid); }
+
+/* media card */
+.media { border: 3px solid var(--ink); padding: 14px; margin: 0 20px 14px; }
+.media .app {
+  font-family: ui-monospace, monospace; font-size: 11.5px; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--faint);
+}
+.media .title { font-size: 18px; font-weight: bold; margin-top: 3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.media .artist { font-size: 15px; color: var(--mid);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.controls { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
+.cbtn {
+  width: 52px; height: 52px; border: 2px solid var(--ink); background: var(--paper);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.cbtn:active { background: var(--pressed); }
+.cbtn svg { display: block; }
+
+/* notifications */
+.nhead { display: flex; align-items: center; }
+.nlabel {
+  font-family: ui-monospace, monospace; font-size: 11.5px; letter-spacing: 2px;
+  text-transform: uppercase; color: var(--mid);
+}
+.clear { margin-left: auto; font-size: 14px; cursor: pointer; padding: 8px 0 8px 12px; }
+.notif { display: flex; align-items: center; padding: 8px 0; cursor: pointer; }
+.notif .bar { width: 4px; height: 36px; background: var(--ink); flex: 0 0 4px; }
+.notif .body { padding: 0 8px 0 12px; min-width: 0; flex: 1; }
+.notif .t { font-weight: bold; font-size: 15px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.notif .x2 { font-size: 14px; color: var(--mid);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.notif .dismiss {
+  width: 44px; height: 44px; flex: 0 0 44px; border: 2px solid var(--ink);
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+}
+
+/* footer */
+.footer { display: flex; gap: 10px; }
+.fbtn {
+  flex: 1; border: 2px solid var(--ink); min-height: 52px; display: flex;
+  align-items: center; justify-content: center; font-size: 17px; cursor: pointer;
+}
+.fbtn:active { background: var(--pressed); }
+
+.caption {
+  position: absolute; bottom: 10px; left: 0; right: 0; text-align: center;
+  color: #eee; font-size: 13px; font-style: italic;
+}
+</style>
+</head>
+<body>
+<div class="device">
+  <div class="statusbar"><span id="sbclock">9:41</span><span>▲ ● 87%</span></div>
+  <div class="homescreen">
+    <h1>a quiet home screen</h1>
+    <p>swipe down from the top of any screen and the shade below slides over
+    it — grayscale, bordered, serif; ours.</p>
+  </div>
+
+  <div class="scrim"></div>
+  <div class="sheet">
+    <div class="section">
+      <div class="head-row"><span class="clock" id="clock">9:41</span>
+        <span class="battery">plenty</span></div>
+      <div class="dateline" id="dateline">Friday, July 11 &nbsp;·&nbsp; alarm 6:30 AM</div>
+    </div>
+    <div class="rule"></div>
+
+    <div class="section">
+      <div class="slider labeled" id="bright">
+        <svg class="end" viewBox="0 0 44 44"><circle cx="22" cy="22" r="5" fill="currentColor"/>
+          <g stroke="currentColor" stroke-width="2"><line x1="22" y1="12" x2="22" y2="9"/><line x1="22" y1="32" x2="22" y2="35"/><line x1="12" y1="22" x2="9" y2="22"/><line x1="32" y1="22" x2="35" y2="22"/><line x1="15" y1="15" x2="13" y2="13"/><line x1="29" y1="29" x2="31" y2="31"/><line x1="29" y1="15" x2="31" y2="13"/><line x1="15" y1="29" x2="13" y2="31"/></g></svg>
+        <div class="track"><span class="zone" id="bright-zone" style="left:25%">paper-like</span><div class="thumb" style="left:25%"></div></div>
+        <svg class="end" viewBox="0 0 44 44"><circle cx="22" cy="22" r="7" fill="currentColor"/>
+          <g stroke="currentColor" stroke-width="2.4"><line x1="22" y1="11" x2="22" y2="6"/><line x1="22" y1="33" x2="22" y2="38"/><line x1="11" y1="22" x2="6" y2="22"/><line x1="33" y1="22" x2="38" y2="22"/><line x1="14" y1="14" x2="10.5" y2="10.5"/><line x1="30" y1="30" x2="33.5" y2="33.5"/><line x1="30" y1="14" x2="33.5" y2="10.5"/><line x1="14" y1="30" x2="10.5" y2="33.5"/></g></svg>
+      </div>
+      <div class="slider" id="warm">
+        <svg class="end" viewBox="0 0 44 44"><circle cx="22" cy="22" r="7" fill="currentColor"/>
+          <g stroke="currentColor" stroke-width="2.4"><line x1="22" y1="11" x2="22" y2="6"/><line x1="22" y1="33" x2="22" y2="38"/><line x1="11" y1="22" x2="6" y2="22"/><line x1="33" y1="22" x2="38" y2="22"/><line x1="14" y1="14" x2="10.5" y2="10.5"/><line x1="30" y1="30" x2="33.5" y2="33.5"/><line x1="30" y1="14" x2="33.5" y2="10.5"/><line x1="14" y1="30" x2="10.5" y2="33.5"/></g></svg>
+        <div class="track"><div class="thumb" style="left:35%"></div></div>
+        <svg class="end" viewBox="0 0 44 44"><circle cx="22" cy="22" r="6" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+      </div>
+    </div>
+    <div class="rule"></div>
+
+    <div class="section">
+      <div class="pair-label">connection</div>
+      <div class="tiles">
+        <div class="tile on" data-name="Wi-Fi"><span class="name">Wi-Fi</span><span class="state">on</span></div>
+        <div class="tile" data-name="Bluetooth"><span class="name">Bluetooth</span><span class="state">off</span></div>
+      </div>
+      <div class="pair-label">attention</div>
+      <div class="tiles">
+        <div class="tile" data-name="Do Not Disturb"><span class="name">Do Not Disturb</span><span class="state">off</span></div>
+        <div class="tile" data-name="Airplane Mode"><span class="name">Airplane Mode</span><span class="state">off</span></div>
+      </div>
+      <div class="pair-label">page</div>
+      <div class="tiles">
+        <div class="tile" data-name="Dark Mode"><span class="name">Dark Mode</span><span class="state">off</span></div>
+        <div class="tile on" data-name="Rotation Lock"><span class="name">Rotation Lock</span><span class="state">on</span></div>
+      </div>
+    </div>
+
+    <div class="media">
+      <div class="app">Spotify</div>
+      <div class="title">Harvest Moon</div>
+      <div class="artist">Neil Young</div>
+      <div class="controls">
+        <div class="cbtn" title="back 15s"><svg width="26" height="26" viewBox="0 0 26 26"><polygon points="8,5 2,13 8,21" fill="currentColor"/><text x="16" y="18" font-size="12" font-weight="bold" text-anchor="middle" font-family="Georgia">15</text></svg></div>
+        <div class="cbtn" title="previous"><svg width="26" height="26" viewBox="0 0 26 26"><rect x="4" y="6" width="4" height="14" fill="currentColor"/><polygon points="22,6 10,13 22,20" fill="currentColor"/></svg></div>
+        <div class="cbtn" id="play" title="play/pause"><svg width="26" height="26" viewBox="0 0 26 26"><g id="playglyph"><rect x="6" y="5" width="5" height="16" fill="currentColor"/><rect x="15" y="5" width="5" height="16" fill="currentColor"/></g></svg></div>
+        <div class="cbtn" title="next"><svg width="26" height="26" viewBox="0 0 26 26"><polygon points="4,6 16,13 4,20" fill="currentColor"/><rect x="18" y="6" width="4" height="14" fill="currentColor"/></svg></div>
+        <div class="cbtn" title="forward 15s"><svg width="26" height="26" viewBox="0 0 26 26"><text x="10" y="18" font-size="12" font-weight="bold" text-anchor="middle" font-family="Georgia">15</text><polygon points="18,5 24,13 18,21" fill="currentColor"/></svg></div>
+        <div class="cbtn" id="heart" title="favorite"><svg width="26" height="26" viewBox="0 0 26 26"><path id="heartpath" d="M13 22 C2 13, 7 4, 13 10 C19 4, 24 13, 13 22 Z" fill="none" stroke="currentColor" stroke-width="2"/></svg></div>
+      </div>
+    </div>
+    <div class="rule"></div>
+
+    <div class="section">
+      <div class="nhead"><span class="nlabel">notifications · 2</span><span class="clear">clear all</span></div>
+      <div class="notif"><div class="bar"></div><div class="body"><div class="t">Melissa</div><div class="x2">the sourdough app works!! thank you</div></div><div class="dismiss"><svg width="16" height="16" viewBox="0 0 16 16"><g stroke="currentColor" stroke-width="2"><line x1="3" y1="3" x2="13" y2="13"/><line x1="13" y1="3" x2="3" y2="13"/></g></svg></div></div>
+      <div class="notif"><div class="bar"></div><div class="body"><div class="t">Downloads</div><div class="x2">field-notes.pdf finished</div></div><div class="dismiss"><svg width="16" height="16" viewBox="0 0 16 16"><g stroke="currentColor" stroke-width="2"><line x1="3" y1="3" x2="13" y2="13"/><line x1="13" y1="3" x2="3" y2="13"/></g></svg></div></div>
+    </div>
+    <div class="rule"></div>
+
+    <div class="section footer">
+      <div class="fbtn">essentials</div>
+      <div class="fbtn">everything else…</div>
+    </div>
+  </div>
+  <div class="caption">Daylight Shade — design mock (tap the pills, drag the sliders)</div>
+</div>
+
+<script>
+// live clock
+(function () {
+  var now = new Date();
+  var h = now.getHours() % 12 || 12, m = String(now.getMinutes()).padStart(2, "0");
+  document.getElementById("clock").textContent = h + ":" + m;
+  document.getElementById("sbclock").textContent = h + ":" + m;
+  var days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  var months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  document.getElementById("dateline").innerHTML =
+      days[now.getDay()] + ", " + months[now.getMonth()] + " " + now.getDate()
+      + " &nbsp;·&nbsp; alarm 6:30 AM";
+})();
+
+// pills toggle
+document.querySelectorAll(".tile").forEach(function (t) {
+  t.addEventListener("click", function () {
+    t.classList.toggle("on");
+    var s = t.querySelector(".state");
+    // Apple vocabulary on purpose (founder ruling 2026-07-12); every
+    // pill, Rotation Lock included, just reads on/off now
+    s.textContent = t.classList.contains("on") ? "on" : "off";
+  });
+});
+
+// sliders drag
+// brightness runs the app's perceptual dial with a soft cap: position p
+// maps to raw = 153^p (NOT the panel's true 255 — "100%" is ~60% duty,
+// so a slammed slider can't burn eyes or battery). The legend names the
+// zone; people settle where the word feels right.
+// both zone boundaries are user-tunable in shade setup on the device
+// (defaults: candlelit ends at 15% of travel, paper-like at 30% — where
+// the backlight starts to out-glow the room)
+function zoneFor(v) {
+  if (v <= 0.001) return "pure reflective";
+  if (v <= 0.15) return "candlelit";
+  if (v <= 0.30) return "paper-like";
+  return "screen-like";
+}
+function slider(id) {
+  var el = document.getElementById(id), track = el.querySelector(".track"),
+      thumb = el.querySelector(".thumb"),
+      zone = el.querySelector(".zone");
+  function move(clientX) {
+    var r = track.getBoundingClientRect();
+    var v = Math.max(0, Math.min(1, (clientX - r.left) / r.width));
+    thumb.style.left = (v * 100) + "%";
+    if (zone) {
+      zone.textContent = zoneFor(v);
+      zone.style.left = (Math.max(8, Math.min(92, v * 100)) + "%");
+    }
+  }
+  function down(e) {
+    e.preventDefault();
+    move(e.touches ? e.touches[0].clientX : e.clientX);
+    function mm(ev) { move(ev.touches ? ev.touches[0].clientX : ev.clientX); }
+    function up() {
+      window.removeEventListener("mousemove", mm); window.removeEventListener("mouseup", up);
+      window.removeEventListener("touchmove", mm); window.removeEventListener("touchend", up);
+    }
+    window.addEventListener("mousemove", mm); window.addEventListener("mouseup", up);
+    window.addEventListener("touchmove", mm); window.addEventListener("touchend", up);
+  }
+  track.addEventListener("mousedown", down);
+  track.addEventListener("touchstart", down, { passive: false });
+}
+slider("bright"); slider("warm");
+
+// play/pause + heart
+var playing = true;
+document.getElementById("play").addEventListener("click", function () {
+  playing = !playing;
+  document.getElementById("playglyph").innerHTML = playing
+      ? '<rect x="6" y="5" width="5" height="16" fill="currentColor"/><rect x="15" y="5" width="5" height="16" fill="currentColor"/>'
+      : '<polygon points="7,5 21,13 7,21" fill="currentColor"/>';
+});
+var loved = false;
+document.getElementById("heart").addEventListener("click", function () {
+  loved = !loved;
+  var p = document.getElementById("heartpath");
+  p.setAttribute("fill", loved ? "currentColor" : "none");
+});
+</script>
+</body>
+</html>
